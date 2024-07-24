@@ -110,6 +110,7 @@ function App() {
 
   return (
       <div>
+        <img src='/img/logos/Setups.png' className='logo' />
         {
           isAauthenticated && profile ? 
           <div className='bikeInputForm'>
@@ -123,10 +124,9 @@ function App() {
           </div>
           :
           <div className='login'>
-            <h2>Setups.Bike</h2>
             <br />
             <br />
-            <p>We remember the clicks for you!</p>
+            <p>All of your supspension settings in one place!</p>
             <button onClick={() => login()}>Clip in</button>
           </div>
           

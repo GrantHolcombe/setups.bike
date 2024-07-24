@@ -12,14 +12,16 @@ code {
     monospace;
 }
 
-.login {
+.login, .bikeInputForm {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.bikeInputForm {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.logo {
+  background: red;
+  border-radius: 8px;
+  height: 175px;
+  margin: 15px auto;
+  display: block;
 }
