@@ -115,7 +115,7 @@ function App() {
           isAauthenticated && profile ? 
           <div className='bikeInputForm'>
             <h2>Welcome back, {profile.given_name}!</h2>
-            <p>Here are your rides settings</p>
+            <p>Here are your rides settings!</p>
             <TireInput name='Front' />
             <div>* Add Fork?</div>
             <TireInput name='Rear' />
