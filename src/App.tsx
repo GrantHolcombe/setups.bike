@@ -110,7 +110,7 @@ function App() {
 
   return (
       <div>
-        <img src='/img/logos/Setups.png' className='logo' />
+        <img src='img/logos/Setups.png' className='logo' />
         {
           isAauthenticated && profile ? 
           <div className='bikeInputForm'>
