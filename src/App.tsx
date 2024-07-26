@@ -4,8 +4,12 @@ import axios from 'axios';
 import './App.css';
 
 export interface IUser {
-  /** Should the name be rendered in bold */
   credential: string;
+}
+export interface IBike {
+  brand: string,
+  model: string,
+  components: Array<IUser>
 }
 
 type tireInputProps = {
@@ -29,13 +33,13 @@ function App() {
   const [user, setUser] = useState<IUser>();
   const [profile, setProfile] = useState<IProfile>();
   const [isAauthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [bikes, setBikes] = useState<Array<IBike>>();
 
   //get googleAPI data once user logs in
   useEffect(
     () => {
         if (user) {
-            axios
-                .get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${user.credential}`, {
+            axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${user.credential}`, {
                     headers: {
                         Authorization: `Bearer ${user.credential}`,
                         Accept: 'application/json'
@@ -44,6 +48,7 @@ function App() {
                 .then((res) => {
                     //set FE profile data
                     setProfile(res.data);
+                    console.log(res.data);
                     //toggles login/app screens
                     setIsAuthenticated(true);
                 })
@@ -57,7 +62,6 @@ function App() {
   //TODO errors gracefuly after creating initial row, clean that up maybe in the query
   useEffect(() => {
     if(profile) {
-      console.log(profile)
       const reqObj = {
         userId: parseInt(profile.id),
         firstName: profile.given_name,
@@ -65,6 +69,8 @@ function App() {
         emailAddress: profile.email
       }
       addUser(reqObj);
+      getBikes();
+      console.log(bikes);
     }
   }, [profile]);
 
@@ -76,17 +82,19 @@ function App() {
     .catch(err => console.warn(err));
   }
   //get users lambda call, just a test
-  const getUsers = () => {
-    axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getUsers`, {
-                    
-                })
+  const getBikes = () => {
+    axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes`,{ params: reqObj})
                 .then((res) => {
                     console.log(res.data);
-                    
+                    setBikes(res.data);
                 })
                 .catch((err) => console.log(err));
   }
-    //getUsers(); //useful for debuging a simpler api call
+  const reqObj = {
+      //return this from auth call
+      userId: 4,
+    }
+    addUser(reqObj);
   
   //login button
   const login = useGoogleLogin({
@@ -115,7 +123,7 @@ function App() {
           isAauthenticated && profile ? 
           <div className='bikeInputForm'>
             <h2>Welcome back, {profile.given_name}!</h2>
-            <p>Here are your rides settings</p>
+            <p>Here's your { bikes?.[0].brand } { bikes?.[0].model } settings</p>
             <TireInput name='Front' />
             <div>* Add Fork?</div>
             <TireInput name='Rear' />
