@@ -1,0 +1,88 @@
+.cardContainer {
+    max-width: 400px;
+    border-radius: 8px;
+    border: 1px solid #CDCDCD;
+    box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cardBody {
+    display: flex;
+    padding: 0px 15px;
+}
+
+.susComponentLabel {
+    font-size: 8px;
+    display: inline-block;
+    vertical-align: top;
+    margin-left: 5px;
+}
+
+
+.tireSection, .suspensionPressureSection {
+    width: 50%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.suspensionPressureSection {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    width: 50%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.pressureRow {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.suspensionCompression, .suspensionRebound {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.featureTitle {
+    display: flex;
+    flex: 0 0 100%;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.componentInput {
+    width: 30px;
+    height: 25px;
+    border-radius: 0px;
+    border: none;
+    border-bottom: 1px solid #cdcdcd;
+    text-align: center;
+}
+
+.front {
+    border: 1px solid #cdcdcd;
+    border-top: none;
+    border-left: none;
+
+}
+
+.tireSection.front {
+    padding: 0px 15px 15px 0px;
+}
+
+.suspensionPressureSection.front {
+    padding: 15px 15px 15px 0px;
+    border-bottom: none;
+}
+
+.suspensionPressureSection.rear {
+    border-bottom: none;
+}
+
+.rear {
+    border-bottom: 1px solid #cdcdcd;
+    padding-left: 15px;
+}

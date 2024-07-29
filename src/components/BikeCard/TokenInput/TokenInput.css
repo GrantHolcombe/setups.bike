@@ -1,0 +1,52 @@
+
+.tokenContainer {    
+    position: absolute;
+    height: 40px;
+    bottom: 200px;
+    width: 190px;
+    transform: translateX(-50%);
+    transform: rotate(-6deg);
+
+}
+
+.tokenRelContainer {
+    position: relative;
+    top: 150px;
+    right: 5px;
+}
+
+.controls {
+    margin-top: 75px;   
+    display: flex;
+    flex: 100%;
+    justify-content: space-between;
+}
+
+.tokenLabel {
+    margin: 0px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.coinShadow {
+    -webkit-filter: drop-shadow(-1px 1px 1px rgba(0, 0, 0, .3));
+    position: absolute;
+    height: 75px;
+    width: 75px;
+}
+
+.modelHeader, .brandHeader {
+    margin: 15px
+}
+
+.modelHeader {
+    margin-bottom: 0px
+}
+
+.brandHeader {
+    margin-top: 0px;
+    font-size: 2rem;
+    font-weight: 500;
+    margin-top: 0px;
+}

@@ -2,14 +2,33 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import axios from 'axios';
 import './App.css';
+import BikeCard from './components/BikeCard/BikeCard';
 
 export interface IUser {
   credential: string;
 }
+
 export interface IBike {
+  bike_id: number,
+  app_user_id: number,
   brand: string,
   model: string,
-  components: Array<IUser>
+  front_tire: number,
+  rear_tire: number,
+  front_sus_pressure: number,
+  rear_sus_pressure: number,
+  front_sus_comp_1: number,
+  front_sus_comp_2: number,
+  front_sus_comp_count: number,
+  front_sus_rebound_1: number,
+  front_sus_rebound_2: number,
+  front_sus_rebound_count: number,
+  rear_sus_comp_1: number,
+  rear_sus_comp_2: number,
+  rear_sus_comp_count: number,
+  rear_sus_rebound_1: number,
+  rear_sus_rebound_2: number,
+  rear_sus_rebound_count: number,
 }
 
 type tireInputProps = {
@@ -124,10 +143,7 @@ function App() {
           <div className='bikeInputForm'>
             <h2>Welcome back, {profile.given_name}!</h2>
             <p>Here's your { bikes?.[0].brand } { bikes?.[0].model } settings</p>
-            <TireInput name='Front' />
-            <div>* Add Fork?</div>
-            <TireInput name='Rear' />
-            <div>* Add Shock?</div>
+            <BikeCard />
             <button onClick={() => logout()}>logout</button>
           </div>
           :
