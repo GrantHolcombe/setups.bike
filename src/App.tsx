@@ -5,7 +5,7 @@ import './App.css';
 import BikeCard from './components/BikeCard/BikeCard';
 
 export interface IUser {
-  credential: string;
+  credentialStr: string;
 }
 
 export interface IBike {
@@ -58,16 +58,15 @@ function App() {
   useEffect(
     () => {
         if (user) {
-            axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${user.credential}`, {
+            axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${user.credentialStr}`, {
                     headers: {
-                        Authorization: `Bearer ${user.credential}`,
+                        Authorization: `Bearer ${user.credentialStr}`,
                         Accept: 'application/json'
                     }
                 })
                 .then((res) => {
                     //set FE profile data
                     setProfile(res.data);
-                    console.log(res.data);
                     //toggles login/app screens
                     setIsAuthenticated(true);
                 })
@@ -117,7 +116,7 @@ function App() {
   
   //login button
   const login = useGoogleLogin({
-    onSuccess: (codeResponse: any) => { console.log(codeResponse.access_token); setUser({credential: codeResponse.access_token}); console.log(user?.credential);},
+    onSuccess: (codeResponse: any) => { console.log(codeResponse.access_token); setUser({credentialStr: codeResponse.access_token}); console.log(user?.credentialStr);},
     onError: (error?: any) => console.log('Login Failed:', error)
   });
 
@@ -139,11 +138,11 @@ function App() {
       <div>
         <img src='img/logos/Setups.png' className='logo' />
         {
-          isAauthenticated && profile ? 
+          isAauthenticated && profile && bikes ? 
           <div className='bikeInputForm'>
             <h2>Welcome back, {profile.given_name}!</h2>
             <p>Here's your { bikes?.[0].brand } { bikes?.[0].model } settings</p>
-            <BikeCard />
+            <BikeCard thisBike={ bikes[0] }/>
             <button onClick={() => logout()}>logout</button>
           </div>
           :

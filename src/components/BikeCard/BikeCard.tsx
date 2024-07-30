@@ -29,9 +29,12 @@ const mockBike = {
   rear_sus_rebound_2: 7,
   rear_sus_rebound_count: 2,
 }
+export interface IBikeCardProps {
+  thisBike: IBike
+}
 
-function BikeCard() {
-  const [bike, setBike] = useState<IBike>(mockBike);
+function BikeCard({thisBike}: IBikeCardProps) {
+  const [bike, setBike] = useState<IBike>(thisBike);
 
   const setBikeVal = (target: any, value: number) => {
     let update: any = {...bike}
@@ -42,6 +45,9 @@ function BikeCard() {
     update[target] = value;
     setBike(update);
   }
+  useEffect(() => {
+    console.log(bike);
+  },[])
 
   return (
     <div className="cardContainer">
