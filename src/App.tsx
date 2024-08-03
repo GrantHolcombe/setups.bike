@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, createContext } from 'react';
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+import { Radio } from 'react-loader-spinner';
 import './App.css';
 import BikeCard from './components/BikeCard/BikeCard';
 
@@ -46,13 +48,31 @@ export interface IProfile {
     "hd": string
 }
 
+export interface IJWT {
+  "app_user_id": number,
+  "first_name": string,
+  "last_name": string,
+  "email_address": string
+}
 
+
+export type AppContent = {
+  loading: boolean
+  setLoading:(b:boolean) => void
+}
+export const AppContext = createContext<AppContent>({
+  loading: true,
+  setLoading: (b) => { },
+})
+export const useAppContext = () => useContext(AppContext)
 
 function App() {
   const [user, setUser] = useState<IUser>();
   const [profile, setProfile] = useState<IProfile>();
   const [isAauthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [jwt, setJwt] = useState<string>("");
   const [bikes, setBikes] = useState<Array<IBike>>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   //get googleAPI data once user logs in
   useEffect(
@@ -79,7 +99,7 @@ function App() {
   //after setting the FE profile data, create a user in DB
   //TODO errors gracefuly after creating initial row, clean that up maybe in the query
   useEffect(() => {
-    if(profile) {
+    if(profile && jwt == "") {
       const reqObj = {
         userId: parseInt(profile.id),
         firstName: profile.given_name,
@@ -87,36 +107,43 @@ function App() {
         emailAddress: profile.email
       }
       addUser(reqObj);
-      getBikes();
-      console.log(bikes);
     }
   }, [profile]);
+
+  useEffect(() => {
+    if(jwt != "") getBikes();
+  }, [jwt]);
 
   //add user lambda call
   const addUser = (reqObj: object) => {
     axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/addUser`, JSON.stringify({}), { params: reqObj
   })
-    .then(response => console.log(response.status))
+    .then(response => {
+      setJwt(response.data.token);
+    })
     .catch(err => console.warn(err));
   }
+  
   //get users lambda call, just a test
-  const getBikes = () => {
+  const getBikes = async () => {
+    setIsLoading(true)
+    const decodedJwt = jwtDecode<IJWT>(jwt);
+    const reqObj = {
+      //return this from auth call
+      userId: decodedJwt.app_user_id,
+    }
     axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes`,{ params: reqObj})
                 .then((res) => {
-                    console.log(res.data);
                     setBikes(res.data);
+                    setIsLoading(false);
                 })
                 .catch((err) => console.log(err));
   }
-  const reqObj = {
-      //return this from auth call
-      userId: 4,
-    }
-    addUser(reqObj);
+  
   
   //login button
   const login = useGoogleLogin({
-    onSuccess: (codeResponse: any) => { console.log(codeResponse.access_token); setUser({credentialStr: codeResponse.access_token}); console.log(user?.credentialStr);},
+    onSuccess: (codeResponse: any) => { setUser({credentialStr: codeResponse.access_token});},
     onError: (error?: any) => console.log('Login Failed:', error)
   });
 
@@ -124,6 +151,7 @@ function App() {
   const logout = () => {
     googleLogout();
     setIsAuthenticated(false);
+    setJwt("");
   };
 
   const TireInput: React.FC<tireInputProps> = ({name}) => {
@@ -135,14 +163,27 @@ function App() {
   )};
 
   return (
-      <div>
+      <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading}}>
+        <Radio
+          visible={isLoading}
+          height="80px"
+          width="80px"
+          colors={["#4fa94d", "#4fa94d", "#4fa94d"]}
+          ariaLabel="radio-loading"
+          wrapperStyle={{boxSizing: "border-box", height: "100vh", zIndex: "999", width: "100vw", padding: "35vh 35vw", position: "absolute", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
+          wrapperClass="test"
+        />
         <img src='img/logos/Setups.png' className='logo' />
         {
           isAauthenticated && profile && bikes ? 
           <div className='bikeInputForm'>
             <h2>Welcome back, {profile.given_name}!</h2>
-            <p>Here's your { bikes?.[0].brand } { bikes?.[0].model } settings</p>
-            <BikeCard thisBike={ bikes[0] }/>
+            <p>Here's your garage.</p>
+            <div className='cardWrapper'>
+              {bikes.map((e, i) => {
+                return <BikeCard key={i} thisBike={ bikes[i] }/>
+              })}
+            </div>
             <button onClick={() => logout()}>logout</button>
           </div>
           :
@@ -154,7 +195,7 @@ function App() {
           </div>
           
         }
-      </div>
+      </AppContext.Provider>
   )
 }
 

@@ -36,7 +36,6 @@ export default function SusMenu({bikeDetail, detail, setBikeVal}: ISusMenuProps)
   const getDetailVal = (detail:string, index: number) => {
     const detailValTarget = `${detail}` as keyof typeof bikeDetail
     const detailVal = bikeDetail[detailValTarget] ;
-    console.log(detailVal);
     return detailVal
   }
 
