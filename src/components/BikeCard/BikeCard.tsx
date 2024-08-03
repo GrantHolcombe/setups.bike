@@ -46,7 +46,6 @@ function BikeCard({thisBike}: IBikeCardProps) {
     setBike(update);
   }
   useEffect(() => {
-    console.log(bike);
   },[])
 
   return (
