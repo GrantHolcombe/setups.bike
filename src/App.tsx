@@ -152,6 +152,7 @@ function App() {
     googleLogout();
     setIsAuthenticated(false);
     setJwt("");
+    setBikes([]);
   };
 
   const TireInput: React.FC<tireInputProps> = ({name}) => {
