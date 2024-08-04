@@ -47,18 +47,18 @@ function BikeCard({thisBike}: IBikeCardProps) {
       <div className='cardBody'>
         <div className='tireSection front'>
           <div className='componentLabel'>Front Tire</div>
-          <input type='number' className='componentInput' value={bike.front_tire} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('front_tire', parseInt(e.currentTarget.value))}/>
+          <input type='number' className='componentInput' value={bike.front_tire} onFocus={(e) => {e.target.select()}} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('front_tire', parseInt(e.currentTarget.value))}/>
         </div>
         <div className='tireSection rear'>
           <div className='componentLabel'>Rear Tire</div>
-          <input type='number' className='componentInput' value={bike.rear_tire} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('rear_tire', parseInt(e.currentTarget.value))}/>
+          <input type='number' className='componentInput' value={bike.rear_tire} onFocus={(e) => {e.target.select()}} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('rear_tire', parseInt(e.currentTarget.value))}/>
         </div>
       </div>
       <div className='cardBody rowTwo'>
         <div className='suspensionPressureSection front'>
           <div className='pressureRow'>
             <div className='componentLabel'>Fork</div>
-            <input type='number' className='componentInput' value={bike.front_sus_pressure} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('front_sus_pressure', parseInt(e.currentTarget.value))}/>
+            <input type='number' className='componentInput' value={bike.front_sus_pressure} onFocus={(e) => {e.target.select()}} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('front_sus_pressure', parseInt(e.currentTarget.value))}/>
           </div>
           <div className='suspensionCompression'>
             <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={(e) => { updateBike(e)}} detail='front_sus_comp_'/>
@@ -71,7 +71,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
         <div className='suspensionPressureSection rear'>
           <div className='pressureRow'>
             <div className='componentLabel'>Shock</div>
-            <input type='number' className='componentInput' value={bike.rear_sus_pressure} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('rear_sus_pressure', parseInt(e.currentTarget.value))}/>
+            <input type='number' className='componentInput' value={bike.rear_sus_pressure} onFocus={(e) => {e.target.select()}} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('rear_sus_pressure', parseInt(e.currentTarget.value))}/>
             <div className='suspensionCompression'>
               <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={(e) => { updateBike(e)}} detail='rear_sus_comp_'/>
             </div>
