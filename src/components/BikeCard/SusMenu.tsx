@@ -23,11 +23,7 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike}: ISus
     setBikeVal((detail + 'count'), val);
     setAnchorEl(null);
   };
-
-  const bikeUpdae = (e:any) => {
-    if(saveBike) saveBike(e);
-  }
-
+  
   const valUpdate = (e: any, index: number) => {
     const detailValTarget = `${detail + index}` as keyof typeof bikeDetail
     const detailVal = bikeDetail[detailValTarget] ;
@@ -65,7 +61,7 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike}: ISus
         return (
         <span>
             <label className='susComponentLabel' htmlFor={detail+`1`}>{i === 1 ? `HS${isComp ? 'C' : 'R'}` : `LS${isComp ? 'C' : 'R'}`}</label>
-            <input type='number' className='componentInput' onFocus={(e) => {e.target.select()}} name={detail+`${i+1}`} value={getDetailVal(detail+`${i+1}`, i + 1)} onBlur={(e) =>{ console.log(e); if(saveBike) saveBike(e);} } onChange={(event) => valUpdate(event, (i + 1)) }/>
+            <input type='number' className='componentInput' name={detail+`${i+1}`} value={getDetailVal(detail+`${i+1}`, i + 1)} onBlur={(e) =>{ console.log(e); if(saveBike) saveBike(e);} } onChange={(event) => valUpdate(event, (i + 1)) }/>
         </span>)})}
     </div>
   );

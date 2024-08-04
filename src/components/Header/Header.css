@@ -1,0 +1,41 @@
+.logo {
+    background: red;
+    border-radius: 8px;
+    height: 175px;
+    margin: 15px;
+    display: block;
+  }
+
+  .appMenuWrapper {
+    position: absolute;
+    top: 50px;
+    right: 35px;
+    background: red;
+    padding: 13px 15px;
+    border-radius: 50%;
+}
+
+.welcomeHeading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 35px;
+  }
+
+.welcomeHeading h2 {
+    color:white;
+    z-index: 999;
+}
+
+@media only screen and (max-width: 600px) {
+    .logo {
+        margin: 15px auto;
+    }
+    .welcomeHeading {
+        margin-top: 200px;
+      }
+
+    .welcomeHeading h2 {
+        color:black;
+    }
+  }

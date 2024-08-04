@@ -5,6 +5,9 @@ import { jwtDecode } from 'jwt-decode';
 import { Radio } from 'react-loader-spinner';
 import './App.css';
 import BikeCard from './components/BikeCard/BikeCard';
+import AppMenu from './components/Header/AppMenu/AppMenu';
+import Header from './components/Header/Header';
+import { Avatar } from '@mui/material';
 
 export interface IUser {
   credentialStr: string;
@@ -167,18 +170,14 @@ function App() {
           wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "999", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
           wrapperClass="test"
         />
-        <img src='img/logos/Setups.png' className='logo' />
-        {
-          isAauthenticated && profile && bikes ? 
+        <Header isAuth={isAauthenticated} profile={profile} logout={logout}/>
+        {isAauthenticated && profile && bikes ? 
           <div className='bikeInputForm'>
-            <h2>Welcome back, {profile.given_name}!</h2>
-            <p>Here's your garage.</p>
             <div className='cardWrapper'>
               {bikes.map((e, i) => {
                 return <BikeCard key={i} thisBike={ bikes[i] }/>
               })}
             </div>
-            <button onClick={() => logout()}>logout</button>
           </div>
           :
           <div className='login'>
