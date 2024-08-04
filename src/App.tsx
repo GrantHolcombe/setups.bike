@@ -156,14 +156,6 @@ function App() {
     setBikes([]);
   };
 
-  const TireInput: React.FC<tireInputProps> = ({name}) => {
-    return (
-    <div>
-      <label htmlFor='${name}Tire'>{name} Tire:</label>
-      <input type='number' name='${name}Tire' id='param${name}Tire' />
-    </div>
-  )};
-
   return (
       <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading}}>
         <Radio
@@ -172,7 +164,7 @@ function App() {
           width="80px"
           colors={["#4fa94d", "#4fa94d", "#4fa94d"]}
           ariaLabel="radio-loading"
-          wrapperStyle={{boxSizing: "border-box", height: "100vh", zIndex: "999", width: "100vw", padding: "35vh 35vw", position: "absolute", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
+          wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "999", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
           wrapperClass="test"
         />
         <img src='img/logos/Setups.png' className='logo' />
