@@ -116,17 +116,18 @@ function App() {
 
   //add user lambda call
   const addUser = (reqObj: object) => {
-    axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/addUser`, JSON.stringify({}), { params: reqObj
-  })
-    .then(response => {
-      setJwt(response.data.token);
-    })
-    .catch(err => console.warn(err));
+    setIsLoading(true);
+
+    axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/addUser`,
+      JSON.stringify({}), 
+      { params: reqObj })
+      .then(response => {
+        setJwt(response.data.token);
+      })
+      .catch(err => console.warn(err));
   }
   
-  //get users lambda call, just a test
   const getBikes = async () => {
-    setIsLoading(true)
     const decodedJwt = jwtDecode<IJWT>(jwt);
     const reqObj = {
       //return this from auth call
