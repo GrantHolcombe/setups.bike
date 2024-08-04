@@ -3,7 +3,7 @@ import { useContext, useEffect, useState, useRef } from 'react';
 import React from 'react';
 import SusMenu from './SusMenu';
 import TokenInput from './TokenInput/TokenInput';
-import { AppContext, IBike } from '../../App';
+import { AppContext, IBike, useAppContext } from '../../App';
 import axios from 'axios';
 
 export interface IBikeCardProps {
@@ -12,7 +12,7 @@ export interface IBikeCardProps {
 
 function BikeCard({thisBike}: IBikeCardProps) {
   const [bike, setBike] = useState<IBike>(thisBike);
-  const {loading, setLoading} = useContext(AppContext);
+  const {loading, setLoading} = useAppContext();
 
   const setBikeVal = (target: any, value: number) => {
     let update: any = {...bike}
@@ -26,10 +26,12 @@ function BikeCard({thisBike}: IBikeCardProps) {
 
   //update bike lambda call
   const updateBike = (e: React.FocusEvent<HTMLInputElement>) => {
+    setLoading(true);
     axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/updateBike`, JSON.stringify({}), { params: bike
   })
     .then(response => {
       console.log(response);
+      setLoading(false);
     })
     .catch(err => console.warn(err));
   }
@@ -45,18 +47,18 @@ function BikeCard({thisBike}: IBikeCardProps) {
       <div className='cardBody'>
         <div className='tireSection front'>
           <div className='componentLabel'>Front Tire</div>
-          <input className='componentInput' value={bike.front_tire} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('front_tire', parseInt(e.currentTarget.value))}/>
+          <input type='number' className='componentInput' value={bike.front_tire} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('front_tire', parseInt(e.currentTarget.value))}/>
         </div>
         <div className='tireSection rear'>
           <div className='componentLabel'>Rear Tire</div>
-          <input className='componentInput' value={bike.rear_tire} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('rear_tire', parseInt(e.currentTarget.value))}/>
+          <input type='number' className='componentInput' value={bike.rear_tire} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('rear_tire', parseInt(e.currentTarget.value))}/>
         </div>
       </div>
       <div className='cardBody rowTwo'>
         <div className='suspensionPressureSection front'>
           <div className='pressureRow'>
             <div className='componentLabel'>Fork</div>
-            <input className='componentInput' value={bike.front_sus_pressure} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('front_sus_pressure', parseInt(e.currentTarget.value))}/>
+            <input type='number' className='componentInput' value={bike.front_sus_pressure} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('front_sus_pressure', parseInt(e.currentTarget.value))}/>
           </div>
           <div className='suspensionCompression'>
             <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={(e) => { updateBike(e)}} detail='front_sus_comp_'/>
@@ -69,7 +71,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
         <div className='suspensionPressureSection rear'>
           <div className='pressureRow'>
             <div className='componentLabel'>Shock</div>
-            <input className='componentInput' value={bike.rear_sus_pressure} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('rear_sus_pressure', parseInt(e.currentTarget.value))}/>
+            <input type='number' className='componentInput' value={bike.rear_sus_pressure} onBlur={(e) => { updateBike(e)}} onChange={(e) => setBikeVal('rear_sus_pressure', parseInt(e.currentTarget.value))}/>
             <div className='suspensionCompression'>
               <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={(e) => { updateBike(e)}} detail='rear_sus_comp_'/>
             </div>
