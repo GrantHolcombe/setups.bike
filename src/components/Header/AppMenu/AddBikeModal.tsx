@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Modal, Box, TextField, Typography, Button, Tooltip } from '@mui/material'
+import { useAppContext } from '../../../App';
 
 export interface IAppMenuProps {
     open: boolean;
@@ -12,12 +13,13 @@ interface INewBike {
 
 export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
     const [newBike, setNewBike] = React.useState<INewBike>({brand: "", model: ""})
+    const { token, setLoading, refreshBikes } = useAppContext();
     const style = {
         position: 'absolute' as 'absolute',
         top: '225px',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 365,
+        width: 315,
         bgcolor: 'background.paper',
         boxShadow: 24,
         borderRadius: '8px',
@@ -42,6 +44,21 @@ export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
         return newBike.brand.length === 0 || newBike.model.length === 0
     }
 
+    const saveNewBike = async () => {
+        setLoading(true);
+        const req = {
+            token,
+            brand: newBike.brand,
+            model: newBike.model
+        }
+        const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/AddBike?' + new URLSearchParams(req).toString();
+        const data = await fetch(url, {method: 'POST'});
+        if (data.status === 200) {
+            closeModal();
+            refreshBikes();
+        }
+    }
+
     return (
         <Modal
             open={open}
@@ -61,7 +78,7 @@ export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
                             <span><Button disabled variant="outlined">Save</Button></span>
                         </Tooltip>
                     :
-                        <Button variant="contained">Save</Button>
+                        <Button variant="contained" onClick={saveNewBike}>Save</Button>
                     }
                 </Box>
             </Box>
