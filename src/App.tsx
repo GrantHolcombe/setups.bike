@@ -37,10 +37,6 @@ export interface IBike {
   rear_sus_rebound_count: number,
 }
 
-type tireInputProps = {
-  name: string
-}
-
 export interface IProfile {
     "id": string,
     "email": string,
@@ -200,7 +196,7 @@ function App() {
         wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "999", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
         wrapperClass="test"
       />
-      <Header isAuth={isAauthenticated} profile={profile} logout={logout}/>
+      <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} logout={logout}/>
       {isAauthenticated && profile && bikes ? 
         <div className='bikeInputForm'>
           <div className='cardWrapper'>
