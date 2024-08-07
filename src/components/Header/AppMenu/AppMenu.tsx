@@ -15,8 +15,27 @@ export default function AppMenu({logout}: IAppMenuProps) {
     };
 
     const iconStyle ={
-        color: "#FFF"
+        color: "#FFF",
+        padding: '13px 15px',
+        background: 'red',
+        borderRadius: 50
     }
+
+    interface modalEvent {
+        event: Object;
+        reason: string;
+    }
+
+    const handleModalClose = () => {
+        setAddBikeOpen(false);
+    }
+
+    const menuItemStyle = {
+        width: 300,
+        justifyContent: 'flex-end',
+        margin: "0px 5px"
+    }
+
 
     return (
     <div className='appMenuWrapper'>
@@ -38,10 +57,12 @@ export default function AppMenu({logout}: IAppMenuProps) {
             'aria-labelledby': 'basic-button',
             }}
         >
-            <MenuItem onClick={() => { setAnchorEl(null); setAddBikeOpen(true);}}>Add Bike</MenuItem>
-            <MenuItem onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
+            <MenuItem sx={menuItemStyle} onClick={() => { setAnchorEl(null); setAddBikeOpen(true);}}>Add a New Bike</MenuItem>
+            <MenuItem sx={menuItemStyle} disabled>Reorder Bike's in Garage</MenuItem>
+            <MenuItem sx={menuItemStyle} disabled>Retire a Bike from Garage</MenuItem>
+            <MenuItem sx={{...menuItemStyle, borderTop: '1px solid #CDCDCD'}} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
         </Menu>
-        <AddBikeModal open={addBikeOpen} closeModal={() => setAddBikeOpen(false)} />
+        <AddBikeModal open={addBikeOpen} closeModal={handleModalClose} />
     </div>
     );
 }
