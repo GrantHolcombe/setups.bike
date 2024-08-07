@@ -88,10 +88,14 @@ const theme = createTheme({
 export type AppContent = {
   loading: boolean
   setLoading:(b:boolean) => void
+  token: string
+  refreshBikes: () => void
 }
 export const AppContext = createContext<AppContent>({
   loading: true,
   setLoading: (b) => { },
+  token: "",
+  refreshBikes: () =>{}
 })
 export const useAppContext = () => useContext(AppContext)
 
@@ -145,7 +149,6 @@ function App() {
 
   //add user lambda call
   const addUser = (reqObj: object) => {
-    setIsLoading(true);
 
     axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/addUser`,
       JSON.stringify({}), 
@@ -187,7 +190,7 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-    <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading}}>
+    <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading, token: jwt, refreshBikes: getBikes}}>
       <Radio
         visible={isLoading}
         height="80px"
@@ -211,7 +214,7 @@ function App() {
           <br />
           <br />
           <p>All of your supspension settings in one place!</p>
-          <Button variant={'contained'} onClick={() => login()}>Clip in</Button>
+          <Button variant={'contained'} onClick={() => { setIsLoading(true); login();}}>Clip in</Button>
         </div>
         
       }
