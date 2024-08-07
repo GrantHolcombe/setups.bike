@@ -7,7 +7,8 @@ import './App.css';
 import BikeCard from './components/BikeCard/BikeCard';
 import AppMenu from './components/Header/AppMenu/AppMenu';
 import Header from './components/Header/Header';
-import { Avatar } from '@mui/material';
+import { Button } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 export interface IUser {
   credentialStr: string;
@@ -58,6 +59,31 @@ export interface IJWT {
   "email_address": string
 }
 
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#daa530',
+    },
+    secondary: {
+      main: '#FF0000',
+    },
+  },
+  components: {
+    // Name of the component
+    MuiButton: {
+      styleOverrides: {
+        // Name of the slot
+        root: ({ ownerState }) => ({
+          ...(ownerState.variant === 'contained' &&
+            ownerState.color === 'primary' && {
+              color: '#fff',
+            }),
+        }),
+      },
+    },
+  },
+});
 
 export type AppContent = {
   loading: boolean
@@ -160,35 +186,37 @@ function App() {
   };
 
   return (
-      <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading}}>
-        <Radio
-          visible={isLoading}
-          height="80px"
-          width="80px"
-          colors={["#4fa94d", "#4fa94d", "#4fa94d"]}
-          ariaLabel="radio-loading"
-          wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "999", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
-          wrapperClass="test"
-        />
-        <Header isAuth={isAauthenticated} profile={profile} logout={logout}/>
-        {isAauthenticated && profile && bikes ? 
-          <div className='bikeInputForm'>
-            <div className='cardWrapper'>
-              {bikes.map((e, i) => {
-                return <BikeCard key={i} thisBike={ bikes[i] }/>
-              })}
-            </div>
+    <ThemeProvider theme={theme}>
+    <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading}}>
+      <Radio
+        visible={isLoading}
+        height="80px"
+        width="80px"
+        colors={["#4fa94d", "#4fa94d", "#4fa94d"]}
+        ariaLabel="radio-loading"
+        wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "999", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
+        wrapperClass="test"
+      />
+      <Header isAuth={isAauthenticated} profile={profile} logout={logout}/>
+      {isAauthenticated && profile && bikes ? 
+        <div className='bikeInputForm'>
+          <div className='cardWrapper'>
+            {bikes.map((e, i) => {
+              return <BikeCard key={i} thisBike={ bikes[i] }/>
+            })}
           </div>
-          :
-          <div className='login'>
-            <br />
-            <br />
-            <p>All of your supspension settings in one place!</p>
-            <button onClick={() => login()}>Clip in</button>
-          </div>
-          
-        }
-      </AppContext.Provider>
+        </div>
+        :
+        <div className='login'>
+          <br />
+          <br />
+          <p>All of your supspension settings in one place!</p>
+          <Button variant={'contained'} onClick={() => login()}>Clip in</Button>
+        </div>
+        
+      }
+    </AppContext.Provider>
+    </ThemeProvider>
   )
 }
 
