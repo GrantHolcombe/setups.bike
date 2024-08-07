@@ -1,14 +1,16 @@
 import { Avatar } from '@mui/material';
 import AppMenu from './AppMenu/AppMenu';
 import './Header.css';
-import { IProfile } from '../../App';
+import { IProfile, IBike } from '../../App';
 
 
 export interface IAppMenuProps {
     logout: Function;
     isAuth?: boolean;
     profile?: IProfile;
+    bikeList?: IBike[];
   }
+
   interface IWelcome {
     welcomeProfile?: IProfile
   }
@@ -22,7 +24,7 @@ const WelcomeMsg = ({welcomeProfile}: IWelcome) => {
         </div>
     )
 }
-export default function Header({logout, isAuth, profile}: IAppMenuProps) {
+export default function Header({logout, isAuth, profile, bikeList}: IAppMenuProps) {
     const headerBarStyle = {
         background: "goldenrod",
         position: 'absolute' as 'absolute',
@@ -36,7 +38,7 @@ export default function Header({logout, isAuth, profile}: IAppMenuProps) {
         <div>
             <div style={headerBarStyle}>
                 <img src='img/logos/Setups.png' className='logo' />
-                {isAuth && <AppMenu logout={logout} />}
+                {isAuth && <AppMenu bikeList={bikeList} logout={logout} />}
             </div>
             {isAuth && <WelcomeMsg welcomeProfile={profile} />}
         </div>

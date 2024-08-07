@@ -3,11 +3,13 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import PedalBikeIcon from '@mui/icons-material/PedalBike';
 import AddBikeModal from './AddBikeModal';
+import DeleteBikeModal from './DeleteBikeModal';
 import { IAppMenuProps } from '../Header';
 
-export default function AppMenu({logout}: IAppMenuProps) {
+export default function AppMenu({logout, bikeList}: IAppMenuProps) {
     const [anchorEl, setAnchorEl] = React.useState<null | SVGSVGElement>(null);
     const [ addBikeOpen, setAddBikeOpen ] = React.useState<boolean>(false);
+    const [ deleteBikeOpen, setDeleteBikeOpen ] = React.useState<boolean>(false);
     const open = Boolean(anchorEl);
 
     const handleClick = (event: React.MouseEvent<SVGSVGElement>) => {
@@ -18,7 +20,9 @@ export default function AppMenu({logout}: IAppMenuProps) {
         color: "#FFF",
         padding: '13px 15px',
         background: 'red',
-        borderRadius: 50
+        borderRadius: 8,
+        cursor: 'pointer',
+        boxShadow: "0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.14),0px 3px 14px 2px rgba(0,0,0,0.12)"
     }
 
     interface modalEvent {
@@ -59,10 +63,11 @@ export default function AppMenu({logout}: IAppMenuProps) {
         >
             <MenuItem sx={menuItemStyle} onClick={() => { setAnchorEl(null); setAddBikeOpen(true);}}>Add a New Bike</MenuItem>
             <MenuItem sx={menuItemStyle} disabled>Reorder Bike's in Garage</MenuItem>
-            <MenuItem sx={menuItemStyle} disabled>Retire a Bike from Garage</MenuItem>
+            <MenuItem sx={menuItemStyle} onClick={() => { setAnchorEl(null); setDeleteBikeOpen(true);}}>Retire a Bike from Garage</MenuItem>
             <MenuItem sx={{...menuItemStyle, borderTop: '1px solid #CDCDCD'}} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
         </Menu>
         <AddBikeModal open={addBikeOpen} closeModal={handleModalClose} />
+        <DeleteBikeModal open={deleteBikeOpen} closeModal={() => setDeleteBikeOpen(false)} bikeList={bikeList} />
     </div>
     );
 }

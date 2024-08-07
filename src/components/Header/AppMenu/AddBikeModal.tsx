@@ -45,6 +45,7 @@ export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
     }
 
     const saveNewBike = async () => {
+        closeModal();
         setLoading(true);
         const req = {
             token,
@@ -54,8 +55,8 @@ export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
         const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/AddBike?' + new URLSearchParams(req).toString();
         const data = await fetch(url, {method: 'POST'});
         if (data.status === 200) {
-            closeModal();
             refreshBikes();
+            setNewBike({brand:"",model:""});
         }
     }
 
@@ -72,7 +73,7 @@ export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
                 <TextField sx={inputStyle} autoComplete='off' id="bikeBrand" label="Brand" variant="standard" value={newBike.brand} onChange={e => {setNewBike({brand: e.target.value, model: {...newBike}.model})}} />
                 <TextField sx={inputStyle} autoComplete='off' id="bikeModel" label="Model" variant="standard" value={newBike.model} onChange={e => {setNewBike({brand: {...newBike}.brand, model: e.target.value})}} />
                 <Box sx={actionStyles}>
-                    <Button color='error' sx={{marginRight: 2}} variant="outlined" onClick={() => closeModal()}>Cancel</Button>
+                    <Button color='error' sx={{marginRight: 2}} variant="outlined" onClick={() => { setNewBike({brand:"",model:""}); closeModal()}}>Cancel</Button>
                     {saveValidation() ? 
                         <Tooltip title="Both fields require some input in order to save" arrow placement='bottom-start'>
                             <span><Button disabled variant="outlined">Save</Button></span>
