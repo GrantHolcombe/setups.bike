@@ -206,11 +206,11 @@ function App() {
             {bikes.map((e, i) => {
               return <BikeCard key={i} thisBike={ bikes[i] }/>
             })}
-            {bikes.length === 0 && <Button className='swing ctaAdd' variant='contained' color='primary' onClick={() => setAddBikeOpen(true)}>Add a Bike</Button>}
+            {!isLoading && bikes.length === 0 && <Button className='swing ctaAdd' variant='contained' color='primary' onClick={() => setAddBikeOpen(true)}>Add a Bike</Button>}
           </div>
         </div>
         :
-        <div className='login'>
+        <div style={{display: isLoading ? 'none' : 'flex'}} className='login'>
           <br />
           <br />
           <p>All of your supspension settings in one place!</p>
