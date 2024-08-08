@@ -25,8 +25,9 @@ function BikeCard({thisBike}: IBikeCardProps) {
   }
 
   //update bike lambda call
-  const updateBike = (e: React.FocusEvent<HTMLInputElement>) => {
+  const updateBike = (e?: React.FocusEvent<HTMLInputElement>) => {
     setLoading(true);
+    console.log(bike);
     axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/updateBike`, JSON.stringify({}), { params: bike
   })
     .then(response => {
@@ -66,7 +67,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
           <div className='suspensionRebound'>
             <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={(e) => { updateBike(e)}} detail='front_sus_rebound_'/>
           </div>
-          <TokenInput />
+          <TokenInput count={bike.front_tokens} refreshCard={() => updateBike()} updateCount={(count:number) => setBikeVal('front_tokens', count)} />
         </div>
         <div className='suspensionPressureSection rear'>
           <div className='pressureRow'>
@@ -78,7 +79,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
             <div className='suspensionRebound'>
               <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={(e) => { updateBike(e)}} detail='rear_sus_rebound_'/>
             </div>
-            <TokenInput />
+            <TokenInput count={bike.rear_tokens} refreshCard={() => updateBike()} updateCount={(count:number) => setBikeVal('rear_tokens', count)} />
           </div>
         </div>
       </div>
