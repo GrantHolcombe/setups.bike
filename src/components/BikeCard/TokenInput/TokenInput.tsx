@@ -1,11 +1,24 @@
 import * as React from 'react';
 import './TokenInput.css';
-export default function TokenInput() {
-    const [coins, setCoins] = React.useState<number>(4);
-    React.useEffect(() => {
-      let emptyArray = Array(coins).fill(0)
+import { Refresh } from '@mui/icons-material';
+interface ITokenInputProps {
+  count: number;
+  refreshCard: Function;
+  updateCount: Function;
+}
 
+export default function TokenInput({count, refreshCard, updateCount}: ITokenInputProps) {
+    const [coins, setCoins] = React.useState<number>(count ? count : 0);
+    const [refresh, setRefresh] = React.useState<number>(0);
+    React.useEffect(() => {
+      updateCount && updateCount(coins);
+      setRefresh(refresh + 1)
     }, [coins])
+
+    React.useEffect(() =>{
+      refreshCard && refreshCard();
+    }, [refresh])
+
   return (
   <div style={{display: "flex", width:"100%"}}>
     <div className='tokenRelContainer'>

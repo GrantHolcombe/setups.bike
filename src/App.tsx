@@ -29,12 +29,14 @@ export interface IBike {
   front_sus_rebound_1: number,
   front_sus_rebound_2: number,
   front_sus_rebound_count: number,
+  front_tokens: number,
   rear_sus_comp_1: number,
   rear_sus_comp_2: number,
   rear_sus_comp_count: number,
   rear_sus_rebound_1: number,
   rear_sus_rebound_2: number,
   rear_sus_rebound_count: number,
+  rear_tokens: number
 }
 
 export interface IProfile {
