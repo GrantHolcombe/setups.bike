@@ -67,7 +67,7 @@ export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
-                <Typography sx={{borderBottom: "1px solid #CDCDCD", paddingBottom: 1}} id="modal-modal-title" variant="h6" component="h2">
+                <Typography sx={{ paddingBottom: 1 }} id="modal-modal-title" variant="h6" component="h2">
                     Add a Steed to the Stable!
                 </Typography>
                 <TextField sx={inputStyle} autoComplete='off' id="bikeBrand" label="Brand" variant="standard" value={newBike.brand} onChange={e => {setNewBike({brand: e.target.value, model: {...newBike}.model})}} />

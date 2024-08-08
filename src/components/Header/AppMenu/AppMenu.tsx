@@ -6,9 +6,9 @@ import AddBikeModal from './AddBikeModal';
 import DeleteBikeModal from './DeleteBikeModal';
 import { IAppMenuProps } from '../Header';
 
-export default function AppMenu({logout, bikeList}: IAppMenuProps) {
+export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}: IAppMenuProps) {
     const [anchorEl, setAnchorEl] = React.useState<null | SVGSVGElement>(null);
-    const [ addBikeOpen, setAddBikeOpen ] = React.useState<boolean>(false);
+   // const [ addBikeOpen, setAddBikeOpen ] = React.useState<boolean>(false);
     const [ deleteBikeOpen, setDeleteBikeOpen ] = React.useState<boolean>(false);
     const open = Boolean(anchorEl);
 
@@ -63,7 +63,7 @@ export default function AppMenu({logout, bikeList}: IAppMenuProps) {
         >
             <MenuItem sx={menuItemStyle} onClick={() => { setAnchorEl(null); setAddBikeOpen(true);}}>Add a New Bike</MenuItem>
             <MenuItem sx={menuItemStyle} disabled>Reorder Bike's in Garage</MenuItem>
-            <MenuItem sx={menuItemStyle} onClick={() => { setAnchorEl(null); setDeleteBikeOpen(true);}}>Retire a Bike from Garage</MenuItem>
+            <MenuItem sx={menuItemStyle} disabled={bikeList?.length === 0} onClick={() => { setAnchorEl(null); setDeleteBikeOpen(true);}}>Retire a Bike from Garage</MenuItem>
             <MenuItem sx={{...menuItemStyle, borderTop: '1px solid #CDCDCD'}} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
         </Menu>
         <AddBikeModal open={addBikeOpen} closeModal={handleModalClose} />

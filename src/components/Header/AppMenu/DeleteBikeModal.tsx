@@ -69,7 +69,7 @@ export default function DeleteBikeModal({open, closeModal, bikeList}: IDeleteBik
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
-                <Typography sx={{borderBottom: "1px solid #CDCDCD", paddingBottom: 1}} id="modal-modal-title" variant="h6" component="h2">
+                <Typography sx={{ paddingBottom: 1 }} id="modal-modal-title" variant="h6" component="h2">
                     All Trail's End
                 </Typography>
                 <Typography variant="subtitle2" sx={{paddingTop: 2, paddingBottom: 1}} component="div">

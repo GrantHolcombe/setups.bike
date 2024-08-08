@@ -104,6 +104,7 @@ function App() {
   const [jwt, setJwt] = useState<string>("");
   const [bikes, setBikes] = useState<Array<IBike>>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [addBikeOpen, setAddBikeOpen] = useState<boolean>(false);
 
   //get googleAPI data once user logs in
   useEffect(
@@ -198,13 +199,14 @@ function App() {
         wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "999", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
         wrapperClass="test"
       />
-      <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} logout={logout}/>
+      <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}/>
       {isAauthenticated && profile && bikes ? 
         <div className='bikeInputForm'>
           <div className='cardWrapper'>
             {bikes.map((e, i) => {
               return <BikeCard key={i} thisBike={ bikes[i] }/>
             })}
+            {bikes.length === 0 && <Button className='swing ctaAdd' variant='contained' color='primary' onClick={() => setAddBikeOpen(true)}>Add a Bike</Button>}
           </div>
         </div>
         :

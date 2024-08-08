@@ -24,3 +24,22 @@ body {
 .login {
   margin-top: 200px;
 }
+
+.ctaAdd {
+  display: block !important;
+  margin: 0 auto !important;
+  width: 150px;
+  margin-top: 1rem !important;
+}
+
+.swing {
+	transform-origin: top center;
+	animation: swing 2s ease infinite;
+}
+@keyframes swing {
+	20% { transform: rotate(15deg); }	
+	40% { transform: rotate(-10deg); }
+	60% { transform: rotate(5deg); }	
+	80% { transform: rotate(-5deg); }	
+	100% { transform: rotate(0deg); }
+}
