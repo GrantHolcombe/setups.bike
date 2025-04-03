@@ -53,12 +53,6 @@ export default function DeleteBikeModal({open, closeModal, bikeList}: IDeleteBik
 
         console.log(data.status);
         refreshBikes();
-        // const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/deleteBike?' + new URLSearchParams(req).toString();
-        // const data = await fetch(url, {method: 'POST'});
-        // if (data.status === 200) {
-        //     closeModal();
-        //     refreshBikes();
-        // }
     }
 
     return (

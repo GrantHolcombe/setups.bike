@@ -36,7 +36,8 @@ export interface IBike {
   rear_sus_rebound_1: number,
   rear_sus_rebound_2: number,
   rear_sus_rebound_count: number,
-  rear_tokens: number
+  rear_tokens: number,
+  garage_order: number
 }
 
 export interface IProfile {
@@ -153,6 +154,7 @@ function App() {
       JSON.stringify({}), 
       { params: reqObj })
       .then(response => {
+        console.log(response.data.token)
         setJwt(response.data.token);
       })
       .catch(err => console.warn(err));
@@ -164,7 +166,9 @@ function App() {
       //return this from auth call
       userId: decodedJwt.app_user_id,
     }
-    axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes`,{ params: reqObj})
+    console.log(decodedJwt)
+    console.log(reqObj)
+    axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes`, { params: reqObj})
                 .then((res) => {
                     setBikes(res.data);
                     setIsLoading(false);
