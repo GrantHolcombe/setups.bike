@@ -36,7 +36,8 @@ export interface IBike {
   rear_sus_rebound_1: number,
   rear_sus_rebound_2: number,
   rear_sus_rebound_count: number,
-  rear_tokens: number
+  rear_tokens: number,
+  garage_order: number
 }
 
 export interface IProfile {
@@ -164,9 +165,9 @@ function App() {
       //return this from auth call
       userId: decodedJwt.app_user_id,
     }
-    axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes`,{ params: reqObj})
+    axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes`, { params: reqObj})
                 .then((res) => {
-                    setBikes(res.data);
+                    setBikes(res.data.sort((a: IBike, b: IBike) => a.garage_order - b.garage_order));
                     setIsLoading(false);
                 })
                 .catch((err) => console.log(err));
@@ -204,7 +205,7 @@ function App() {
         <div className='bikeInputForm'>
           <div className='cardWrapper'>
             {bikes.map((e, i) => {
-              return <BikeCard key={i} thisBike={ bikes[i] }/>
+              return <BikeCard key={e.bike_id} thisBike={ e }/>
             })}
             {!isLoading && bikes.length === 0 && <Button className='swing ctaAdd' variant='contained' color='primary' onClick={() => setAddBikeOpen(true)}>Add a Bike</Button>}
           </div>
