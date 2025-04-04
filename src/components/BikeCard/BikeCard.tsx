@@ -18,8 +18,6 @@ function BikeCard({thisBike}: IBikeCardProps) {
     let update: any = {...bike}
 
     target = target as keyof typeof update
-    console.log( typeof update[target]);
-    //const detailVal = bikeDetail[detailLengthTarget] ;
     update[target] = value;
     setBike(update);
   }
@@ -27,11 +25,9 @@ function BikeCard({thisBike}: IBikeCardProps) {
   //update bike lambda call
   const updateBike = (e?: React.FocusEvent<HTMLInputElement>) => {
     setLoading(true);
-    console.log(bike);
     axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/updateBike`, JSON.stringify({}), { params: bike
   })
     .then(response => {
-      console.log(response);
       setLoading(false);
     })
     .catch(err => console.warn(err));

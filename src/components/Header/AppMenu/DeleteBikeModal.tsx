@@ -47,11 +47,9 @@ export default function DeleteBikeModal({open, closeModal, bikeList}: IDeleteBik
             deleteList: deleteList
         }
 
-        console.log(JSON.stringify(req));
         const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/DeleteBike'
-        const data = await fetch(url, {method: "POST", body: JSON.stringify(req)})
+        await fetch(url, {method: "POST", body: JSON.stringify(req)})
 
-        console.log(data.status);
         refreshBikes();
     }
 

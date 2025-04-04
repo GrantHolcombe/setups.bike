@@ -154,7 +154,6 @@ function App() {
       JSON.stringify({}), 
       { params: reqObj })
       .then(response => {
-        console.log(response.data.token)
         setJwt(response.data.token);
       })
       .catch(err => console.warn(err));
@@ -166,11 +165,9 @@ function App() {
       //return this from auth call
       userId: decodedJwt.app_user_id,
     }
-    console.log(decodedJwt)
-    console.log(reqObj)
     axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes`, { params: reqObj})
                 .then((res) => {
-                    setBikes(res.data);
+                    setBikes(res.data.sort((a: IBike, b: IBike) => a.garage_order - b.garage_order));
                     setIsLoading(false);
                 })
                 .catch((err) => console.log(err));
@@ -208,7 +205,7 @@ function App() {
         <div className='bikeInputForm'>
           <div className='cardWrapper'>
             {bikes.map((e, i) => {
-              return <BikeCard key={i} thisBike={ bikes[i] }/>
+              return <BikeCard key={e.bike_id} thisBike={ e }/>
             })}
             {!isLoading && bikes.length === 0 && <Button className='swing ctaAdd' variant='contained' color='primary' onClick={() => setAddBikeOpen(true)}>Add a Bike</Button>}
           </div>

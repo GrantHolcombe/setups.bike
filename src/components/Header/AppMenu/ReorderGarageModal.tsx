@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Modal, Box, Typography, Button, Tooltip } from '@mui/material'
-import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import { KeyboardArrowUp, KeyboardArrowDown } from '@mui/icons-material';
 import { useAppContext, IBike } from '../../../App';
 import { useEffect } from 'react';
 
@@ -11,13 +11,13 @@ interface IReorderGarageProps {
 }
 
 export default function ReorderGarageModal({open, closeModal, bikeList}: IReorderGarageProps) {
-    const [deleteList, setDeleteList] = React.useState<Number[]>([])
     const [tempList, setTempList] = React.useState<IBike[]>([]);
+    const [hasChange, setHasChange] = React.useState<boolean>(false);
     const { token, setLoading, refreshBikes } = useAppContext();
 
     const style = {
         position: 'absolute' as 'absolute',
-        top: '225px',
+        top: '350px',
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: 315,
@@ -37,7 +37,6 @@ export default function ReorderGarageModal({open, closeModal, bikeList}: IReorde
     }
 
     const handleClose = ():void => {
-        setDeleteList([]);
         closeModal();
     }
     useEffect(() => {
@@ -49,7 +48,6 @@ export default function ReorderGarageModal({open, closeModal, bikeList}: IReorde
             bikeIndex = tempList.findIndex(item => item.bike_id === bike_id);
         if (isUp) {
             if (bikeIndex > 0) {
-                console.log(bikeIndex);
                 temp[bikeIndex - 1].garage_order = bikeIndex + 1;
                 temp[bikeIndex].garage_order = bikeIndex;
                 setTempList(temp.sort((a, b) => a.garage_order - b.garage_order));
@@ -62,22 +60,26 @@ export default function ReorderGarageModal({open, closeModal, bikeList}: IReorde
                 setTempList(temp.sort((a, b) => a.garage_order - b.garage_order));
             }
         }
+        if(!hasChange) setHasChange(true);
     }
 
 
     const saveOrder = async () => {
-        closeModal();
-        setLoading(true);
-        
-        const req = {
+        const bikeList = tempList.map((e: IBike) => {
+            return {
+                bike_id: e.bike_id,
+                garage_order: e.garage_order
+            }
+        }),
+        req = {
             token,
-            tempList
-        }
-
-        console.log(JSON.stringify(req));
-        //const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/DeleteBike'
-        //const data = await fetch(url, {method: "POST", body: JSON.stringify(req)})
-
+            bikeList
+        };
+        
+        const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/reorderGarage'
+        setLoading(true);
+        closeModal();
+        await fetch(url, {method: "POST", body: JSON.stringify(req)})
         refreshBikes();
     }
 
@@ -97,18 +99,19 @@ export default function ReorderGarageModal({open, closeModal, bikeList}: IReorde
                 </Typography>
                     {tempList.map((e: IBike, i: Number) => {
                         return(
-                            <div key={e.bike_id} style={{display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0px"}}>
-                                <Button disabled={e.garage_order == 1} onClick={() => reorder(true, e.bike_id)}><ArrowUpward/></Button>
-                                <Typography variant="subtitle2" sx={{paddingTop: 2, paddingBottom: 1}} component="div">
+                            <div key={e.bike_id} style={{display: "flex", justifyContent: "flex-start", alignItems: "center", height: "24px", padding: "10px 0px"}}>
+                                <KeyboardArrowUp style={e.garage_order == 1 ? {color: 'grey'} : {color: 'orange', cursor: 'pointer'}} onClick={() => reorder(true, e.bike_id)}/>
+                                <div style={{width: '2px', height: '100%', backgroundColor: 'grey'}}></div>
+                                <KeyboardArrowDown style={e.garage_order == tempList.length ? {color: 'grey'} : {color: 'orange', cursor: 'pointer'}} onClick={() => reorder(false, e.bike_id)}/>
+                                <Typography variant="subtitle2" sx={{paddingTop: 1, paddingBottom: 1}} component="div">
                                     {e.brand} {e.model} {e.garage_order}
                                 </Typography>
-                                <Button disabled={e.garage_order == tempList.length} onClick={() => reorder(false, e.bike_id)}><ArrowDownward/></Button>
                             </div>
                         )
                     })}
                 <Box sx={actionStyles}>
                     <Button color='warning' sx={{marginRight: 2}} variant="outlined" onClick={() => handleClose()}>Cancel</Button>
-                    <Button variant="contained" color='secondary' disabled={deleteList.length === 0} onClick={() => saveOrder()}>Remove Selected</Button>
+                    <Button variant="contained" color='secondary' disabled={!hasChange} onClick={() => saveOrder()}>Save Order</Button>
                 </Box>
             </Box>
         </Modal>
