@@ -21,3 +21,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Lambda dependencies (installed when packaging)
+lambdas/**/node_modules
+lambdas/**/*.zip
