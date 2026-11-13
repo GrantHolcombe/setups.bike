@@ -1,4 +1,5 @@
 const { Client } = require("pg");
+const jwt = require("jsonwebtoken");
 
 const headers = {
   "Content-Type": "application/json",
@@ -8,6 +9,8 @@ const headers = {
   "X-Requested-With": "*"
 };
 
+const reply = (statusCode, body) => ({ statusCode, body: JSON.stringify(body), headers });
+
 const newClient = () => new Client({
   host: process.env.RDS_HOSTNAME,
   user: process.env.RDS_USERNAME,
@@ -15,20 +18,40 @@ const newClient = () => new Client({
   database: process.env.RDS_DATABASE
 });
 
+// The signed-in user, from the token AddUser issued. Returns null if the token is
+// missing, expired or not signed with our secret.
+const userIdFrom = (token) => {
+  if (!token || !process.env.JWT) return null;
+  try {
+    const id = Number(jwt.verify(token, process.env.JWT, { algorithms: ["HS256"] }).app_user_id);
+    return Number.isInteger(id) ? id : null;
+  } catch {
+    return null;
+  }
+};
+
 exports.handler = async (event) => {
   const client = newClient();
   try {
-    const deleteList = (JSON.parse(event.body).deleteList || []).map(Number);
+    const body = JSON.parse(event.body || "{}");
+    const userId = userIdFrom(body.token);
+    if (userId === null) return reply(401, { error: "Please sign in again" });
+
+    const deleteList = (body.deleteList || []).map(Number);
     if (deleteList.length === 0 || deleteList.some((id) => !Number.isInteger(id))) {
-      return { statusCode: 400, body: JSON.stringify({ error: "deleteList must be bike ids" }), headers };
+      return reply(400, { error: "deleteList must be bike ids" });
     }
     await client.connect();
-    const res = await client.query("DELETE FROM bike WHERE bike_id = ANY($1::bigint[])", [deleteList]);
-    console.log("deleted bikes", deleteList, "rows", res.rowCount);
-    return { statusCode: 200, body: JSON.stringify(res.rows), headers };
+    // Only deletes bikes that belong to the signed-in user.
+    const res = await client.query(
+      "DELETE FROM bike WHERE bike_id = ANY($1::bigint[]) AND app_user_id = $2",
+      [deleteList, userId]
+    );
+    console.log("user", userId, "deleted bikes", deleteList, "rows", res.rowCount);
+    return reply(200, res.rows);
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: JSON.stringify({ error: "deleteBike failed" }), headers };
+    return reply(500, { error: "deleteBike failed" });
   } finally {
     await client.end().catch(() => {});
   }

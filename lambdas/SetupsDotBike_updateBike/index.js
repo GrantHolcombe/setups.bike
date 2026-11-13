@@ -1,4 +1,5 @@
 const { Client } = require("pg");
+const jwt = require("jsonwebtoken");
 
 const headers = {
   "Content-Type": "application/json",
@@ -8,12 +9,26 @@ const headers = {
   "X-Requested-With": "*"
 };
 
+const reply = (statusCode, body) => ({ statusCode, body: JSON.stringify(body), headers });
+
 const newClient = () => new Client({
   host: process.env.RDS_HOSTNAME,
   user: process.env.RDS_USERNAME,
   password: process.env.RDS_PASSWORD,
   database: process.env.RDS_DATABASE
 });
+
+// The signed-in user, from the token AddUser issued. Returns null if the token is
+// missing, expired or not signed with our secret.
+const userIdFrom = (token) => {
+  if (!token || !process.env.JWT) return null;
+  try {
+    const id = Number(jwt.verify(token, process.env.JWT, { algorithms: ["HS256"] }).app_user_id);
+    return Number.isInteger(id) ? id : null;
+  } catch {
+    return null;
+  }
+};
 
 // Columns the app may update. Column names are fixed here, never taken from the request.
 const COLUMNS = [
@@ -28,24 +43,29 @@ const COLUMNS = [
 const toValue = (v) => (v === undefined || v === "" || v === "NaN" || v === "null" ? null : v);
 
 exports.handler = async (event) => {
+  const data = event.queryStringParameters || {};
+  const userId = userIdFrom(data.token);
+  if (userId === null) return reply(401, { error: "Please sign in again" });
+
   const client = newClient();
   try {
-    const data = event.queryStringParameters || {};
     const sets = COLUMNS.map((c, i) => `${c} = COALESCE($${i + 1}, ${c})`).join(",\n        ");
     const values = COLUMNS.map((c) => toValue(data[c]));
-    values.push(data.bike_id);
+    values.push(data.bike_id, userId);
 
     await client.connect();
+    // Only updates the bike if it belongs to the signed-in user.
     const res = await client.query(
       `UPDATE bike SET
         ${sets}
-      WHERE bike_id = $${COLUMNS.length + 1}`,
+      WHERE bike_id = $${COLUMNS.length + 1} AND app_user_id = $${COLUMNS.length + 2}`,
       values
     );
-    return { statusCode: 200, body: JSON.stringify(res.rows), headers };
+    if (res.rowCount === 0) return reply(404, { error: "Bike not found" });
+    return reply(200, res.rows);
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: JSON.stringify({ error: "updateBike failed" }), headers };
+    return reply(500, { error: "updateBike failed" });
   } finally {
     await client.end().catch(() => {});
   }

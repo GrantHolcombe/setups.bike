@@ -132,8 +132,10 @@ function App() {
   //after setting the FE profile data, create a user in DB
   //TODO errors gracefuly after creating initial row, clean that up maybe in the query
   useEffect(() => {
-    if(profile && jwt == "") {
+    if(profile && user && jwt == "") {
       const reqObj = {
+        //addUser checks this with Google and takes the name and email from Google, not from the fields below
+        accessToken: user.credentialStr,
         userId: parseInt(profile.id),
         firstName: profile.given_name,
         lastName: profile.family_name,
@@ -156,13 +158,17 @@ function App() {
       .then(response => {
         setJwt(response.data.token);
       })
-      .catch(err => console.warn(err));
+      .catch(err => {
+        console.warn(err);
+        logout();
+      });
   }
-  
+
   const getBikes = async () => {
     const decodedJwt = jwtDecode<IJWT>(jwt);
     const reqObj = {
-      //return this from auth call
+      //getBikes reads the user from the token; userId is only for the older Lambda
+      token: jwt,
       userId: decodedJwt.app_user_id,
     }
     axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes`, { params: reqObj})
@@ -170,7 +176,11 @@ function App() {
                     setBikes(res.data.sort((a: IBike, b: IBike) => a.garage_order - b.garage_order));
                     setIsLoading(false);
                 })
-                .catch((err) => console.log(err));
+                .catch((err) => {
+                  console.log(err);
+                  //expired or invalid token: back to the sign-in screen
+                  if (err.response?.status === 401) logout();
+                });
   }
   
   

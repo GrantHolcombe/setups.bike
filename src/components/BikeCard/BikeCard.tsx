@@ -12,7 +12,7 @@ export interface IBikeCardProps {
 
 function BikeCard({thisBike}: IBikeCardProps) {
   const [bike, setBike] = useState<IBike>(thisBike);
-  const {loading, setLoading} = useAppContext();
+  const {loading, setLoading, token} = useAppContext();
 
   const setBikeVal = (target: any, value: number) => {
     let update: any = {...bike}
@@ -25,7 +25,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
   //update bike lambda call
   const updateBike = (e?: React.FocusEvent<HTMLInputElement>) => {
     setLoading(true);
-    axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/updateBike`, JSON.stringify({}), { params: bike
+    axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/updateBike`, JSON.stringify({}), { params: { ...bike, token }
   })
     .then(response => {
       setLoading(false);
