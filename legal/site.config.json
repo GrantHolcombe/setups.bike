@@ -1,0 +1,15 @@
+{
+  "_readme": "Single source for details used in the legal pages. Edit here, then run `npm run build` (or `npm run legal`). Any value left as TODO stops the build so placeholders never go live.",
+  "appName": "Setups.Bike",
+  "siteUrl": "https://setups.bike",
+  "operatorName": "Grant Holcombe",
+  "supportEmail": "grant@hiregrant.today",
+  "governingState": "California",
+  "effectiveDate": "November 17, 2026",
+  "proMonthlyPrice": "$2.99",
+  "proYearlyPrice": "$24",
+  "freeBikeLimit": "3",
+  "annualRefundWindowDays": "14",
+  "logRetentionDays": "30",
+  "minimumAge": "13"
+}

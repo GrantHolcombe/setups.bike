@@ -43,3 +43,13 @@ body {
 	80% { transform: rotate(-5deg); }	
 	100% { transform: rotate(0deg); }
 }
+.legalFooter {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  padding: 24px 16px;
+}
+
+.legalFooter a {
+  color: #888;
+}

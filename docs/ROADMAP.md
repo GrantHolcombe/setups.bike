@@ -28,25 +28,35 @@ Rules:
 ## Phase 0: Prep (mostly you)
 
 - [x] **Pricing:** $2.99/month or $24/year (decided 2026-11-17).
-- [ ] **Create a Stripe account** at stripe.com, in your name. Start in **test mode**.
+- [x] **Create a Stripe account** at stripe.com, in your name. Start in **test mode**.
+      Done 2026-11-17: the "Setups.bike sandbox" is connected through Stripe's MCP server.
       You fill in the business and bank details. Claude never handles them.
-- [ ] **Lambda role for new functions.** The connector can't create IAM roles or pass them,
+- [x] **Lambda role for new functions.** Done 2026-11-17 with option (a):
+      `setupsbike-lambda-role` (logs only), and `ClaudeOperatorPolicy` allows passing that
+      role to Lambda and nothing else. The connector can't create IAM roles or pass them,
       and each new endpoint needs a new Lambda. Pick one:
   - (a) Create one role `setupsbike-lambda-role` with `AWSLambdaBasicExecutionRole`, and
         allow `iam:PassRole` on **only that role** in `ClaudeOperatorPolicy`. Claude can then
         create functions. **(Recommended.)**
   - (b) Create each new function yourself in the console as an empty shell. Claude deploys
         the code.
-- [ ] Attach `AWSLambdaBasicExecutionRole` to the GetBikes and reorderGarage roles so every
-      function writes logs. Debugging payments without logs is painful.
-- [ ] **Database migrations.** Schema changes go in `db/migrations/NNN_name.sql` in this repo.
+- [x] **Logs for every function.** Done 2026-11-17: GetBikes and reorderGarage were borrowing
+      AddUser's and updateBike's roles, which could only log to those functions' log groups.
+      Both now use `setupsbike-lambda-role`, and both write logs.
+- [x] **All six app Lambdas on `setupsbike-lambda-role`.** Done 2026-11-17. AddUser's old
+      role had full RDS Data and VPC access plus the old Aurora secret; that's gone now.
+- [ ] Delete the four old roles nothing uses any more (IAM, yours to do):
+      `SetupDotBikes_AddUser-role-prmqlqlf`, `SetupsDotBike_addBike-role-x63taabc`,
+      `SetupsDotBike_updateBike-role-295612hm`, `SetupsDotBike_DeleteBike-role-mz88xe3q`.
+      **Keep** `Setups.Bike_CD_Role` (the pipeline) and `SetupsDotBikeCodeBuildSR` (the build).
+- [x] **Database migrations.** Set up 2026-11-17 (`000` and `001` applied). Schema changes go in `db/migrations/NNN_name.sql` in this repo.
       You run each one against the Neon **direct** host and type the password at the prompt:
       ```powershell
       & "C:\Program Files\PostgreSQL\18\bin\psql.exe" -h ep-shiny-mountain-bfjvu2jn.c-5.us-west-2.aws.neon.tech -U neondb_owner -d neondb -f db\migrations\002_plans.sql
       ```
       First, take a backup with `pg_dump` (same flags as the migration).
-- [ ] Check how `garage_order` rows get created (addBike only inserts into `bike`, so there's
-      probably a trigger). Dump the schema so migrations build on what's really there:
+- [x] Check how `garage_order` rows get created. Done 2026-11-17: a trigger
+      (`insert_garage_order`) adds one per new bike. The schema is in `db/schema.sql`:
       ```powershell
       & "C:\Program Files\PostgreSQL\18\bin\pg_dump.exe" -h ep-shiny-mountain-bfjvu2jn.c-5.us-west-2.aws.neon.tech -U neondb_owner -d neondb --schema-only -f db\schema.sql
       ```
@@ -84,6 +94,8 @@ Rules:
 | `stripeWebhook` | new | Verifies Stripe's signature, then sets `plan`/`plan_status` on checkout, renewal, cancellation and failed payment |
 | `addBike` | changed | Refuses a 4th bike on Free (403 with a clear message) |
 
+- Every new Lambda uses `setupsbike-lambda-role`, and its log group gets **30-day retention**,
+  as the privacy policy says (all six existing functions were set to 30 days on 2026-11-17).
 - Stripe keys (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price ids) go in Lambda env vars.
   You enter them in the console. They never go in chat or the repo.
 - The plan is read from the database on each gated call, not stored in the JWT, so upgrades

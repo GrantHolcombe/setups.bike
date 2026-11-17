@@ -269,8 +269,11 @@ function App() {
           <p>All of your supspension settings in one place!</p>
           <Button variant={'contained'} onClick={() => { setIsLoading(true); login();}}>Clip in</Button>
         </div>
-        
+
       }
+      <footer className='legalFooter'>
+        <a href='terms.html'>Terms</a> · <a href='privacy.html'>Privacy</a> · <a href='refunds.html'>Refunds</a>
+      </footer>
     </AppContext.Provider>
     </ThemeProvider>
   )

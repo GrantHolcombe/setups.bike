@@ -25,3 +25,8 @@ yarn-error.log*
 # Lambda dependencies (installed when packaging)
 lambdas/**/node_modules
 lambdas/**/*.zip
+
+# Legal pages are generated from legal/ by scripts/build-legal.js
+/public/terms.html
+/public/privacy.html
+/public/refunds.html
