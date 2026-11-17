@@ -98,11 +98,45 @@ export const AppContext = createContext<AppContent>({
 })
 export const useAppContext = () => useContext(AppContext)
 
+//signed-in session kept across page reloads, until the app token expires
+const SESSION_KEY = 'setupsBikeSession';
+interface ISession {
+  token: string,
+  profile: IProfile
+}
+
+const loadSession = (): ISession | null => {
+  try {
+    const session: ISession = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    if (!session?.token || !session.profile) return null;
+    const { exp } = jwtDecode<{ exp?: number }>(session.token);
+    //treat tokens that expire within a minute as already expired
+    if (!exp || exp * 1000 < Date.now() + 60_000) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return session;
+  } catch {
+    return null;
+  }
+}
+
+const saveSession = (session: ISession | null) => {
+  try {
+    if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    else localStorage.removeItem(SESSION_KEY);
+  } catch {
+    //storage blocked (private mode etc.): the session just won't survive a reload
+  }
+}
+
+const savedSession = loadSession();
+
 function App() {
   const [user, setUser] = useState<IUser>();
-  const [profile, setProfile] = useState<IProfile>();
-  const [isAauthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [jwt, setJwt] = useState<string>("");
+  const [profile, setProfile] = useState<IProfile | undefined>(savedSession?.profile);
+  const [isAauthenticated, setIsAuthenticated] = useState<boolean>(!!savedSession);
+  const [jwt, setJwt] = useState<string>(savedSession?.token || "");
   const [bikes, setBikes] = useState<Array<IBike>>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [addBikeOpen, setAddBikeOpen] = useState<boolean>(false);
@@ -146,7 +180,11 @@ function App() {
   }, [profile]);
 
   useEffect(() => {
-    if(jwt != "") getBikes();
+    if(jwt != "") {
+      if (profile) saveSession({ token: jwt, profile });
+      setIsLoading(true);
+      getBikes();
+    }
   }, [jwt]);
 
   //add user lambda call
@@ -193,7 +231,11 @@ function App() {
   //logout button
   const logout = () => {
     googleLogout();
+    saveSession(null);
     setIsAuthenticated(false);
+    setIsLoading(false);
+    setUser(undefined);
+    setProfile(undefined);
     setJwt("");
     setBikes([]);
   };
