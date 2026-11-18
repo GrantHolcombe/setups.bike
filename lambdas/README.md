@@ -11,6 +11,9 @@ Lambda function and deploys on its own. These aren't part of the CodePipeline fr
 | `SetupsDotBike_updateBike` | `updateBike` | Saves a bike's tire and suspension settings |
 | `SetupsDotBike_DeleteBike` | `DeleteBike` | Deletes bikes by id |
 | `setupsDotBike_reorderGarage` | `reorderGarage` | Saves the garage order |
+| `SetupsDotBike_bikeSetups` | `POST bikeSetups` | Pro: named setups per bike |
+| `SetupsDotBike_rideNotes` | `POST rideNotes` | Pro: ride notes with a settings snapshot |
+| `SetupsDotBike_sharedSetups` | `POST sharedSetups` | Pro: share links (viewing needs no sign-in) |
 
 All DB access uses parameterized queries (`$1`, `$2`, ...). Keep it that way: never build SQL
 by joining strings with request values.

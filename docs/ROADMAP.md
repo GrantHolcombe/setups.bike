@@ -204,7 +204,7 @@ Built and tested with Pro switched on only for Grant. Each feature checks Pro **
 (the same `plan = 'pro'` and `BILLING_ENABLED_FOR` rules as addBike), so it stays invisible
 and unusable for everyone else until launch.
 
-### 2.1 Multiple setups per bike
+### 2.1 Multiple setups per bike: ✅ live 2026-11-18 (Grant only while billing is off for others)
 Named presets per bike, such as "Bike park", "XC" or "Wet".
 - `003_bike_setups.sql`: a `bike_setup` table (id, bike_id, name, all the suspension and tire
   columns, created_at).
@@ -223,22 +223,30 @@ Named presets per bike, such as "Bike park", "XC" or "Wet".
   cascade-delete with their bike; one Lambda `SetupsDotBike_bikeSetups` behind one route; if
   Pro lapses, presets are hidden, not deleted.
 
-### 2.2 Ride notes
+### 2.2 Ride notes: ✅ built 2026-11-18
 Log how a setup rode: date, trail, conditions, a 1–5 rating, and free text.
-- `004_ride_notes.sql`: a `ride_note` table (id, bike_id, setup snapshot as `jsonb`, ride date,
-  trail, conditions, rating, note). The snapshot keeps the exact settings even if the setup
-  changes later.
-- UI: "Log a ride" on a bike card and a history list. Optionally, "use these settings again".
+- `004_ride_notes_and_shares.sql` (shared with 2.3): a `ride_note` table (id, bike_id, settings
+  snapshot as `jsonb`, setup name if the bike matched one, ride date, trail, conditions, rating,
+  note). The snapshot never changes, even when a note is edited.
+- Lambda `SetupsDotBike_rideNotes` at `POST /rideNotes`: list, add, edit, delete, reuse. Pro only.
+- UI: "Log ride", "Rides" (history, newest first, with each ride's settings) and "Use these
+  settings again" on the bike card.
+- Decisions (2026-11-18): conditions are one-tap chips (Dry, Tacky, Wet, Muddy, Loose,
+  Snow/ice); every field is optional but a note needs at least one of trail, rating, conditions
+  or text; up to 500 notes per bike; reusing a ride's settings asks first.
 
-### 2.3 Share a setup
-- `005_shared_setups.sql`: a `shared_setup` table (random unguessable id, owner, bike
-  brand/model, settings snapshot, created_at, revoked).
-- A public read-only page `setups.bike/s/<id>` that works without signing in. This is the
-  growth loop, so keep it free to view.
-- "Copy to my garage" needs sign-in and counts toward the bike limit, so it works on Free too.
-- The owner can see and revoke their links.
-- Note: the site is served from S3, so `/s/<id>` needs the app to handle that path. That
-  means a client-side route plus an S3/Cloudflare rule that serves `index.html` for it.
+### 2.3 Share a setup: ✅ built 2026-11-18
+- `shared_setup` table in migration 004: a random 16-character id (96 bits), owner, bike,
+  brand/model, setup name, settings snapshot, view and copy counts, created_at, revoked_at.
+- Lambda `SetupsDotBike_sharedSetups` at `POST /sharedSetups`: view (no sign-in), create (Pro),
+  list and revoke (signed in, no Pro needed), copy (signed in; free plan's bike limit applies).
+- Links are `setups.bike/?s=<id>` (decided 2026-11-18): works on S3 as-is, with no error-page
+  or Cloudflare rule. A `/s/<id>` path can be added later if wanted.
+- The public page shows brand, model, setup name and settings only, never the owner's name or
+  email, plus a note that it's another rider's setup, not a recommendation.
+- Sharing the same settings again returns the same link. Links survive a Pro lapse, and the
+  Share button stays visible while a bike has links so they can always be removed. Links are
+  deleted with their bike. Up to 100 active links per user.
 
 ### 2.4 Suggested starting settings (deferred, not part of the Pro launch)
 **Deferred 2026-11-18:** without real data this is a guess, and Grant doesn't want the app (or
