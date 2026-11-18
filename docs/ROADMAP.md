@@ -83,7 +83,8 @@ by the Lambdas, so readable code doesn't open a way around it):
       right to reuse it, which suits a portfolio project you sell. Don't add an open-source
       license (MIT and the like) unless you mean to allow reuse. Optionally add a README line:
       "Source shown for portfolio purposes. All rights reserved."
-- [ ] **Turn on GitHub secret scanning and push protection** (repo Settings > Code security).
+- [x] **Turn on GitHub secret scanning and push protection** (repo Settings > Code security).
+      Confirmed on 2026-11-17.
       Free for public repos; it blocks a push that contains a Stripe or AWS key. The only secret
       ever committed is the old JWT secret, rotated twice on 2026-11-17 and now useless.
 - [ ] **Optional: limit which IPs can reach Neon.** Low priority while the password stays
@@ -154,6 +155,22 @@ rate, freemium, Customer Portal, Smart Retries):
 - "Go Pro" in the menu, plus an upgrade prompt when a Free user tries to add a 4th bike.
 - Return pages for checkout success and cancel. After success, refresh the plan.
 - "Manage subscription" (the portal) for Pro users.
+
+**Before switching to live keys** (repeat in the live account; sandbox settings don't carry over):
+- [ ] Tax settings: head office address, SaaS (personal use) tax code, automatic tax off.
+- [ ] Revenue recovery > Retries: Smart Retries on; "If all retries fail" = cancel the
+      subscription. (Already set in the sandbox.)
+- [ ] Revenue recovery > Emails: turn on "Send emails when card payments fail" and
+      "Send emails about expiring cards", both with **Link to a Stripe hosted page** (it lets
+      the customer update their card without signing in to the app). Done in the sandbox on
+      2026-11-17.
+- [ ] Activate the live account (Stripe asks for identity and bank details; yours to do), then
+      in Settings > Business > Business details set: privacy policy
+      `https://setups.bike/privacy.html`, terms `https://setups.bike/terms.html`, support
+      email `grant@hiregrant.today`. (Not available in the sandbox.)
+- [ ] Create the Pro product and prices (lookup keys `pro_monthly`, `pro_yearly`), the
+      Customer Portal configuration, and the webhook endpoint again in live mode, then put
+      the live `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in the three Lambdas.
 
 **Done when:** in Stripe test mode, a test card upgrades an account, a 4th bike can be added,
 cancelling in the portal reverts to Free at period end, and a failed renewal is handled.

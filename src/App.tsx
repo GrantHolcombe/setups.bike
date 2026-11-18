@@ -7,7 +7,9 @@ import './App.css';
 import BikeCard from './components/BikeCard/BikeCard';
 import AppMenu from './components/Header/AppMenu/AppMenu';
 import Header from './components/Header/Header';
-import { Button } from '@mui/material';
+import { Alert, Button, Snackbar } from '@mui/material';
+import UpgradeDialog, { UpgradeReason } from './components/Billing/UpgradeDialog';
+import { IAccount, getAccount, openBillingPortal } from './billing';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 export interface IUser {
@@ -89,12 +91,19 @@ export type AppContent = {
   setLoading:(b:boolean) => void
   token: string
   refreshBikes: () => void
+  account?: IAccount
+  refreshAccount: () => Promise<IAccount | undefined>
+  openUpgrade: (reason?: UpgradeReason) => void
+  manageBilling: () => void
 }
 export const AppContext = createContext<AppContent>({
   loading: true,
   setLoading: (b) => { },
   token: "",
-  refreshBikes: () =>{}
+  refreshBikes: () =>{},
+  refreshAccount: async () => undefined,
+  openUpgrade: () => {},
+  manageBilling: () => {}
 })
 export const useAppContext = () => useContext(AppContext)
 
@@ -132,6 +141,16 @@ const saveSession = (session: ISession | null) => {
 
 const savedSession = loadSession();
 
+//Stripe sends people back with ?checkout=success|cancel or ?portal=return; read it once and
+//tidy the address bar so a reload doesn't repeat the message
+const returnedFrom = (() => {
+  const params = new URLSearchParams(window.location.search);
+  const checkout = params.get('checkout');
+  const portal = params.get('portal');
+  if (checkout || portal) window.history.replaceState(null, '', window.location.pathname);
+  return { checkout, portal };
+})();
+
 function App() {
   const [user, setUser] = useState<IUser>();
   const [profile, setProfile] = useState<IProfile | undefined>(savedSession?.profile);
@@ -140,6 +159,59 @@ function App() {
   const [bikes, setBikes] = useState<Array<IBike>>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [addBikeOpen, setAddBikeOpen] = useState<boolean>(false);
+  const [account, setAccount] = useState<IAccount>();
+  const [upgrade, setUpgrade] = useState<{ open: boolean, reason: UpgradeReason }>({ open: false, reason: 'menu' });
+  const [notice, setNotice] = useState<{ severity: 'success' | 'info' | 'error', text: string } | null>(null);
+
+  //plan, bike count and limit for the signed-in user
+  const refreshAccount = async (): Promise<IAccount | undefined> => {
+    if (!jwt) return undefined;
+    try {
+      const a = await getAccount(jwt);
+      setAccount(a);
+      return a;
+    } catch (err: any) {
+      console.warn(err);
+      if (err?.status === 401) logout();
+      return undefined;
+    }
+  };
+
+  const openUpgrade = (reason: UpgradeReason = 'menu') => setUpgrade({ open: true, reason });
+
+  const manageBilling = async () => {
+    setIsLoading(true);
+    try {
+      const { url } = await openBillingPortal(jwt);
+      window.location.assign(url);
+    } catch (err: any) {
+      setIsLoading(false);
+      setNotice({ severity: 'error', text: err?.message || "Couldn't open billing. Please try again." });
+    }
+  };
+
+  //after checkout, Stripe tells our webhook a moment later; check a few times until Pro shows up
+  useEffect(() => {
+    if (!jwt || !returnedFrom.checkout) return;
+    if (returnedFrom.checkout === 'cancel') {
+      setNotice({ severity: 'info', text: 'Checkout cancelled. You have not been charged.' });
+    } else if (returnedFrom.checkout === 'success') {
+      setNotice({ severity: 'info', text: 'Payment received. Setting up Pro…' });
+      let tries = 0;
+      const check = async () => {
+        const a = await refreshAccount();
+        if (a?.plan === 'pro') {
+          setNotice({ severity: 'success', text: "You're on Pro. Thanks for supporting Setups.Bike!" });
+        } else if (++tries < 8) {
+          setTimeout(check, 2000);
+        } else {
+          setNotice({ severity: 'info', text: 'Payment received. Pro will appear in a minute; refresh if it doesn’t.' });
+        }
+      };
+      check();
+    }
+    returnedFrom.checkout = null;
+  }, [jwt]);
 
   //get googleAPI data once user logs in
   useEffect(
@@ -213,6 +285,8 @@ function App() {
                 .then((res) => {
                     setBikes(res.data.sort((a: IBike, b: IBike) => a.garage_order - b.garage_order));
                     setIsLoading(false);
+                    //keeps the bike count and limit current after adds and deletes
+                    refreshAccount();
                 })
                 .catch((err) => {
                   console.log(err);
@@ -238,11 +312,14 @@ function App() {
     setProfile(undefined);
     setJwt("");
     setBikes([]);
+    setAccount(undefined);
   };
+
+  const pastDue = account?.plan === 'pro' && account.planStatus === 'past_due';
 
   return (
     <ThemeProvider theme={theme}>
-    <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading, token: jwt, refreshBikes: getBikes}}>
+    <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading, token: jwt, refreshBikes: getBikes, account, refreshAccount, openUpgrade, manageBilling }}>
       <Radio
         visible={isLoading}
         height="80px"
@@ -255,6 +332,12 @@ function App() {
       <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}/>
       {isAauthenticated && profile && bikes ? 
         <div className='bikeInputForm'>
+          {pastDue && (
+            <Alert severity='warning' sx={{ maxWidth: 600, mx: 'auto', mb: 2 }}
+              action={account?.canManageBilling ? <Button color='inherit' size='small' onClick={manageBilling}>Update card</Button> : undefined}>
+              Your last Pro payment didn't go through. Update your card to keep Pro.
+            </Alert>
+          )}
           <div className='cardWrapper'>
             {bikes.map((e, i) => {
               return <BikeCard key={e.bike_id} thisBike={ e }/>
@@ -271,6 +354,11 @@ function App() {
         </div>
 
       }
+      <UpgradeDialog open={upgrade.open} reason={upgrade.reason} onClose={() => setUpgrade({ ...upgrade, open: false })} />
+      <Snackbar open={!!notice} autoHideDuration={notice?.severity === 'success' ? 6000 : null} onClose={() => setNotice(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        {notice ? <Alert severity={notice.severity} onClose={() => setNotice(null)} variant='filled'>{notice.text}</Alert> : <span />}
+      </Snackbar>
       <footer className='legalFooter'>
         <a href='terms.html'>Terms</a> · <a href='privacy.html'>Privacy</a> · <a href='refunds.html'>Refunds</a>
       </footer>

@@ -11,6 +11,16 @@ const headers = {
 
 const reply = (statusCode, body) => ({ statusCode, body: JSON.stringify(body), headers });
 
+const FREE_BIKE_LIMIT = 3;
+
+// Billing rollout switch: BILLING_ENABLED_FOR is "all" or a comma-separated list of user ids.
+// Users not on it keep today's behaviour: no bike limit, no Go Pro.
+const billingEnabledFor = (userId) => {
+  const v = (process.env.BILLING_ENABLED_FOR || "").trim();
+  return v === "all" || v.split(",").map((s) => s.trim()).includes(String(userId));
+};
+
+
 const newClient = () => new Client({
   host: process.env.RDS_HOSTNAME,
   user: process.env.RDS_USERNAME,
@@ -38,6 +48,23 @@ exports.handler = async (event) => {
   const client = newClient();
   try {
     await client.connect();
+
+    // Free plan: up to FREE_BIKE_LIMIT bikes. Users already over the limit keep their bikes
+    // but can't add more until they're on Pro.
+    const { rows } = await client.query(
+      `SELECT u.plan, (SELECT count(*) FROM bike b WHERE b.app_user_id = u.app_user_id)::int AS bikes
+         FROM app_user u WHERE u.app_user_id = $1`,
+      [userId]
+    );
+    if (rows.length === 0) return reply(401, { error: "Please sign in again" });
+    if (billingEnabledFor(userId) && rows[0].plan !== "pro" && rows[0].bikes >= FREE_BIKE_LIMIT) {
+      return reply(403, {
+        error: `The free plan holds ${FREE_BIKE_LIMIT} bikes. Go Pro for unlimited bikes.`,
+        code: "FREE_LIMIT",
+        limit: FREE_BIKE_LIMIT
+      });
+    }
+
     const res = await client.query(
       "INSERT INTO bike (app_user_id, brand, model) VALUES ($1, $2, $3)",
       [userId, brand, model]

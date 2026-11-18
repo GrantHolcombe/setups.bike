@@ -6,8 +6,20 @@ import AddBikeModal from './AddBikeModal';
 import DeleteBikeModal from './DeleteBikeModal';
 import ReorderGarageModal from './ReorderGarageModal';
 import { IAppMenuProps } from '../Header';
+import { useAppContext } from '../../../App';
 
 export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}: IAppMenuProps) {
+    const { account, openUpgrade, manageBilling } = useAppContext();
+    const isPro = account?.plan === 'pro';
+    const proUntil = account?.cancelAtPeriodEnd && account.renewsAt
+        ? new Date(account.renewsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+        : null;
+
+    //free plan at its bike limit: offer Pro instead of the add form
+    const addBike = () => {
+        if (account && !account.canAddBike) openUpgrade('limit');
+        else setAddBikeOpen(true);
+    };
     const [anchorEl, setAnchorEl] = React.useState<null | SVGSVGElement>(null);
     const [ deleteBikeOpen, setDeleteBikeOpen ] = React.useState<boolean>(false);
     const [ reorderGarageOpen, setReorderGarageOpen ] = React.useState<boolean>(false);
@@ -62,9 +74,17 @@ export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}:
             'aria-labelledby': 'basic-button',
             }}
         >
-            <MenuItem sx={menuItemStyle} onClick={() => { setAnchorEl(null); setAddBikeOpen(true);}}>Add a New Bike</MenuItem>
+            <MenuItem sx={menuItemStyle} onClick={() => { setAnchorEl(null); addBike();}}>Add a New Bike</MenuItem>
             <MenuItem sx={menuItemStyle} disabled={bikeList !== undefined && bikeList?.length < 2} onClick={() => { setAnchorEl(null); setReorderGarageOpen(true);}}>Reorder Bike's in Garage</MenuItem>
             <MenuItem sx={menuItemStyle} disabled={bikeList?.length === 0} onClick={() => { setAnchorEl(null); setDeleteBikeOpen(true);}}>Retire a Bike from Garage</MenuItem>
+            {isPro
+                ? <MenuItem sx={{...menuItemStyle, borderTop: '1px solid #CDCDCD', flexDirection: 'column', alignItems: 'flex-end'}}
+                    disabled={!account?.canManageBilling} onClick={() => { setAnchorEl(null); manageBilling();}}>
+                    Manage Subscription
+                    <span style={{ fontSize: 12, color: '#888' }}>{proUntil ? `Pro until ${proUntil}` : 'Pro plan'}</span>
+                  </MenuItem>
+                : account?.billingEnabled && <MenuItem sx={{...menuItemStyle, borderTop: '1px solid #CDCDCD', color: 'goldenrod', fontWeight: 600}}
+                    onClick={() => { setAnchorEl(null); openUpgrade('menu');}}>Go Pro</MenuItem>}
             <MenuItem sx={{...menuItemStyle, borderTop: '1px solid #CDCDCD'}} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
         </Menu>
         <AddBikeModal open={addBikeOpen} closeModal={handleModalClose} />

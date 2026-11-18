@@ -13,7 +13,7 @@ interface INewBike {
 
 export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
     const [newBike, setNewBike] = React.useState<INewBike>({brand: "", model: ""})
-    const { token, setLoading, refreshBikes } = useAppContext();
+    const { token, setLoading, refreshBikes, openUpgrade } = useAppContext();
     const style = {
         position: 'absolute' as 'absolute',
         top: '225px',
@@ -53,10 +53,20 @@ export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
             model: newBike.model
         }
         const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/AddBike?' + new URLSearchParams(req).toString();
-        const data = await fetch(url, {method: 'POST'});
-        if (data.status === 200) {
-            refreshBikes();
-            setNewBike({brand:"",model:""});
+        try {
+            const data = await fetch(url, {method: 'POST'});
+            if (data.status === 200) {
+                refreshBikes();
+                setNewBike({brand:"",model:""});
+                return;
+            }
+            setLoading(false);
+            //free plan is full: offer Pro (the typed bike is kept for after upgrading)
+            if (data.status === 403) openUpgrade('limit');
+            else console.warn('addBike failed', data.status);
+        } catch (err) {
+            setLoading(false);
+            console.warn(err);
         }
     }
 
