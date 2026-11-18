@@ -286,6 +286,62 @@ after a logo or tagline change. There's no service worker yet.
 - [ ] An "Install app" prompt on Android and Chrome, and short "Add to Home Screen" help for iOS.
 - [ ] Check with Lighthouse's PWA audit.
 
+## Phase 3.5: Partner referrals and promo codes (after the Pro launch, web first)
+
+Idea (2026-11-18): local pros, influencers and shops get their own code or link. A new
+subscriber gets a discount, and the partner gets a finder's fee on what that subscriber pays.
+
+**How it works on the web (Stripe; most of the pieces exist)**
+- Each partner gets a Stripe **promotion code** (for example `SHOPNAME20`) on a shared coupon,
+  such as 20% off the first 3 months or the first year. Checkout already has
+  `allow_promotion_codes: true`, so typed codes already work.
+- **Referral links** `setups.bike/?ref=SHOPNAME`: the app remembers the code (localStorage,
+  about 30 days) and `createCheckoutSession` pre-applies that partner's promotion code, so
+  link and code both lead to the same attribution. The share-preview Worker can give these
+  links a partner-branded preview.
+- **Attribution:** on `checkout.session.completed` the webhook reads which promotion code was
+  used and records the partner on the user (first partner wins; it's never changed later).
+- **Earnings ledger:** the webhook already receives `invoice.*` events. On each paid invoice
+  for an attributed user, add a row to a `partner_earning` table (invoice, amount actually
+  paid after the discount, fee %, fee owed). Refunds and chargebacks add a negative row.
+- **New tables (migration 005):** `partner` (name, code, Stripe promotion code id, fee %,
+  fee months, active, contact), `app_user.referred_by_partner_id` + `referred_at`,
+  `partner_earning` (ledger, paid-out flag).
+- **Partner view:** start with a monthly CSV/report Grant sends each partner (sign-ups, paid
+  subscribers, fees). A self-serve partner dashboard can come later.
+
+**Paying the finder's fee**
+- **Start manual:** once a month, pay what's owed for invoices older than the refund window
+  (14 days, plus a buffer for chargebacks) by PayPal, Venmo or check. Cheapest and simplest
+  for a handful of partners.
+- **Later, Stripe Connect (Express):** partners onboard with Stripe, which handles their
+  identity, bank details and US tax forms, and payouts become automatic transfers. It costs
+  about $2 per active partner per month plus a small per-payout fee, so it's worth it once
+  there are more than a few partners.
+- Off-the-shelf affiliate tools that plug into Stripe (Rewardful, FirstPromoter and similar)
+  are an option too, but run about $49+/month.
+
+**Before launching it (not legal or tax advice; check these)**
+- A short **partner agreement**: the fee %, how long fees last (for example the first 12
+  months of each subscriber), payout timing, clawback on refunds, and that partners must
+  disclose the relationship (US FTC rules for endorsements).
+- **Taxes:** paying a US partner $600+ in a year generally means collecting a W-9 and filing
+  a 1099-NEC. Stripe Connect handles that; with manual payouts you'd track it yourself.
+- Add a line about promotions and discounts to the Terms.
+
+**App stores (Phase 4) caveats**
+- Stripe codes and coupons don't apply to Apple or Google in-app purchases.
+- **Apple** has its own **Offer Codes** for subscriptions, including custom codes like
+  `SHOPNAME20` with redemption limits, and its server notifications say which offer was used,
+  so attribution is possible. Apple still takes its cut, and the finder's fee would be paid by
+  you outside Apple.
+- **Google Play** has subscription promo codes and developer-defined offers, with similar
+  attribution through its real-time notifications.
+- **Simplest plan:** keep referrals on the web. A subscriber who signs up through a partner's
+  link pays through Stripe, and Pro works in the apps too because Pro belongs to the account
+  (`plan_source`), not to where it was bought. Store rules on linking from the app to web
+  checkout have been changing (US apps may link out as of 2025), so check them in Phase 4.
+
 ## Phase 4: App stores (later, when Pro has a few paying users)
 
 - Wrap the same React code with **Capacitor** for iOS and Android. iOS builds on your Mac.
@@ -307,6 +363,7 @@ after a logo or tagline change. There's no service worker yet.
 2. Whether to keep using the `test` API Gateway stage for production, or add a `prod` stage
    while adding the new routes.
 3. A support email address and who writes the legal pages.
+4. Partner referrals (Phase 3.5): discount size and length, finder's fee % and how long it lasts, and manual payouts versus Stripe Connect.
 
 ## Done so far (Nov 2026)
 - Database moved to Neon. Parameterized SQL in every Lambda.
