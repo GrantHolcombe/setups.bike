@@ -21,7 +21,9 @@ export default {
       return fetch(request);
     }
 
-    const page = await fetch(request);
+    // On the setups.bike route this is the S3 site itself. On the Worker's own workers.dev
+    // address (used for testing) it fetches the live site instead of calling itself.
+    const page = await fetch(url.hostname === "setups.bike" ? request : `https://setups.bike/${url.search}`);
     try {
       if (!page.ok || !(page.headers.get("content-type") || "").includes("text/html")) return page;
       const share = await lookUp(id);
