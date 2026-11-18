@@ -39,8 +39,15 @@ const COLUMNS = [
   "rear_sus_rebound_1", "rear_sus_rebound_2", "rear_sus_rebound_count", "rear_tokens"
 ];
 
-// Missing, empty or "NaN" (an emptied number input) means "leave this column as it is".
-const toValue = (v) => (v === undefined || v === "" || v === "NaN" || v === "null" ? null : v);
+// Missing, empty or anything that isn't a number (an emptied input, "NaN") means "leave this
+// column as it is". Real settings are whole numbers and can't be negative, so anything else
+// is rounded and floored at 0.
+const toValue = (v) => {
+  if (v === undefined || v === null || v === "" || v === "NaN" || v === "null") return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  return Math.min(99999, Math.max(0, Math.round(n)));
+};
 
 exports.handler = async (event) => {
   const data = event.queryStringParameters || {};
