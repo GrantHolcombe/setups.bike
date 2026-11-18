@@ -269,13 +269,20 @@ A starting point from rider weight, riding style and fork/shock model.
 
 ## Phase 3: PWA (installable web app)
 
-Today the manifest is still Create React App's default ("React App", React logos, black
-theme), and there's no service worker.
-- [ ] Manifest: the name "Setups.Bike", proper icons (192, 512 and a maskable one) made from
-      `public/img/logos`, the theme colour `#daa530`, `start_url` `/`.
+Icons, manifest and link previews done 2026-11-18. Icons and the preview image come from
+`scripts/make-icons.py` (Pillow), which builds them from `public/img/logos/Setups.png`; re-run it
+after a logo or tagline change. There's no service worker yet.
+- [x] Manifest: the name "Setups.Bike", icons (192, 512 and a maskable one) made from
+      `public/img/logos`, theme and splash colour `#daa520` (the header gold), `start_url` `/`.
+- [x] Head tags: real title and description, `theme-color`, home-screen app tags for iOS and
+      Android, a 180px `apple-touch-icon` and a new favicon.
+- [x] Link previews: Open Graph and Twitter card tags with a generated 1200x630
+      `og-image.png` (logo tile on gold plus a tagline). The site is static, so every link,
+      shared setups included, gets the same preview; per-setup previews would need a server
+      (for example a Lambda@Edge or Cloudflare Worker that fills in the tags).
 - [ ] Service worker: cache the app shell (HTML, JS, CSS, images) so it opens fast and offline.
       **Never cache API responses**, so data is always fresh.
-- [ ] iOS: `apple-touch-icon` at the right size, the status bar style, and a splash colour.
+- [x] iOS: `apple-touch-icon` at the right size, the status bar style, and a splash colour.
 - [ ] An "Install app" prompt on Android and Chrome, and short "Add to Home Screen" help for iOS.
 - [ ] Check with Lighthouse's PWA audit.
 
