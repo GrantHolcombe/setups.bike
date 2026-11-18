@@ -8,6 +8,8 @@ import './SharedSetupView.css';
 interface ISharedSetupViewProps {
   shareId: string;
   signedIn: boolean;
+  // true when the header's welcome message sits above this page (signed in)
+  belowWelcome: boolean;
   copying: boolean;
   copyError: string;
   onCopy: () => void;
@@ -15,7 +17,7 @@ interface ISharedSetupViewProps {
 }
 
 // The public page for a shared link (setups.bike/?s=<id>). Works without signing in.
-export default function SharedSetupView({ shareId, signedIn, copying, copyError, onCopy, onClose }: ISharedSetupViewProps) {
+export default function SharedSetupView({ shareId, signedIn, belowWelcome, copying, copyError, onCopy, onClose }: ISharedSetupViewProps) {
   const [share, setShare] = React.useState<IShare | null>(null);
   const [error, setError] = React.useState('');
 
@@ -28,7 +30,7 @@ export default function SharedSetupView({ shareId, signedIn, copying, copyError,
   }, [shareId]);
 
   return (
-    <div className='sharedSetup'>
+    <div className={`sharedSetup${belowWelcome ? '' : ' clearHeader'}`}>
       {!share && !error && <div className='sharedSetupLoading'><Spinner size={80} /></div>}
       {error && (
         <>
@@ -43,7 +45,7 @@ export default function SharedSetupView({ shareId, signedIn, copying, copyError,
           <div className='brandHeader'>{share.brand}</div>
           {share.setup_name && <Typography variant='subtitle2' sx={{ mt: 1 }}>{share.setup_name}</Typography>}
           <SettingsSummary settings={share.settings} />
-          <Typography variant='caption' component='p' className='sharedSetupNote'>
+          <Typography variant='caption' component='p' className='sharedSetupNote' sx={{ mt: 2, mb: 3, lineHeight: 1.6 }}>
             Shared by another rider for their bike, weight and riding. It isn't a recommendation from
             Setups.Bike. Check against your suspension maker's guide before you ride.
           </Typography>

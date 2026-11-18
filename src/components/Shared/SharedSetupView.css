@@ -2,7 +2,20 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px 16px;
+    padding: 16px;
+}
+
+/* signed out there's no welcome message under the header, so clear the bar and logo
+   ourselves, like the sign-in screen */
+.sharedSetup.clearHeader {
+    margin-top: 200px;
+}
+
+@media only screen and (max-width: 600px) {
+    /* on phones the logo is centered and hangs below the bar (to about 205px) */
+    .sharedSetup.clearHeader {
+        margin-top: 205px;
+    }
 }
 
 .sharedSetupLoading {
@@ -12,23 +25,23 @@
 .sharedSetupCard {
     width: 100%;
     box-sizing: border-box;
-    padding: 16px;
+    padding: 16px 16px 24px;
 }
 
 .sharedSetupCard .modelHeader,
 .sharedSetupCard .brandHeader {
-    padding-left: 0;
-    padding-right: 0;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .sharedSetupNote {
     display: block;
     color: var(--text-muted);
-    margin: 12px 0 16px;
 }
 
 .sharedSetupActions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    align-items: center;
+    gap: 12px;
 }

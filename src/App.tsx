@@ -426,7 +426,7 @@ function App() {
       />
       <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}/>
       {sharedId ?
-        <SharedSetupView shareId={sharedId} signedIn={!!jwt} copying={copying} copyError={copyError}
+        <SharedSetupView shareId={sharedId} signedIn={!!jwt} belowWelcome={isAauthenticated} copying={copying} copyError={copyError}
           onCopy={copySharedToGarage} onClose={closeShared} />
       : isAauthenticated && profile && bikes ? 
         <div className='bikeInputForm'>

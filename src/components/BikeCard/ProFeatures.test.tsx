@@ -149,7 +149,7 @@ describe('SharedSetupView (public page)', () => {
   test('shows the shared bike, the disclaimer and a sign-in button when signed out', async () => {
     const f = mockFetch({ share: { share_id: 'abcdefghijklmnop', brand: 'Giant', model: 'Trance', setup_name: 'Park', settings } });
     const onCopy = jest.fn();
-    render(<SharedSetupView shareId='abcdefghijklmnop' signedIn={false} copying={false} copyError='' onCopy={onCopy} onClose={jest.fn()} />);
+    render(<SharedSetupView shareId='abcdefghijklmnop' signedIn={false} belowWelcome={false} copying={false} copyError='' onCopy={onCopy} onClose={jest.fn()} />);
     expect(await screen.findByText('Trance')).toBeTruthy();
     expect(screen.getByText('Park')).toBeTruthy();
     expect(screen.getByText(/isn't a recommendation from/)).toBeTruthy();
@@ -160,7 +160,7 @@ describe('SharedSetupView (public page)', () => {
 
   test('a removed link says so', async () => {
     mockFetch({ error: "This shared setup doesn't exist or was removed", code: 'NOT_FOUND' }, 404);
-    render(<SharedSetupView shareId='abcdefghijklmnop' signedIn copying={false} copyError='' onCopy={jest.fn()} onClose={jest.fn()} />);
+    render(<SharedSetupView shareId='abcdefghijklmnop' signedIn belowWelcome copying={false} copyError='' onCopy={jest.fn()} onClose={jest.fn()} />);
     expect(await screen.findByText(/doesn't exist or was removed/)).toBeTruthy();
     expect(screen.getByText('Go to my garage')).toBeTruthy();
   });
