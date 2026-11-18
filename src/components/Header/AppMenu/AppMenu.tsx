@@ -78,14 +78,14 @@ export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}:
             <MenuItem sx={menuItemStyle} disabled={bikeList !== undefined && bikeList?.length < 2} onClick={() => { setAnchorEl(null); setReorderGarageOpen(true);}}>Reorder Bike's in Garage</MenuItem>
             <MenuItem sx={menuItemStyle} disabled={bikeList?.length === 0} onClick={() => { setAnchorEl(null); setDeleteBikeOpen(true);}}>Retire a Bike from Garage</MenuItem>
             {isPro
-                ? <MenuItem sx={{...menuItemStyle, borderTop: '1px solid #CDCDCD', flexDirection: 'column', alignItems: 'flex-end'}}
+                ? <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)', flexDirection: 'column', alignItems: 'flex-end'}}
                     disabled={!account?.canManageBilling} onClick={() => { setAnchorEl(null); manageBilling();}}>
                     Manage Subscription
-                    <span style={{ fontSize: 12, color: '#888' }}>{proUntil ? `Pro until ${proUntil}` : 'Pro plan'}</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{proUntil ? `Pro until ${proUntil}` : 'Pro plan'}</span>
                   </MenuItem>
-                : account?.billingEnabled && <MenuItem sx={{...menuItemStyle, borderTop: '1px solid #CDCDCD', color: 'goldenrod', fontWeight: 600}}
+                : account?.billingEnabled && <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)', color: 'goldenrod', fontWeight: 600}}
                     onClick={() => { setAnchorEl(null); openUpgrade('menu');}}>Go Pro</MenuItem>}
-            <MenuItem sx={{...menuItemStyle, borderTop: '1px solid #CDCDCD'}} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
+            <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)'}} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
         </Menu>
         <AddBikeModal open={addBikeOpen} closeModal={handleModalClose} />
         <DeleteBikeModal open={deleteBikeOpen} closeModal={() => setDeleteBikeOpen(false)} bikeList={bikeList} />

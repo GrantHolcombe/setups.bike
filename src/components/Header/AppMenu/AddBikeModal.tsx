@@ -32,7 +32,7 @@ export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
         justifyContent: 'flex-end',
         padding: "15px 0px",
         marginTop: "30px",
-        borderTop: "1px solid #CDCDCD"
+        borderTop: "1px solid var(--border)"
     }
 
     const inputStyle = {

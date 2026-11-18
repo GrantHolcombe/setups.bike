@@ -31,7 +31,7 @@ export default function DeleteBikeModal({open, closeModal, bikeList}: IDeleteBik
         justifyContent: 'flex-end',
         padding: "15px 0px",
         marginTop: "30px",
-        borderTop: "1px solid #CDCDCD"
+        borderTop: "1px solid var(--border)"
     }
 
     const handleClose = ():void => {

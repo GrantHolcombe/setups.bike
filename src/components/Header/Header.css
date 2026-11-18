@@ -33,6 +33,6 @@
       }
 
     .welcomeHeading h2 {
-        color:black;
+        color: var(--text);
     }
   }

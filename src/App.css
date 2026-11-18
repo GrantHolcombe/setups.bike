@@ -46,10 +46,10 @@ body {
 .legalFooter {
   text-align: center;
   font-size: 13px;
-  color: #888;
+  color: var(--text-muted);
   padding: 24px 16px;
 }
 
 .legalFooter a {
-  color: #888;
+  color: var(--text-muted);
 }

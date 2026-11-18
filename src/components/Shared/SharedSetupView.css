@@ -1,0 +1,34 @@
+.sharedSetup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+}
+
+.sharedSetupLoading {
+    padding: 40px;
+}
+
+.sharedSetupCard {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px;
+}
+
+.sharedSetupCard .modelHeader,
+.sharedSetupCard .brandHeader {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.sharedSetupNote {
+    display: block;
+    color: var(--text-muted);
+    margin: 12px 0 16px;
+}
+
+.sharedSetupActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}

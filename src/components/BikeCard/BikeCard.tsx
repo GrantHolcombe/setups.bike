@@ -5,6 +5,7 @@ import SusMenu from './SusMenu';
 import TokenInput from './TokenInput/TokenInput';
 import SetupPicker from './SetupPicker';
 import SettingInput from './SettingInput';
+import ProActions from './ProActions';
 import { AppContext, IBike, useAppContext } from '../../App';
 import axios from 'axios';
 
@@ -49,6 +50,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
         <div className='modelHeader'>{bike.model}</div>
         <div className='brandHeader'>{bike.brand}</div>
         <SetupPicker bike={bike} />
+        <ProActions bike={bike} />
       </div>
       <div className='cardBody'>
         <div className='tireSection front'>

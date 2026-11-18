@@ -11,7 +11,11 @@ import { Alert, Button, Snackbar } from '@mui/material';
 import UpgradeDialog, { UpgradeReason } from './components/Billing/UpgradeDialog';
 import { IAccount, getAccount, openBillingPortal } from './billing';
 import { IBikeSetup, listSetups } from './setups';
+import { IShare, SHARE_PARAM, copyShare, listShares } from './shares';
+import SharedSetupView from './components/Shared/SharedSetupView';
+import { SPINNER_COLORS } from './components/Spinner';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 export interface IUser {
   credentialStr: string;
@@ -64,8 +68,11 @@ export interface IJWT {
 }
 
 
-const theme = createTheme({
+//light or dark, following the browser/system setting (matches the CSS tokens in index.css)
+const makeTheme = (mode: 'light' | 'dark') => createTheme({
   palette: {
+    mode,
+    ...(mode === 'dark' && { background: { default: '#121212', paper: '#1e1e1e' } }),
     primary: {
       main: '#daa530',
     },
@@ -100,6 +107,9 @@ export type AppContent = {
   manageBilling: () => void
   setups: IBikeSetup[]
   refreshSetups: () => Promise<void>
+  //Pro 2.3: the user's own shared links
+  shares: IShare[]
+  refreshShares: () => Promise<void>
 }
 export const AppContext = createContext<AppContent>({
   loading: true,
@@ -110,7 +120,9 @@ export const AppContext = createContext<AppContent>({
   openUpgrade: () => {},
   manageBilling: () => {},
   setups: [],
-  refreshSetups: async () => {}
+  refreshSetups: async () => {},
+  shares: [],
+  refreshShares: async () => {}
 })
 export const useAppContext = () => useContext(AppContext)
 
@@ -158,7 +170,12 @@ const returnedFrom = (() => {
   return { checkout, portal };
 })();
 
+//a shared setup link: setups.bike/?s=<id>
+const initialShareId = new URLSearchParams(window.location.search).get(SHARE_PARAM);
+
 function App() {
+  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)', { noSsr: true });
+  const theme = React.useMemo(() => makeTheme(prefersDark ? 'dark' : 'light'), [prefersDark]);
   const [user, setUser] = useState<IUser>();
   const [profile, setProfile] = useState<IProfile | undefined>(savedSession?.profile);
   const [isAauthenticated, setIsAuthenticated] = useState<boolean>(!!savedSession);
@@ -171,6 +188,58 @@ function App() {
   const [notice, setNotice] = useState<{ severity: 'success' | 'info' | 'error', text: string } | null>(null);
 
   const [setups, setSetups] = useState<IBikeSetup[]>([]);
+  const [shares, setShares] = useState<IShare[]>([]);
+  const [sharedId, setSharedId] = useState<string | null>(initialShareId);
+  const [pendingCopy, setPendingCopy] = useState<boolean>(false);
+  const [copying, setCopying] = useState<boolean>(false);
+  const [copyError, setCopyError] = useState<string>('');
+
+  //Pro 2.3: the user's shared links (kept after Pro lapses so they can still be removed)
+  const refreshShares = async (): Promise<void> => {
+    if (!jwt) return;
+    try {
+      setShares(await listShares(jwt));
+    } catch (err) {
+      console.warn(err);
+      setShares([]);
+    }
+  };
+
+  const closeShared = () => {
+    setSharedId(null);
+    setCopyError('');
+    setPendingCopy(false);
+    window.history.replaceState(null, '', window.location.pathname);
+  };
+
+  const copySharedToGarage = async () => {
+    if (!sharedId) return;
+    if (!jwt) {
+      //sign in first; the copy runs once the app token arrives
+      setPendingCopy(true);
+      login();
+      return;
+    }
+    setPendingCopy(false);
+    setCopying(true);
+    setCopyError('');
+    try {
+      await copyShare(jwt, sharedId);
+      closeShared();
+      setNotice({ severity: 'success', text: 'Copied to your garage.' });
+      setIsLoading(true);
+      getBikes();
+    } catch (err: any) {
+      if (err?.code === 'FREE_LIMIT') openUpgrade('limit');
+      if (err?.status === 401) logout();
+      setCopyError(err?.message || 'Could not copy this setup. Please try again.');
+    }
+    setCopying(false);
+  };
+
+  useEffect(() => {
+    if (jwt && pendingCopy) copySharedToGarage();
+  }, [jwt, pendingCopy]);
 
   //Pro: every saved setup for every bike, loaded once and refreshed after changes
   const refreshSetups = async (): Promise<void> => {
@@ -191,6 +260,8 @@ function App() {
       setAccount(a);
       if (a.plan === 'pro' && a.billingEnabled) refreshSetups();
       else setSetups([]);
+      if (a.billingEnabled) refreshShares();
+      else setShares([]);
       return a;
     } catch (err: any) {
       console.warn(err);
@@ -336,24 +407,28 @@ function App() {
     setBikes([]);
     setAccount(undefined);
     setSetups([]);
+    setShares([]);
   };
 
   const pastDue = account?.plan === 'pro' && account.planStatus === 'past_due';
 
   return (
     <ThemeProvider theme={theme}>
-    <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading, token: jwt, refreshBikes: getBikes, account, refreshAccount, openUpgrade, manageBilling, setups, refreshSetups }}>
+    <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading, token: jwt, refreshBikes: getBikes, account, refreshAccount, openUpgrade, manageBilling, setups, refreshSetups, shares, refreshShares }}>
       <Radio
         visible={isLoading}
         height="80px"
         width="80px"
-        colors={["#4fa94d", "#4fa94d", "#4fa94d"]}
+        colors={SPINNER_COLORS}
         ariaLabel="radio-loading"
         wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "1400", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
         wrapperClass="test"
       />
       <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}/>
-      {isAauthenticated && profile && bikes ? 
+      {sharedId ?
+        <SharedSetupView shareId={sharedId} signedIn={!!jwt} copying={copying} copyError={copyError}
+          onCopy={copySharedToGarage} onClose={closeShared} />
+      : isAauthenticated && profile && bikes ? 
         <div className='bikeInputForm'>
           {pastDue && (
             <Alert severity='warning' sx={{ maxWidth: 600, mx: 'auto', mb: 2 }}
