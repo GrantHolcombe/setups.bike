@@ -98,3 +98,18 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+.setupPicker {
+    padding: 0px 15px 10px;
+}
+
+.setupPickerLabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.setupNameIdeas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}

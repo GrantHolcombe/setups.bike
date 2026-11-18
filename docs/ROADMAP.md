@@ -3,6 +3,13 @@
 Written 2026-11-17. Order of work: **Pro plan → Pro features → PWA → app stores.**
 Each phase ships on its own, so the app keeps working between phases.
 
+**Changed 2026-11-18:** Phase 1 is built and fully tested in Stripe test mode, but **Pro does
+not launch yet**. Stripe stays in test mode and billing stays switched on only for Grant
+(`BILLING_ENABLED_FOR=1`) while the Phase 2 features are built and tested one at a time, behind
+the same Pro check. Pro launches (Phase 1's "Before switching to live keys" checklist, then
+`BILLING_ENABLED_FOR=all`) once there are features worth buying. Everyone else keeps today's
+app in the meantime, with no bike limit and no Go Pro.
+
 ## Plans
 
 | | Free | Pro |
@@ -12,7 +19,7 @@ Each phase ships on its own, so the app keeps working between phases.
 | Today's features: tire pressure, suspension settings, tokens, reordering | ✅ | ✅ |
 | Multiple saved setups per bike | — | ✅ |
 | Ride notes (how a setup rode on a trail) | — | ✅ |
-| Suggested starting settings | — | ✅ |
+| Suggested starting settings | — | Deferred (see 2.4) |
 | Share a setup with a friend | — | ✅ (anyone can view a shared link) |
 
 Rules:
@@ -191,7 +198,11 @@ then Free. Notes: in flexible billing mode a portal cancel sets `cancel_at` rath
 `cancel_at_period_end` (the webhook handles both); events can arrive out of order (handled by
 re-reading the subscription); an event for an old subscription is ignored.
 
-## Phase 2: Pro features (one release each)
+## Phase 2: Pro features (one release each, before the Pro launch)
+
+Built and tested with Pro switched on only for Grant. Each feature checks Pro **in its Lambda**
+(the same `plan = 'pro'` and `BILLING_ENABLED_FOR` rules as addBike), so it stays invisible
+and unusable for everyone else until launch.
 
 ### 2.1 Multiple setups per bike
 Named presets per bike, such as "Bike park", "XC" or "Wet".
@@ -202,6 +213,15 @@ Named presets per bike, such as "Bike park", "XC" or "Wet".
   Switching copies a preset back onto the bike.
 - UI: a setup picker on each bike card, with "Save as new setup", rename and delete.
 - Lambdas: list, save, apply, rename and delete setups, all checking ownership and Pro.
+- **Names and settings are always the user's own** (decided 2026-11-18). "Save as new setup"
+  snapshots the bike's current settings under any name the user types. A few optional name
+  chips ("Trail", "Bike park", "XC", "Wet", "Race") just fill in the name box; they never
+  carry settings. The app never suggests values.
+- Design (agreed 2026-11-18): the bike row stays the current setup; `bike.active_setup_id`
+  records which preset is applied; the picker shows "(edited)" when the bike no longer
+  matches it (compared in the app); switching with unsaved changes asks first; presets
+  cascade-delete with their bike; one Lambda `SetupsDotBike_bikeSetups` behind one route; if
+  Pro lapses, presets are hidden, not deleted.
 
 ### 2.2 Ride notes
 Log how a setup rode: date, trail, conditions, a 1–5 rating, and free text.
@@ -220,7 +240,14 @@ Log how a setup rode: date, trail, conditions, a 1–5 rating, and free text.
 - Note: the site is served from S3, so `/s/<id>` needs the app to handle that path. That
   means a client-side route plus an S3/Cloudflare rule that serves `index.html` for it.
 
-### 2.4 Suggested starting settings
+### 2.4 Suggested starting settings (deferred, not part of the Pro launch)
+**Deferred 2026-11-18:** without real data this is a guess, and Grant doesn't want the app (or
+himself) to be blamed for a crash on a suggested setup. Pro launches with 2.1–2.3 only.
+Revisit once there's enough anonymous, aggregated setup data from real users to show what
+riders actually run (for example, "riders on this fork at your weight typically run X–Y psi"),
+always framed as what others use rather than a recommendation, and after a legal review of
+the wording. The notes below are kept for then.
+
 A starting point from rider weight, riding style and fork/shock model.
 - The hardest feature, because it needs **data**:
   - Start with general, well-known rules, such as setting air pressure to reach a target

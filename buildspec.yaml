@@ -1,4 +1,8 @@
 version: 0.2
+env:
+  variables:
+    # Skip source maps: faster builds, and the site doesn't publish a readable copy of the source.
+    GENERATE_SOURCEMAP: "false"
 phases:
   install:
     #If you use the Ubuntu standard image 2.0 or later, you must specify runtime-versions.
@@ -8,7 +12,8 @@ phases:
   pre_build:
     commands:
       - echo Installing source NPM dependencies...
-      - npm install
+      # npm ci installs exactly what package-lock.json says, and is faster than npm install
+      - npm ci --no-audit --no-fund
   build:
     commands:
       - echo Build started on 'date'

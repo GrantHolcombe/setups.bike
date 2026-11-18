@@ -10,6 +10,7 @@ import Header from './components/Header/Header';
 import { Alert, Button, Snackbar } from '@mui/material';
 import UpgradeDialog, { UpgradeReason } from './components/Billing/UpgradeDialog';
 import { IAccount, getAccount, openBillingPortal } from './billing';
+import { IBikeSetup, listSetups } from './setups';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 export interface IUser {
@@ -39,7 +40,9 @@ export interface IBike {
   rear_sus_rebound_2: number,
   rear_sus_rebound_count: number,
   rear_tokens: number,
-  garage_order: number
+  garage_order: number,
+  //Pro: the saved setup last applied or saved on this bike
+  active_setup_id?: number | null
 }
 
 export interface IProfile {
@@ -95,6 +98,8 @@ export type AppContent = {
   refreshAccount: () => Promise<IAccount | undefined>
   openUpgrade: (reason?: UpgradeReason) => void
   manageBilling: () => void
+  setups: IBikeSetup[]
+  refreshSetups: () => Promise<void>
 }
 export const AppContext = createContext<AppContent>({
   loading: true,
@@ -103,7 +108,9 @@ export const AppContext = createContext<AppContent>({
   refreshBikes: () =>{},
   refreshAccount: async () => undefined,
   openUpgrade: () => {},
-  manageBilling: () => {}
+  manageBilling: () => {},
+  setups: [],
+  refreshSetups: async () => {}
 })
 export const useAppContext = () => useContext(AppContext)
 
@@ -163,12 +170,27 @@ function App() {
   const [upgrade, setUpgrade] = useState<{ open: boolean, reason: UpgradeReason }>({ open: false, reason: 'menu' });
   const [notice, setNotice] = useState<{ severity: 'success' | 'info' | 'error', text: string } | null>(null);
 
+  const [setups, setSetups] = useState<IBikeSetup[]>([]);
+
+  //Pro: every saved setup for every bike, loaded once and refreshed after changes
+  const refreshSetups = async (): Promise<void> => {
+    if (!jwt) return;
+    try {
+      setSetups(await listSetups(jwt));
+    } catch (err) {
+      console.warn(err);
+      setSetups([]);
+    }
+  };
+
   //plan, bike count and limit for the signed-in user
   const refreshAccount = async (): Promise<IAccount | undefined> => {
     if (!jwt) return undefined;
     try {
       const a = await getAccount(jwt);
       setAccount(a);
+      if (a.plan === 'pro' && a.billingEnabled) refreshSetups();
+      else setSetups([]);
       return a;
     } catch (err: any) {
       console.warn(err);
@@ -313,13 +335,14 @@ function App() {
     setJwt("");
     setBikes([]);
     setAccount(undefined);
+    setSetups([]);
   };
 
   const pastDue = account?.plan === 'pro' && account.planStatus === 'past_due';
 
   return (
     <ThemeProvider theme={theme}>
-    <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading, token: jwt, refreshBikes: getBikes, account, refreshAccount, openUpgrade, manageBilling }}>
+    <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading, token: jwt, refreshBikes: getBikes, account, refreshAccount, openUpgrade, manageBilling, setups, refreshSetups }}>
       <Radio
         visible={isLoading}
         height="80px"

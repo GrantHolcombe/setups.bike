@@ -16,7 +16,6 @@ const FEATURES = [
   'Unlimited bikes in your garage',
   'Multiple saved setups per bike',
   'Ride notes for every setup',
-  'Suggested starting settings',
   'Share setups with friends',
 ];
 

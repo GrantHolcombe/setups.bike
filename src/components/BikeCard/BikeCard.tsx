@@ -3,6 +3,7 @@ import { useContext, useEffect, useState, useRef } from 'react';
 import React from 'react';
 import SusMenu from './SusMenu';
 import TokenInput from './TokenInput/TokenInput';
+import SetupPicker from './SetupPicker';
 import { AppContext, IBike, useAppContext } from '../../App';
 import axios from 'axios';
 
@@ -13,6 +14,9 @@ export interface IBikeCardProps {
 function BikeCard({thisBike}: IBikeCardProps) {
   const [bike, setBike] = useState<IBike>(thisBike);
   const {loading, setLoading, token} = useAppContext();
+
+  //take the server's version when the garage reloads (e.g. after applying a saved setup)
+  useEffect(() => { setBike(thisBike); }, [thisBike]);
 
   const setBikeVal = (target: any, value: number) => {
     let update: any = {...bike}
@@ -40,6 +44,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
       <div>
         <div className='modelHeader'>{bike.model}</div>
         <div className='brandHeader'>{bike.brand}</div>
+        <SetupPicker bike={bike} />
       </div>
       <div className='cardBody'>
         <div className='tireSection front'>
