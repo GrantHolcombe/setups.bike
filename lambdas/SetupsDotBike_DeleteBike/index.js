@@ -42,14 +42,27 @@ exports.handler = async (event) => {
       return reply(400, { error: "deleteList must be bike ids" });
     }
     await client.connect();
-    // Only deletes bikes that belong to the signed-in user.
+    await client.query("BEGIN");
+    // Only deletes bikes that belong to the signed-in user. Their garage_order rows go
+    // with them (ON DELETE CASCADE).
     const res = await client.query(
       "DELETE FROM bike WHERE bike_id = ANY($1::bigint[]) AND app_user_id = $2",
       [deleteList, userId]
     );
+    // Close the gap the deleted bikes left, so the garage stays numbered 1..n.
+    await client.query(
+      `UPDATE garage_order g SET garage_order = r.pos
+         FROM (SELECT garage_order_id,
+                      row_number() OVER (ORDER BY garage_order, garage_order_id) AS pos
+                 FROM garage_order WHERE app_user_id = $1) r
+        WHERE g.garage_order_id = r.garage_order_id AND g.garage_order <> r.pos`,
+      [userId]
+    );
+    await client.query("COMMIT");
     console.log("user", userId, "deleted bikes", deleteList, "rows", res.rowCount);
     return reply(200, res.rows);
   } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
     console.error(err);
     return reply(500, { error: "deleteBike failed" });
   } finally {

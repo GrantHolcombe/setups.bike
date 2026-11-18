@@ -41,26 +41,22 @@ export default function ReorderGarageModal({open, closeModal, bikeList}: IReorde
         closeModal();
     }
     useEffect(() => {
-        if (bikeList) { setTempList(bikeList) }
-    }, [bikeList]);
+        //work on copies numbered 1..n by list position: stored positions can have gaps
+        //(e.g. after a bike is deleted), and editing the app's own bike objects would
+        //change the garage before Save
+        if (bikeList && open) {
+            setTempList(bikeList.map((b, i) => ({ ...b, garage_order: i + 1 })));
+            setHasChange(false);
+        }
+    }, [bikeList, open]);
 
     const reorder = (isUp: boolean, bike_id: number) => {
-        let temp: IBike[] = [...tempList],
-            bikeIndex = tempList.findIndex(item => item.bike_id === bike_id);
-        if (isUp) {
-            if (bikeIndex > 0) {
-                temp[bikeIndex - 1].garage_order = bikeIndex + 1;
-                temp[bikeIndex].garage_order = bikeIndex;
-                setTempList(temp.sort((a, b) => a.garage_order - b.garage_order));
-            }
-        }
-        else {
-            if (bikeIndex < tempList.length - 1) {
-                temp[bikeIndex + 1].garage_order = bikeIndex + 1;
-                temp[bikeIndex].garage_order = bikeIndex + 2;
-                setTempList(temp.sort((a, b) => a.garage_order - b.garage_order));
-            }
-        }
+        const from = tempList.findIndex(item => item.bike_id === bike_id);
+        const to = isUp ? from - 1 : from + 1;
+        if (from < 0 || to < 0 || to >= tempList.length) return;
+        const temp = [...tempList];
+        [temp[from], temp[to]] = [temp[to], temp[from]];
+        setTempList(temp.map((b, i) => ({ ...b, garage_order: i + 1 })));
         if(!hasChange) setHasChange(true);
     }
 
@@ -98,12 +94,15 @@ export default function ReorderGarageModal({open, closeModal, bikeList}: IReorde
                 <Typography variant="subtitle2" sx={{paddingTop: 2, paddingBottom: 1}} component="div">
                     Feel free to move bikes up or down in priority:
                 </Typography>
-                    {tempList.map((e: IBike, i: Number) => {
+                    {tempList.map((e: IBike, i: number) => {
+                        //first bike can't move up, last bike can't move down
+                        const isFirst = i === 0;
+                        const isLast = i === tempList.length - 1;
                         return(
                             <div key={e.bike_id} style={{display: "flex", justifyContent: "flex-start", alignItems: "center", height: "24px", padding: "10px 0px"}}>
-                                <KeyboardArrowUp style={e.garage_order == 1 ? {color: 'grey'} : {color: 'orange', cursor: 'pointer'}} onClick={() => reorder(true, e.bike_id)}/>
+                                <KeyboardArrowUp style={isFirst ? {color: 'grey'} : {color: 'orange', cursor: 'pointer'}} onClick={() => { if (!isFirst) reorder(true, e.bike_id); }}/>
                                 <div style={{width: '2px', height: '100%', backgroundColor: 'grey'}}></div>
-                                <KeyboardArrowDown style={e.garage_order == tempList.length ? {color: 'grey'} : {color: 'orange', cursor: 'pointer'}} onClick={() => reorder(false, e.bike_id)}/>
+                                <KeyboardArrowDown style={isLast ? {color: 'grey'} : {color: 'orange', cursor: 'pointer'}} onClick={() => { if (!isLast) reorder(false, e.bike_id); }}/>
                                 <Typography variant="subtitle2" sx={{paddingTop: 1, paddingBottom: 1}} component="div">
                                     {e.brand} {e.model} {e.garage_order}
                                 </Typography>
