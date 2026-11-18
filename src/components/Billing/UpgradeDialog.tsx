@@ -21,7 +21,7 @@ const FEATURES = [
 ];
 
 export default function UpgradeDialog({ open, reason, onClose }: IUpgradeDialogProps) {
-  const { token, account } = useAppContext();
+  const { token, account, setLoading } = useAppContext();
   const [busy, setBusy] = React.useState<BillingInterval | null>(null);
   const [error, setError] = React.useState<string>('');
 
@@ -32,10 +32,13 @@ export default function UpgradeDialog({ open, reason, onClose }: IUpgradeDialogP
   const choose = async (interval: BillingInterval) => {
     setBusy(interval);
     setError('');
+    //same full-screen spinner as Manage Subscription while Stripe's page loads
+    setLoading(true);
     try {
       const { url } = await startCheckout(token, interval);
       window.location.assign(url);
     } catch (err: any) {
+      setLoading(false);
       setBusy(null);
       setError(err?.message || "Couldn't start checkout. Please try again.");
     }

@@ -326,7 +326,7 @@ function App() {
         width="80px"
         colors={["#4fa94d", "#4fa94d", "#4fa94d"]}
         ariaLabel="radio-loading"
-        wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "999", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
+        wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "1400", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
         wrapperClass="test"
       />
       <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}/>

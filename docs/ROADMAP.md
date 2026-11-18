@@ -169,7 +169,9 @@ rate, freemium, Customer Portal, Smart Retries):
       `https://setups.bike/privacy.html`, terms `https://setups.bike/terms.html`, support
       email `grant@hiregrant.today`. (Not available in the sandbox.)
 - [ ] Create the Pro product and prices (lookup keys `pro_monthly`, `pro_yearly`), the
-      Customer Portal configuration, and the webhook endpoint again in live mode, then put
+      Customer Portal configuration (plan switches use **`always_invoice`**, so an upgrade is
+      charged right away; `create_prorations` deferred the difference to the next renewal, as
+      found in testing 2026-11-17), and the webhook endpoint again in live mode, then put
       the live `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in the three Lambdas.
 
 **Done when:** in Stripe test mode, a test card upgrades an account, a 4th bike can be added,

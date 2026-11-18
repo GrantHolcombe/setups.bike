@@ -21,6 +21,7 @@ export default function DeleteBikeModal({open, closeModal, bikeList}: IDeleteBik
         width: 315,
         bgcolor: 'background.paper',
         boxShadow: 24,
+        outline: "none",
         borderRadius: '8px',
         p: 4,
     };
