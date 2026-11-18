@@ -71,8 +71,26 @@ Rules:
 - **How migrations run:** test on a Neon branch first, take a `pg_dump -Fc` backup of
   production, dry run (the default rolls back), then apply with `-v apply=1`. Re-dump
   `db/schema.sql` after each one so it stays current.
-- [ ] Basic legal pages before taking money: **Terms**, **Privacy Policy** (also required by
-      both app stores later), and a **refund policy**. Stripe also asks for a support email.
+- [x] **Legal pages and support email.** Done 2026-11-17: Terms, Privacy Policy and Refund
+      Policy at `/terms.html`, `/privacy.html` and `/refunds.html`, linked from the app footer.
+      Edit `legal/site.config.json` (support email, prices, refund window and so on) or
+      `legal/templates/`; the build regenerates the pages. Worth a review by someone qualified
+      before taking real money.
+
+**Keeping the public repo safe** (the repo stays public as a portfolio piece; Pro is enforced
+by the Lambdas, so readable code doesn't open a way around it):
+- [ ] **Decide on a license.** With no `LICENSE` file, others can read the code but have no
+      right to reuse it, which suits a portfolio project you sell. Don't add an open-source
+      license (MIT and the like) unless you mean to allow reuse. Optionally add a README line:
+      "Source shown for portfolio purposes. All rights reserved."
+- [ ] **Turn on GitHub secret scanning and push protection** (repo Settings > Code security).
+      Free for public repos; it blocks a push that contains a Stripe or AWS key. The only secret
+      ever committed is the old JWT secret, rotated twice on 2026-11-17 and now useless.
+- [ ] **Optional: limit which IPs can reach Neon.** Low priority while the password stays
+      private. The Lambdas have no fixed IPs, so this may need a paid Neon feature or a
+      different network setup.
+- [ ] **Later: keep curated data out of the repo.** If the Phase 2.4 suggested-settings table
+      becomes valuable, store it only in the database rather than in a migration file.
 - [x] **Sales tax: not collected at launch** (decided 2026-11-17). Turn on Stripe Tax's free
       **threshold monitoring** instead: set the product's tax category and your head office
       address in the Dashboard. Stripe then alerts you before sales in any state or country
