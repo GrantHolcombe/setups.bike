@@ -174,9 +174,22 @@ rate, freemium, Customer Portal, Smart Retries):
       found in testing 2026-11-17), and the webhook endpoint again in live mode, then put
       the live `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in the three Lambdas.
 
+- [x] **Stale test-mode Stripe ids** (only user 1 has any). Done 2026-11-18: createCheckoutSession
+      and createPortalSession now check the stored customer still exists in the current mode;
+      if not, checkout starts fresh with the user's email, the portal says "No subscription to
+      manage yet", and the stale ids are cleared. Nothing to do by hand at go-live.
+
 **Done when:** in Stripe test mode, a test card upgrades an account, a 4th bike can be added,
 cancelling in the portal reverts to Free at period end, and a failed renewal is handled.
 Then switch to live keys.
+
+**Test results (sandbox, 2026-11-17/18), all passing:** checkout → Pro; more than 3 bikes
+on Pro; monthly → yearly charges $21.01 at once; immediate cancel → Free; failed renewal
+(test clock + declining card) → Pro past due with the "update your card" warning, then Free
+after 2 weeks of retries; cancel in the portal → "Pro until" period end, no renewal charge,
+then Free. Notes: in flexible billing mode a portal cancel sets `cancel_at` rather than
+`cancel_at_period_end` (the webhook handles both); events can arrive out of order (handled by
+re-reading the subscription); an event for an old subscription is ignored.
 
 ## Phase 2: Pro features (one release each)
 

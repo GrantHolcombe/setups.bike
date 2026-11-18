@@ -24,6 +24,25 @@ const billingEnabledFor = (userId) => {
   return v === "all" || v.split(",").map((s) => s.trim()).includes(String(userId));
 };
 
+// A stored Stripe customer can stop existing: a sandbox customer after switching to live
+// keys, or a deleted test customer. Treat it as "no customer yet" and clear the stale ids,
+// instead of failing.
+async function usableCustomer(stripe, db, userId, customerId) {
+  if (!customerId) return null;
+  try {
+    const c = await stripe.customers.retrieve(customerId);
+    if (!c.deleted) return customerId;
+  } catch (err) {
+    if (err.code !== "resource_missing") throw err;
+  }
+  await db.query(
+    "UPDATE app_user SET stripe_customer_id = NULL, stripe_subscription_id = NULL WHERE app_user_id = $1 AND stripe_customer_id = $2",
+    [userId, customerId]
+  );
+  console.warn("cleared stale Stripe customer for user", userId);
+  return null;
+}
+
 const PRICE_LOOKUP_KEYS = { month: "pro_monthly", year: "pro_yearly" };
 
 const newClient = () => new Client({
@@ -71,6 +90,7 @@ exports.handler = async (event) => {
     if (rows.length === 0) return reply(401, { error: "Please sign in again" });
     const user = rows[0];
     if (user.plan === "pro") return reply(409, { error: "You're already on Pro", code: "ALREADY_PRO" });
+    const customerId = await usableCustomer(stripe, client, userId, user.stripe_customer_id);
 
     const prices = await stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 });
     if (prices.data.length === 0) {
@@ -84,8 +104,8 @@ exports.handler = async (event) => {
       // Lets the webhook match the payment to this user.
       client_reference_id: String(userId),
       // Reuse the Stripe customer if they've paid before; otherwise prefill their email.
-      ...(user.stripe_customer_id
-        ? { customer: user.stripe_customer_id }
+      ...(customerId
+        ? { customer: customerId }
         : { customer_email: user.email_address }),
       subscription_data: { metadata: { app_user_id: String(userId) } },
       metadata: { app_user_id: String(userId) },

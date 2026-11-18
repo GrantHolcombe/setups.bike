@@ -17,6 +17,25 @@ const reply = (statusCode, body) => ({ statusCode, body: JSON.stringify(body), h
 
 const APP_URL = (process.env.APP_URL || "https://setups.bike").replace(/\/$/, "");
 
+// A stored Stripe customer can stop existing: a sandbox customer after switching to live
+// keys, or a deleted test customer. Treat it as "no customer yet" and clear the stale ids,
+// instead of failing.
+async function usableCustomer(stripe, db, userId, customerId) {
+  if (!customerId) return null;
+  try {
+    const c = await stripe.customers.retrieve(customerId);
+    if (!c.deleted) return customerId;
+  } catch (err) {
+    if (err.code !== "resource_missing") throw err;
+  }
+  await db.query(
+    "UPDATE app_user SET stripe_customer_id = NULL, stripe_subscription_id = NULL WHERE app_user_id = $1 AND stripe_customer_id = $2",
+    [userId, customerId]
+  );
+  console.warn("cleared stale Stripe customer for user", userId);
+  return null;
+}
+
 const newClient = () => new Client({
   host: process.env.RDS_HOSTNAME,
   user: process.env.RDS_USERNAME,
@@ -56,13 +75,13 @@ exports.handler = async (event) => {
       [userId]
     );
     if (rows.length === 0) return reply(401, { error: "Please sign in again" });
-    if (!rows[0].stripe_customer_id) {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const customerId = await usableCustomer(stripe, client, userId, rows[0].stripe_customer_id);
+    if (!customerId) {
       return reply(404, { error: "No subscription to manage yet", code: "NO_BILLING" });
     }
-
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const session = await stripe.billingPortal.sessions.create({
-      customer: rows[0].stripe_customer_id,
+      customer: customerId,
       return_url: `${APP_URL}/?portal=return`
     });
     return reply(200, { url: session.url });
