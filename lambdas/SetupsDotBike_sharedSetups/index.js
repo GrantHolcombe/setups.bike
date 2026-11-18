@@ -5,6 +5,7 @@
 //
 // Actions:
 //   view    {shareId}             no sign-in   -> the shared snapshot (404 once revoked)
+//   preview {shareId}             no sign-in   -> same, for link previews; not counted as a view
 //   create  {token, bikeId}       Pro          -> a link for the bike's current settings
 //   list    {token}               signed in    -> the user's own links, so they can revoke them
 //   revoke  {token, shareId}      signed in    -> hides a link for good
@@ -75,6 +76,16 @@ async function view(db, _userId, body) {
     [shareId]
   );
   if (rows.length === 0) return reply(404, { error: "This shared setup doesn't exist or was removed", code: "NOT_FOUND" });
+  return reply(200, { share: rows[0] });
+}
+
+// Same public fields as view, for the link-preview Worker. Doesn't count as a view.
+async function preview(db, _userId, body) {
+  const shareId = asShareId(body.shareId);
+  const { rows } = shareId
+    ? await db.query(`SELECT ${PUBLIC_COLUMNS} FROM shared_setup WHERE share_id = $1 AND revoked_at IS NULL`, [shareId])
+    : { rows: [] };
+  if (rows.length === 0) return reply(404, { error: "Not found", code: "NOT_FOUND" });
   return reply(200, { share: rows[0] });
 }
 
@@ -164,7 +175,7 @@ async function copy(db, userId, body, user) {
   return reply(200, { bikeId: rows[0].bike_id });
 }
 
-const ACTIONS = { view, create, list, revoke, copy };
+const ACTIONS = { view, preview, create, list, revoke, copy };
 
 exports.handler = async (event) => {
   let body;
@@ -177,7 +188,7 @@ exports.handler = async (event) => {
   if (!action) return reply(400, { error: "Unknown action" });
 
   let userId = null;
-  if (body.action !== "view") {
+  if (body.action !== "view" && body.action !== "preview") {
     userId = userIdFrom(body.token);
     if (userId === null) return reply(401, { error: "Please sign in again" });
   }
