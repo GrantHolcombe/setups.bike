@@ -20,7 +20,8 @@
   }
 
 .welcomeHeading h2 {
-    color:white;
+    /* dark text on the gold header bar (7.6:1); white was 2.2:1 */
+    color: var(--ink, #1c1c1c);
     z-index: 888;
 }
 

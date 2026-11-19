@@ -54,7 +54,7 @@ export default function UpgradeDialog({ open, reason, onClose }: IUpgradeDialogP
         )}
         {FEATURES.map((f) => (
           <Typography key={f} variant='body2' sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
-            <CheckCircleOutline fontSize='small' sx={{ color: 'goldenrod' }} /> {f}
+            <CheckCircleOutline fontSize='small' sx={{ color: 'var(--gold-text)' }} /> {f}
           </Typography>
         ))}
         <Typography variant='caption' component='p' sx={{ mt: 2, color: 'text.secondary' }}>

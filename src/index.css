@@ -10,6 +10,10 @@
   --border: #cdcdcd;
   --divider: #eeeeee;
   --input-bg: transparent;
+  /* brand gold used as text, outlines and icons: deeper in light mode so it's readable on
+     white (5.3:1); the gold fill itself (#daa530) is unchanged */
+  --gold-text: #8a6514;
+  --ink: #1c1c1c;
   --shadow: 0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12);
 }
 
@@ -21,6 +25,7 @@
     --text-muted: #b0b0b0;
     --border: #4a4a4a;
     --divider: #333333;
+    --gold-text: #daa530;
     --shadow: 0px 5px 5px -3px rgba(0, 0, 0, 0.6), 0px 8px 10px 1px rgba(0, 0, 0, 0.5), 0px 3px 14px 2px rgba(0, 0, 0, 0.45);
   }
 }

@@ -83,7 +83,7 @@ export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}:
                     Manage Subscription
                     <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{proUntil ? `Pro until ${proUntil}` : 'Pro plan'}</span>
                   </MenuItem>
-                : account?.billingEnabled && <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)', color: 'goldenrod', fontWeight: 600}}
+                : account?.billingEnabled && <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)', color: 'var(--gold-text)', fontWeight: 600}}
                     onClick={() => { setAnchorEl(null); openUpgrade('menu');}}>Go Pro</MenuItem>}
             {installOption && (
               <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)'}} onClick={() => {

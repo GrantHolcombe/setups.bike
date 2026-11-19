@@ -75,23 +75,46 @@ const makeTheme = (mode: 'light' | 'dark') => createTheme({
     ...(mode === 'dark' && { background: { default: '#121212', paper: '#1e1e1e' } }),
     primary: {
       main: '#daa530',
+      // dark text on gold fills (7.6:1); white on gold was 2.2:1
+      contrastText: '#1c1c1c',
     },
     secondary: {
       main: '#FF0000',
     },
   },
   components: {
-    // Name of the component
+    // Gold used as text or an outline follows --gold-text (deeper in light mode, bright in dark)
     MuiButton: {
       styleOverrides: {
-        // Name of the slot
         root: ({ ownerState }) => ({
-          ...(ownerState.variant === 'contained' &&
-            ownerState.color === 'primary' && {
-              color: '#fff',
-            }),
+          ...(ownerState.color === 'primary' && ownerState.variant !== 'contained' && {
+            color: 'var(--gold-text)',
+          }),
+          ...(ownerState.color === 'primary' && ownerState.variant === 'outlined' && {
+            borderColor: 'var(--gold-text)',
+          }),
         }),
       },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: ({ ownerState }) => ({
+          ...(ownerState.color === 'primary' && ownerState.variant === 'outlined' && {
+            color: 'var(--gold-text)',
+            borderColor: 'var(--gold-text)',
+          }),
+        }),
+      },
+    },
+    // focused text fields: label and underline
+    MuiInputLabel: {
+      styleOverrides: { root: { '&.Mui-focused': { color: 'var(--gold-text)' } } },
+    },
+    MuiInput: {
+      styleOverrides: { underline: { '&:after': { borderBottomColor: 'var(--gold-text)' } } },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: { root: { '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--gold-text)' } } },
     },
   },
 });
