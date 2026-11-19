@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TuCz4poyrR0dtv13vbxaJ3KJkrbrTFFtdW72kBTVA5p3SPBIS8d5c2mA60moePG
+\restrict n7x4f0lhSCFkeprnyno2Gj9fsyaZtWN7FOcC380Oaf1CJmYzRHQSt4n36eSZoQC
 
 -- Dumped from database version 18.7 (a21afb5)
 -- Dumped by pg_dump version 18.6
@@ -108,7 +108,7 @@ CREATE TABLE public.app_user (
     stripe_subscription_id text,
     CONSTRAINT app_user_plan_check CHECK ((plan = ANY (ARRAY['free'::text, 'pro'::text]))),
     CONSTRAINT app_user_plan_interval_check CHECK (((plan_interval IS NULL) OR (plan_interval = ANY (ARRAY['month'::text, 'year'::text])))),
-    CONSTRAINT app_user_plan_source_check CHECK (((plan_source IS NULL) OR (plan_source = ANY (ARRAY['stripe'::text, 'apple'::text, 'google'::text]))))
+    CONSTRAINT app_user_plan_source_check CHECK (((plan_source IS NULL) OR (plan_source = ANY (ARRAY['stripe'::text, 'apple'::text, 'google'::text, 'comp'::text]))))
 );
 ALTER TABLE ONLY public.app_user ALTER COLUMN plan SET (pg_attver=31955024);
 ALTER TABLE ONLY public.app_user ALTER COLUMN plan_source SET (pg_attver=31956416);
@@ -511,5 +511,5 @@ ALTER TABLE ONLY public.shared_setup
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TuCz4poyrR0dtv13vbxaJ3KJkrbrTFFtdW72kBTVA5p3SPBIS8d5c2mA60moePG
+\unrestrict n7x4f0lhSCFkeprnyno2Gj9fsyaZtWN7FOcC380Oaf1CJmYzRHQSt4n36eSZoQC
 
