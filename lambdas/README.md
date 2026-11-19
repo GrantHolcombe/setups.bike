@@ -30,3 +30,7 @@ Compress-Archive -Force -Path index.js,package.json,package-lock.json,node_modul
 aws lambda update-function-code --region us-west-1 --function-name SetupsDotBike_GetBikes --zip-file fileb://function.zip
 ```
 Before deploying, publish a version (`aws lambda publish-version`) so you can roll back.
+
+Zips uploaded to `s3://codepipeline-us-west-1-708924771225/lambda-deploys/` (the presigned-URL
+deploy path) are deleted automatically after 7 days by the bucket's lifecycle rule
+`expire-lambda-deploy-zips` (added 2026-11-19). Lambda keeps its own copy of each version.

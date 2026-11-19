@@ -295,11 +295,16 @@ after a logo or tagline change. There's no service worker yet.
       `og-image.png` (logo tile on gold plus a tagline). The site is static, so every link,
       shared setups included, gets the same preview; per-setup previews would need a server
       (for example a Lambda@Edge or Cloudflare Worker that fills in the tags).
-- [ ] Service worker: cache the app shell (HTML, JS, CSS, images) so it opens fast and offline.
+- [x] Service worker: cache the app shell (HTML, JS, CSS, images) so it opens fast and offline.
       **Never cache API responses**, so data is always fresh.
 - [x] iOS: `apple-touch-icon` at the right size, the status bar style, and a splash colour.
-- [ ] An "Install app" prompt on Android and Chrome, and short "Add to Home Screen" help for iOS.
-- [ ] Check with Lighthouse's PWA audit.
+- [x] An "Install app" prompt on Android and Chrome, and short "Add to Home Screen" help for iOS.
+- [x] Check with Lighthouse's PWA audit. Done 2026-11-19 with Lighthouse 9 (v12 dropped the PWA
+      category): PWA, accessibility and SEO 100; performance 37 -> 81 after replacing
+      react-loader-spinner (local production build, simulated slow phone).
+- Service worker notes: `src/service-worker.ts` precaches the app shell and same-origin images,
+  never the API; updates wait for "A new version is ready · Reload"; `service-worker.js` and
+  `manifest.json` are uploaded with no-cache (buildspec).
 
 ## Phase 3.5: Partner referrals and promo codes (after the Pro launch, web first)
 
