@@ -13,6 +13,7 @@ import { IBikeSetup, listSetups } from './setups';
 import { IShare, SHARE_PARAM, copyShare, listShares } from './shares';
 import SharedSetupView from './components/Shared/SharedSetupView';
 import { SPINNER_COLORS } from './components/Spinner';
+import { applyUpdate, useUpdateAvailable } from './pwa';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
@@ -184,6 +185,15 @@ function App() {
   const [addBikeOpen, setAddBikeOpen] = useState<boolean>(false);
   const [account, setAccount] = useState<IAccount>();
   const [upgrade, setUpgrade] = useState<{ open: boolean, reason: UpgradeReason }>({ open: false, reason: 'menu' });
+  const updateReady = useUpdateAvailable();
+  const [offline, setOffline] = useState<boolean>(!navigator.onLine);
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
   const [notice, setNotice] = useState<{ severity: 'success' | 'info' | 'error', text: string } | null>(null);
 
   const [setups, setSetups] = useState<IBikeSetup[]>([]);
@@ -349,6 +359,12 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
+  //back online with a signed-in garage that never loaded: try again
+  useEffect(() => {
+    if (!offline && jwt !== "" && !bikes) getBikes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offline]);
+
   useEffect(() => {
     if(jwt !== "") {
       if (profile) saveSession({ token: jwt, profile });
@@ -392,6 +408,8 @@ function App() {
                   console.log(err);
                   //expired or invalid token: back to the sign-in screen
                   if (err.response?.status === 401) logout();
+                  //no connection: stop the spinner; the offline banner explains, and it retries when back online
+                  else if (!err.response) { setIsLoading(false); setOffline(!navigator.onLine); }
                 });
   }
   
@@ -432,6 +450,11 @@ function App() {
         wrapperClass="test"
       />
       <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}/>
+      {offline && (
+        <Alert severity='info' sx={{ maxWidth: 600, mx: 'auto', mb: 2, position: 'relative', zIndex: 1 }}>
+          You're offline. Changes can't be saved until you're back online.
+        </Alert>
+      )}
       {sharedId ?
         <SharedSetupView shareId={sharedId} signedIn={!!jwt} belowWelcome={isAauthenticated} copying={copying} copyError={copyError}
           onCopy={copySharedToGarage} onClose={closeShared} />
@@ -460,6 +483,12 @@ function App() {
 
       }
       <UpgradeDialog open={upgrade.open} reason={upgrade.reason} onClose={() => setUpgrade({ ...upgrade, open: false })} />
+      <Snackbar open={updateReady} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity='info' variant='filled'
+          action={<Button color='inherit' size='small' onClick={applyUpdate}>Reload</Button>}>
+          A new version of Setups.Bike is ready.
+        </Alert>
+      </Snackbar>
       <Snackbar open={!!notice} autoHideDuration={notice?.severity === 'success' ? 6000 : null} onClose={() => setNotice(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         {notice ? <Alert severity={notice.severity} onClose={() => setNotice(null)} variant='filled'>{notice.text}</Alert> : <span />}

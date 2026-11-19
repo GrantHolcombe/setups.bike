@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { registerServiceWorker } from './pwa';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -15,4 +16,7 @@ root.render(
     </React.StrictMode>
   </GoogleOAuthProvider>
 );
+
+// offline app shell and update notices (production builds only)
+registerServiceWorker();
 

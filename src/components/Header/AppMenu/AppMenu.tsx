@@ -7,6 +7,8 @@ import DeleteBikeModal from './DeleteBikeModal';
 import ReorderGarageModal from './ReorderGarageModal';
 import { IAppMenuProps } from '../Header';
 import { useAppContext } from '../../../App';
+import InstallHelpDialog from './InstallHelpDialog';
+import { promptInstall, useInstallOption } from '../../../pwa';
 
 export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}: IAppMenuProps) {
     const { account, openUpgrade, manageBilling } = useAppContext();
@@ -23,6 +25,9 @@ export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}:
     const [anchorEl, setAnchorEl] = React.useState<null | SVGSVGElement>(null);
     const [ deleteBikeOpen, setDeleteBikeOpen ] = React.useState<boolean>(false);
     const [ reorderGarageOpen, setReorderGarageOpen ] = React.useState<boolean>(false);
+    const [ installHelpOpen, setInstallHelpOpen ] = React.useState<boolean>(false);
+    //'prompt' = the browser can install it, 'ios' = show Add to Home Screen steps, null = installed or not possible
+    const installOption = useInstallOption();
     const open = Boolean(anchorEl);
 
     const handleClick = (event: React.MouseEvent<SVGSVGElement>) => {
@@ -80,10 +85,18 @@ export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}:
                   </MenuItem>
                 : account?.billingEnabled && <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)', color: 'goldenrod', fontWeight: 600}}
                     onClick={() => { setAnchorEl(null); openUpgrade('menu');}}>Go Pro</MenuItem>}
+            {installOption && (
+              <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)'}} onClick={() => {
+                  setAnchorEl(null);
+                  if (installOption === 'prompt') promptInstall();
+                  else setInstallHelpOpen(true);
+                }}>{installOption === 'prompt' ? 'Install App' : 'Add to Home Screen'}</MenuItem>
+            )}
             <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)'}} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
         </Menu>
         <AddBikeModal open={addBikeOpen} closeModal={handleModalClose} />
         <DeleteBikeModal open={deleteBikeOpen} closeModal={() => setDeleteBikeOpen(false)} bikeList={bikeList} />
+        <InstallHelpDialog open={installHelpOpen} onClose={() => setInstallHelpOpen(false)} />
         <ReorderGarageModal open={reorderGarageOpen} closeModal={() => setReorderGarageOpen(false)} bikeList={bikeList} />
     </div>
     );
