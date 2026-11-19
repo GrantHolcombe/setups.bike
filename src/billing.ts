@@ -6,7 +6,7 @@ export type BillingInterval = 'month' | 'year';
 
 export interface IAccount {
   plan: 'free' | 'pro';
-  planSource: 'stripe' | 'apple' | 'google' | null;
+  planSource: 'stripe' | 'apple' | 'google' | 'comp' | null;
   planStatus: string | null;
   interval: BillingInterval | null;
   renewsAt: string | null;

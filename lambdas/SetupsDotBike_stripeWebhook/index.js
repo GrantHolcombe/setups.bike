@@ -62,14 +62,14 @@ async function syncSubscription(stripe, db, subscriptionId, hintUserId) {
 
   // Find the user: by customer id first, then the app_user_id we put on the checkout.
   let { rows } = await db.query(
-    "SELECT app_user_id, stripe_subscription_id FROM app_user WHERE stripe_customer_id = $1",
+    "SELECT app_user_id, stripe_subscription_id, plan_source FROM app_user WHERE stripe_customer_id = $1",
     [customerId]
   );
   if (rows.length === 0) {
     const id = Number(hintUserId || sub.metadata?.app_user_id);
     if (Number.isInteger(id)) {
       ({ rows } = await db.query(
-        "SELECT app_user_id, stripe_subscription_id FROM app_user WHERE app_user_id = $1",
+        "SELECT app_user_id, stripe_subscription_id, plan_source FROM app_user WHERE app_user_id = $1",
         [id]
       ));
     }
@@ -79,6 +79,12 @@ async function syncSubscription(stripe, db, subscriptionId, hintUserId) {
     return;
   }
   const user = rows[0];
+
+  // Comped accounts (free Pro, set by hand) are never changed by Stripe.
+  if (user.plan_source === "comp") {
+    console.log("Ignoring subscription", sub.id, "for comped user", user.app_user_id);
+    return;
+  }
 
   // An old, finished subscription mustn't overwrite a newer one.
   if (user.stripe_subscription_id && user.stripe_subscription_id !== sub.id && !PRO_STATUSES.has(sub.status)) {
