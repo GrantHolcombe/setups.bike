@@ -25,7 +25,7 @@ export default function TokenInput({ count, onChange, invalid = false }: ITokenI
         </div>
     </div>
 
-    <div className={invalid ? 'controls saveFailed' : 'controls'} aria-invalid={invalid || undefined}>
+    <div className={invalid ? 'controls saveFailed' : 'controls'} role='group' aria-label='Token count'>
         <button aria-label='Remove a token' disabled={coins === 0} onClick={() => onChange(Math.max(0, coins - 1))}>-</button>
         <p className='tokenLabel'>Token Count ({coins})</p>
         <button aria-label='Add a token' disabled={coins === MAX_TOKENS} onClick={() => onChange(Math.min(MAX_TOKENS, coins + 1))}>+</button>

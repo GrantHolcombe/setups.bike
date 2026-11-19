@@ -1,9 +1,10 @@
-// App.tsx pulls in axios, which jest (CRA) can't parse; these tests never call it
-jest.mock('axios', () => ({ __esModule: true, default: {} }));
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { AppContext, AppContent } from '../../App';
 import BikeCard from './BikeCard';
 import { SAVE_DELAY_MS, SAVED_SHOWN_MS } from './useBikeSaver';
+
+// App.tsx pulls in axios, which jest (CRA) can't parse; these tests never call it (jest hoists this)
+jest.mock('axios', () => ({ __esModule: true, default: {} }));
 
 const bike: any = {
   bike_id: 7, brand: 'Giant', model: 'Trance', front_tire: 20, rear_tire: 22, front_sus_pressure: 97,
@@ -32,7 +33,13 @@ beforeEach(() => {
 afterEach(() => { jest.useRealTimers(); delete (global as any).fetch; });
 
 const params = (url: string) => Object.fromEntries(new URL(url).searchParams);
-const settle = async () => { await act(async () => { jest.advanceTimersByTime(SAVE_DELAY_MS + 50); }); await act(async () => {}); };
+// run the save timer, then let the (mocked) request resolve
+const settle = async () => {
+  await act(async () => {
+    jest.advanceTimersByTime(SAVE_DELAY_MS + 50);
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+  });
+};
 const renderCard = () => render(<AppContext.Provider value={ctx()}><BikeCard thisBike={bike} /></AppContext.Provider>);
 
 test('loading a bike sends no saves', async () => {
@@ -107,11 +114,10 @@ test('a failed save shows Retry and keeps the change', async () => {
   fireEvent.click(screen.getAllByLabelText('Remove a token')[0]);
   await settle();
   expect(screen.getByText(/Couldn't save/)).toBeTruthy();
-  await act(async () => { fireEvent.click(screen.getByText('Retry')); });
-  await act(async () => {});
+  fireEvent.click(screen.getByText('Retry'));
+  expect(await screen.findByText('Saved')).toBeTruthy();
   expect(calls).toHaveLength(2);
   expect(params(calls[1])).toMatchObject({ front_tokens: '1' });
-  expect(screen.getByText('Saved')).toBeTruthy();
 });
 
 test('the field whose save failed is outlined until a save works', async () => {
@@ -126,19 +132,18 @@ test('the field whose save failed is outlined until a save works', async () => {
   expect(fork.className).toContain('saveFailed');
   expect(fork.getAttribute('aria-invalid')).toBe('true');
   expect(tire.className).not.toContain('saveFailed');
-  await act(async () => { fireEvent.click(screen.getByText('Retry')); });
-  await act(async () => {});
-  expect(fork.className).not.toContain('saveFailed');
+  fireEvent.click(screen.getByText('Retry'));
+  await waitFor(() => expect(fork.className).not.toContain('saveFailed'));
 });
 
 test('a failed token save outlines the token counter', async () => {
-  const view = renderCard();
+  renderCard();
   failNext = 1;
   fireEvent.click(screen.getAllByLabelText('Add a token')[1]);
   await settle();
-  const outlined = view.container.querySelectorAll('.controls.saveFailed');
-  expect(outlined).toHaveLength(1);
-  expect(outlined[0].textContent).toContain('(2)'); // the rear counter (was 1)
+  const [front, rear] = screen.getAllByRole('group', { name: 'Token count' });
+  expect(front.className).not.toContain('saveFailed');
+  expect(rear.className).toContain('saveFailed');
 });
 
 test('pending changes are sent when the card goes away', async () => {

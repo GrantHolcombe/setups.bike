@@ -40,7 +40,7 @@ export default function Header({logout, isAuth, profile, bikeList, addBikeOpen, 
     return (
         <div>
             <div style={headerBarStyle}>
-                <img src='img/logos/Setups.png' className='logo' />
+                <img src='img/logos/Setups.png' className='logo' alt='Setups.Bike' />
                 {isAuth && <AppMenu bikeList={bikeList} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout} />}
             </div>
             {isAuth && <WelcomeMsg welcomeProfile={profile} hasBikes={bikeList ? bikeList.length > 0 : false} />}

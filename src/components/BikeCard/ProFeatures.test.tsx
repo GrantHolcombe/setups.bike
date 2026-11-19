@@ -1,5 +1,3 @@
-// App.tsx pulls in axios, which jest (CRA) can't parse; these tests never call it
-jest.mock('axios', () => ({ __esModule: true, default: {} }));
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AppContext, AppContent } from '../../App';
 import { RideLogDialog, RideHistoryDialog } from './RideNotes';
@@ -7,6 +5,9 @@ import ShareDialog from './ShareDialog';
 import ProActions from './ProActions';
 import SettingsSummary from './SettingsSummary';
 import SharedSetupView from '../Shared/SharedSetupView';
+
+// App.tsx pulls in axios, which jest (CRA) can't parse; these tests never call it (jest hoists this)
+jest.mock('axios', () => ({ __esModule: true, default: {} }));
 
 const bike: any = { bike_id: 7, brand: 'Giant', model: 'Trance', front_tire: 20 };
 const settings: any = {

@@ -30,6 +30,13 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
   const handleClick = (event: React.MouseEvent<SVGSVGElement>) => {
     setAnchorEl(event.currentTarget);
   };
+  //the cog also opens with Enter or Space, for keyboard users
+  const handleKey = (event: React.KeyboardEvent<SVGSVGElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setAnchorEl(event.currentTarget);
+    }
+  };
 
   //clicking outside or pressing Escape just closes the menu and keeps the current setting
   const closeMenu = () => setAnchorEl(null);
@@ -49,7 +56,8 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
   return (
     <div className='suspensionCompression'>
         <div className='featureTitle'>{isComp ? 'Compression' : 'Rebound'}</div>
-        <SettingsOutlinedIcon onClick={handleClick} />
+        <SettingsOutlinedIcon onClick={handleClick} onKeyDown={handleKey} role='button' tabIndex={0} aria-hidden={false}
+          aria-label={`${isComp ? 'Compression' : 'Rebound'} adjusters`} aria-haspopup='menu' />
         <Menu
             anchorEl={anchorEl}
             open={open}

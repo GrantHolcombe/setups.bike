@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Modal, Box, Typography, Button, Tooltip } from '@mui/material'
+import { Modal, Box, Typography, Button } from '@mui/material'
 import { KeyboardArrowUp, KeyboardArrowDown } from '@mui/icons-material';
 import { useAppContext, IBike } from '../../../App';
 import { useEffect } from 'react';

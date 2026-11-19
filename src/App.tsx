@@ -5,7 +5,6 @@ import { jwtDecode } from 'jwt-decode';
 import { Radio } from 'react-loader-spinner';
 import './App.css';
 import BikeCard from './components/BikeCard/BikeCard';
-import AppMenu from './components/Header/AppMenu/AppMenu';
 import Header from './components/Header/Header';
 import { Alert, Button, Snackbar } from '@mui/material';
 import UpgradeDialog, { UpgradeReason } from './components/Billing/UpgradeDialog';
@@ -239,6 +238,8 @@ function App() {
 
   useEffect(() => {
     if (jwt && pendingCopy) copySharedToGarage();
+    // runs once when sign-in finishes; copySharedToGarage is a new function every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jwt, pendingCopy]);
 
   //Pro: every saved setup for every bike, loaded once and refreshed after changes
@@ -304,6 +305,8 @@ function App() {
       check();
     }
     returnedFrom.checkout = null;
+    // only when the token changes (on sign-in), not every time refreshAccount is recreated
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jwt]);
 
   //get googleAPI data once user logs in
@@ -331,7 +334,7 @@ function App() {
   //after setting the FE profile data, create a user in DB
   //TODO errors gracefuly after creating initial row, clean that up maybe in the query
   useEffect(() => {
-    if(profile && user && jwt == "") {
+    if(profile && user && jwt === "") {
       const reqObj = {
         //addUser checks this with Google and takes the name and email from Google, not from the fields below
         accessToken: user.credentialStr,
@@ -342,14 +345,18 @@ function App() {
       }
       addUser(reqObj);
     }
+    // only when Google returns a profile, so sign-in runs once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
   useEffect(() => {
-    if(jwt != "") {
+    if(jwt !== "") {
       if (profile) saveSession({ token: jwt, profile });
       setIsLoading(true);
       getBikes();
     }
+    // load the garage once per new token
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jwt]);
 
   //add user lambda call

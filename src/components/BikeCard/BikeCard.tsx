@@ -17,6 +17,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
   const [bike, setBike] = useState<IBike>(thisBike);
   const { token } = useAppContext();
   const saver = useBikeSaver(thisBike.bike_id, token);
+  const { unsaved } = saver;
   // what the server has, so leaving a field without changing it doesn't save anything
   const saved = useRef<Record<string, number>>({ ...(thisBike as any) });
 
@@ -24,8 +25,8 @@ function BikeCard({thisBike}: IBikeCardProps) {
   //keeping any edits that haven't been saved yet
   useEffect(() => {
     saved.current = { ...(thisBike as any) };
-    setBike({ ...thisBike, ...saver.unsaved() });
-  }, [thisBike]);
+    setBike({ ...thisBike, ...unsaved() });
+  }, [thisBike, unsaved]);
 
   //functional update, so two changes in a row (type, then leave the field) both stick
   const setBikeVal = (target: string, value: number) => {

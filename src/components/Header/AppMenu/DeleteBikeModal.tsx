@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Modal, Box, FormGroup, FormControlLabel, Checkbox, Typography, Button, Tooltip } from '@mui/material'
+import { Modal, Box, FormGroup, FormControlLabel, Checkbox, Typography, Button } from '@mui/material'
 import { DeleteOutline, Delete } from '@mui/icons-material';
 import { useAppContext, IBike } from '../../../App';
 
@@ -68,9 +68,9 @@ export default function DeleteBikeModal({open, closeModal, bikeList}: IDeleteBik
                 <Typography variant="subtitle2" sx={{paddingTop: 2, paddingBottom: 1}} component="div">
                     Select bikes to remove from your garage:
                 </Typography>
-                {bikeList && bikeList.map((e: IBike, i: Number) => {
+                {bikeList && bikeList.map((e: IBike) => {
                     return(
-                        <FormGroup>
+                        <FormGroup key={e.bike_id}>
                             <FormControlLabel sx={{color: deleteList.includes(e.bike_id) ? 'red' : 'inherit'}} control={
                                 <Checkbox 
                                     onChange={ () => {

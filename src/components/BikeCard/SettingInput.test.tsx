@@ -83,8 +83,8 @@ describe('SusMenu (compression / rebound cog)', () => {
   const renderMenu = () => {
     const setBikeVal = jest.fn();
     const saveBike = jest.fn();
-    const view = render(<SusMenu bikeDetail={bike} detail='front_sus_comp_' setBikeVal={setBikeVal} saveBike={saveBike} />);
-    fireEvent.click(view.container.querySelector('svg')!);
+    render(<SusMenu bikeDetail={bike} detail='front_sus_comp_' setBikeVal={setBikeVal} saveBike={saveBike} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Compression adjusters' }));
     return { setBikeVal, saveBike };
   };
 
@@ -92,7 +92,8 @@ describe('SusMenu (compression / rebound cog)', () => {
     const { setBikeVal, saveBike } = renderMenu();
     const menu = screen.getByRole('menu');
     expect(within(menu).getByText('Dual')).toBeTruthy();
-    // MUI closes the menu on a backdrop click
+    // MUI closes the menu on a backdrop click; the backdrop has no role to query by
+    // eslint-disable-next-line testing-library/no-node-access
     fireEvent.click(document.querySelector('.MuiBackdrop-root')!);
     expect(setBikeVal).not.toHaveBeenCalled();
     expect(saveBike).not.toHaveBeenCalled();
