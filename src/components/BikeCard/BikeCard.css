@@ -233,3 +233,20 @@ input[type=number] {
     text-decoration: underline;
     cursor: pointer;
 }
+
+/* a field whose last save failed */
+.componentInput.saveFailed {
+    border: 1px solid #d32f2f;
+    border-radius: 3px;
+}
+
+.controls.saveFailed {
+    outline: 1px solid #d32f2f;
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .componentInput.saveFailed { border-color: #ff6b6b; }
+    .controls.saveFailed { outline-color: #ff6b6b; }
+}

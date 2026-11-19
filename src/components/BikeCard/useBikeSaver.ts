@@ -17,6 +17,8 @@ export default function useBikeSaver(bikeId: number, token: string) {
   const timer = React.useRef<number | undefined>(undefined);
   const chain = React.useRef<Promise<void>>(Promise.resolve());
   const [state, setState] = React.useState<SaveState>('idle');
+  // fields whose last save failed, so the card can outline them in red
+  const [failed, setFailed] = React.useState<string[]>([]);
 
   // "Saved" clears itself after a moment (but never hides "Saving" or an error)
   React.useEffect(() => {
@@ -46,11 +48,13 @@ export default function useBikeSaver(bikeId: number, token: string) {
       try {
         const res = await fetch(urlFor(changes), { method: 'POST', body: '{}' });
         if (!res.ok) throw new Error(`updateBike ${res.status}`);
+        setFailed((f) => f.filter((k) => !(k in changes)));
         if (Object.keys(pending.current).length === 0 && timer.current === undefined) setState('saved');
       } catch (err) {
         console.warn(err);
         // keep the failed changes, under anything newer
         pending.current = { ...changes, ...pending.current };
+        setFailed((f) => Array.from(new Set([...f, ...Object.keys(changes)])));
         setState('error');
       }
     });
@@ -89,5 +93,5 @@ export default function useBikeSaver(bikeId: number, token: string) {
     };
   }, [urlFor]);
 
-  return { queue, flush, unsaved, dismiss, state };
+  return { queue, flush, unsaved, dismiss, state, failed };
 }

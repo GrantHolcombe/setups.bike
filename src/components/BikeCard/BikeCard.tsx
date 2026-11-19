@@ -58,38 +58,38 @@ function BikeCard({thisBike}: IBikeCardProps) {
       <div className='cardBody'>
         <div className='tireSection front'>
           <div className='componentLabel'>Front Tire</div>
-          <SettingInput name='front_tire' value={bike.front_tire} onChange={setBikeVal} onCommit={commit} />
+          <SettingInput name='front_tire' value={bike.front_tire} onChange={setBikeVal} onCommit={commit} invalid={saver.failed.includes('front_tire')} />
         </div>
         <div className='tireSection rear'>
           <div className='componentLabel'>Rear Tire</div>
-          <SettingInput name='rear_tire' value={bike.rear_tire} onChange={setBikeVal} onCommit={commit} />
+          <SettingInput name='rear_tire' value={bike.rear_tire} onChange={setBikeVal} onCommit={commit} invalid={saver.failed.includes('rear_tire')} />
         </div>
       </div>
       <div className='cardBody rowTwo'>
         <div className='suspensionPressureSection front'>
           <div className='pressureRow'>
             <div className='componentLabel'>Fork</div>
-            <SettingInput name='front_sus_pressure' value={bike.front_sus_pressure} onChange={setBikeVal} onCommit={commit} />
+            <SettingInput name='front_sus_pressure' value={bike.front_sus_pressure} onChange={setBikeVal} onCommit={commit} invalid={saver.failed.includes('front_sus_pressure')} />
           </div>
           <div className='suspensionCompression'>
-            <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} detail='front_sus_comp_'/>
+            <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} failed={saver.failed} detail='front_sus_comp_'/>
           </div>
           <div className='suspensionRebound'>
-            <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} detail='front_sus_rebound_'/>
+            <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} failed={saver.failed} detail='front_sus_rebound_'/>
           </div>
-          <TokenInput count={bike.front_tokens} onChange={setTokens('front_tokens')} />
+          <TokenInput count={bike.front_tokens} onChange={setTokens('front_tokens')} invalid={saver.failed.includes('front_tokens')} />
         </div>
         <div className='suspensionPressureSection rear'>
           <div className='pressureRow'>
             <div className='componentLabel'>Shock</div>
-            <SettingInput name='rear_sus_pressure' value={bike.rear_sus_pressure} onChange={setBikeVal} onCommit={commit} />
+            <SettingInput name='rear_sus_pressure' value={bike.rear_sus_pressure} onChange={setBikeVal} onCommit={commit} invalid={saver.failed.includes('rear_sus_pressure')} />
             <div className='suspensionCompression'>
-              <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} detail='rear_sus_comp_'/>
+              <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} failed={saver.failed} detail='rear_sus_comp_'/>
             </div>
             <div className='suspensionRebound'>
-              <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} detail='rear_sus_rebound_'/>
+              <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} failed={saver.failed} detail='rear_sus_rebound_'/>
             </div>
-            <TokenInput count={bike.rear_tokens} onChange={setTokens('rear_tokens')} />
+            <TokenInput count={bike.rear_tokens} onChange={setTokens('rear_tokens')} invalid={saver.failed.includes('rear_tokens')} />
           </div>
         </div>
       </div>

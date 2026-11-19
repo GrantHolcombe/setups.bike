@@ -10,7 +10,9 @@ export interface ISusMenuProps {
   detail: string,
   setBikeVal: (name: string, value: number) => void,
   //saves one setting right away (name, value)
-  saveBike?: (name: string, value: number) => void
+  saveBike?: (name: string, value: number) => void,
+  //fields whose last save failed
+  failed?: string[]
 }
 
 const OPTIONS = [
@@ -19,7 +21,7 @@ const OPTIONS = [
   { count: 2, label: 'Dual' },
 ];
 
-export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike}: ISusMenuProps) {
+export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, failed = []}: ISusMenuProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | SVGSVGElement>(null);
   const open = Boolean(anchorEl);
   const isComp: boolean = detail.includes("comp");
@@ -62,7 +64,7 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike}: ISus
         return (
         <span key={key}>
             <label className='susComponentLabel' htmlFor={key}>{i === 1 ? `HS${isComp ? 'C' : 'R'}` : `LS${isComp ? 'C' : 'R'}`}</label>
-            <SettingInput name={key} value={valueOf(key)} onChange={setBikeVal}
+            <SettingInput name={key} value={valueOf(key)} onChange={setBikeVal} invalid={failed.includes(key)}
               onCommit={(name, value) => { if (saveBike) saveBike(name, value); }} />
         </span>)})}
     </div>

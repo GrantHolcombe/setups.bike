@@ -8,6 +8,8 @@ interface ISettingInputProps {
   //called on blur with the final value, to save it
   onCommit: (name: string, value: number) => void;
   className?: string;
+  // outlines the field in red (its last save failed)
+  invalid?: boolean;
 }
 
 //digits only, at most 5 of them (no real setting gets near 99,999)
@@ -17,7 +19,7 @@ const clean = (raw: string) => raw.replace(/[^0-9]/g, '').slice(0, 5);
 //  - never goes below 0 (no minus sign, and the arrow keys and spinner stop at 0)
 //  - empties a 0 when you click in, so you can just type
 //  - puts the last value back if you leave it empty
-export default function SettingInput({ name, value, onChange, onCommit, className = 'componentInput' }: ISettingInputProps) {
+export default function SettingInput({ name, value, onChange, onCommit, className = 'componentInput', invalid = false }: ISettingInputProps) {
   const current = Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
   const [text, setText] = React.useState<string>(String(current));
   const focused = React.useRef(false);
@@ -34,7 +36,8 @@ export default function SettingInput({ name, value, onChange, onCommit, classNam
       min={0}
       max={99999}
       step={1}
-      className={className}
+      className={invalid ? `${className} saveFailed` : className}
+      aria-invalid={invalid || undefined}
       name={name}
       value={text}
       onFocus={() => {

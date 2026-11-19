@@ -114,6 +114,33 @@ test('a failed save shows Retry and keeps the change', async () => {
   expect(screen.getByText('Saved')).toBeTruthy();
 });
 
+test('the field whose save failed is outlined until a save works', async () => {
+  renderCard();
+  failNext = 1;
+  const fork = screen.getAllByRole('spinbutton').find((i) => (i as HTMLInputElement).name === 'front_sus_pressure')!;
+  const tire = screen.getAllByRole('spinbutton').find((i) => (i as HTMLInputElement).name === 'front_tire')!;
+  fireEvent.focus(fork);
+  fireEvent.change(fork, { target: { value: '110' } });
+  fireEvent.blur(fork);
+  await settle();
+  expect(fork.className).toContain('saveFailed');
+  expect(fork.getAttribute('aria-invalid')).toBe('true');
+  expect(tire.className).not.toContain('saveFailed');
+  await act(async () => { fireEvent.click(screen.getByText('Retry')); });
+  await act(async () => {});
+  expect(fork.className).not.toContain('saveFailed');
+});
+
+test('a failed token save outlines the token counter', async () => {
+  const view = renderCard();
+  failNext = 1;
+  fireEvent.click(screen.getAllByLabelText('Add a token')[1]);
+  await settle();
+  const outlined = view.container.querySelectorAll('.controls.saveFailed');
+  expect(outlined).toHaveLength(1);
+  expect(outlined[0].textContent).toContain('(2)'); // the rear counter (was 1)
+});
+
 test('pending changes are sent when the card goes away', async () => {
   const view = renderCard();
   fireEvent.click(screen.getAllByLabelText('Add a token')[0]);
