@@ -10,6 +10,13 @@ the same Pro check. Pro launches (Phase 1's "Before switching to live keys" chec
 `BILLING_ENABLED_FOR=all`) once there are features worth buying. Everyone else keeps today's
 app in the meantime, with no bike limit and no Go Pro.
 
+> **Pro launched 2026-11-19 (UTC).** Live Stripe keys (restricted key) in the three Stripe
+> Lambdas; `BILLING_ENABLED_FOR=all` on addBike, GetAccount, createCheckoutSession,
+> bikeSetups, rideNotes and sharedSetups (set it back to `1` to turn billing off for everyone
+> but Grant). A real $2.99 purchase and cancel were checked end to end first. Grant's account
+> (user 1) is comped Pro (`plan_source = 'comp'`, see `db/maintenance/comp_user.sql`); his
+> other accounts test the free side.
+
 ## Plans
 
 | | Free | Pro |
