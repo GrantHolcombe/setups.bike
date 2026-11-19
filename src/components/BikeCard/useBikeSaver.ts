@@ -4,6 +4,8 @@ import { API_BASE } from '../../billing';
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export const SAVE_DELAY_MS = 700;
+// how long "Saved" stays up
+export const SAVED_SHOWN_MS = 2000;
 
 // Batches a bike's setting changes into one updateBike call. Changes are merged and sent
 // SAVE_DELAY_MS after the last one, only the changed fields go out (the Lambda leaves the
@@ -15,6 +17,16 @@ export default function useBikeSaver(bikeId: number, token: string) {
   const timer = React.useRef<number | undefined>(undefined);
   const chain = React.useRef<Promise<void>>(Promise.resolve());
   const [state, setState] = React.useState<SaveState>('idle');
+
+  // "Saved" clears itself after a moment (but never hides "Saving" or an error)
+  React.useEffect(() => {
+    if (state !== 'saved') return;
+    const t = window.setTimeout(() => setState((s) => (s === 'saved' ? 'idle' : s)), SAVED_SHOWN_MS);
+    return () => window.clearTimeout(t);
+  }, [state]);
+
+  // Clears "Saved" right away, e.g. when the rider moves to another field.
+  const dismiss = React.useCallback(() => setState((s) => (s === 'saved' ? 'idle' : s)), []);
 
   const urlFor = React.useCallback((changes: Record<string, number>) => {
     const params = new URLSearchParams({ bike_id: String(bikeId), token });
@@ -77,5 +89,5 @@ export default function useBikeSaver(bikeId: number, token: string) {
     };
   }, [urlFor]);
 
-  return { queue, flush, unsaved, state };
+  return { queue, flush, unsaved, dismiss, state };
 }

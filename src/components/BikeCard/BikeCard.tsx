@@ -45,7 +45,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
   };
 
   return (
-    <div className="cardContainer">
+    <div className="cardContainer" onFocusCapture={saver.dismiss}>
       <div>
         <div className='modelHeader'>
           {bike.model}

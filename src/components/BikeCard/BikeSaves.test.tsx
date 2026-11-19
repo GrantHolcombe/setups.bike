@@ -3,7 +3,7 @@ jest.mock('axios', () => ({ __esModule: true, default: {} }));
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { AppContext, AppContent } from '../../App';
 import BikeCard from './BikeCard';
-import { SAVE_DELAY_MS } from './useBikeSaver';
+import { SAVE_DELAY_MS, SAVED_SHOWN_MS } from './useBikeSaver';
 
 const bike: any = {
   bike_id: 7, brand: 'Giant', model: 'Trance', front_tire: 20, rear_tire: 22, front_sus_pressure: 97,
@@ -50,6 +50,34 @@ test('three quick token clicks become one save with only that field', async () =
   expect(calls).toHaveLength(1);
   expect(params(calls[0])).toEqual({ bike_id: '7', token: 'tok', front_tokens: '5' });
   expect(screen.getByText('Saved')).toBeTruthy();
+});
+
+test('"Saved" goes away after a moment', async () => {
+  renderCard();
+  fireEvent.click(screen.getAllByLabelText('Add a token')[0]);
+  await settle();
+  expect(screen.getByText('Saved')).toBeTruthy();
+  await act(async () => { jest.advanceTimersByTime(SAVED_SHOWN_MS + 50); });
+  expect(screen.queryByText('Saved')).toBeNull();
+});
+
+test('"Saved" clears when you move into another field', async () => {
+  renderCard();
+  fireEvent.click(screen.getAllByLabelText('Add a token')[0]);
+  await settle();
+  expect(screen.getByText('Saved')).toBeTruthy();
+  fireEvent.focus(screen.getAllByRole('spinbutton')[0]);
+  expect(screen.queryByText('Saved')).toBeNull();
+});
+
+test('an error stays up until retried', async () => {
+  renderCard();
+  failNext = 1;
+  fireEvent.click(screen.getAllByLabelText('Add a token')[0]);
+  await settle();
+  fireEvent.focus(screen.getAllByRole('spinbutton')[0]);
+  await act(async () => { jest.advanceTimersByTime(SAVED_SHOWN_MS * 3); });
+  expect(screen.getByText(/Couldn't save/)).toBeTruthy();
 });
 
 test('changes to different fields in a burst are merged', async () => {
