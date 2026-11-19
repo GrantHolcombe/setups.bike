@@ -164,22 +164,30 @@ rate, freemium, Customer Portal, Smart Retries):
 - "Manage subscription" (the portal) for Pro users.
 
 **Before switching to live keys** (repeat in the live account; sandbox settings don't carry over):
-- [ ] Tax settings: head office address, SaaS (personal use) tax code, automatic tax off.
-- [ ] Revenue recovery > Retries: Smart Retries on; "If all retries fail" = cancel the
+- [x] Tax settings: head office address, SaaS (personal use) tax code, automatic tax off.
+      Live account checked 2026-11-18: all set, threshold emails on.
+- [x] Revenue recovery > Retries: Smart Retries on; "If all retries fail" = cancel the
       subscription. (Already set in the sandbox.)
-- [ ] Revenue recovery > Emails: turn on "Send emails when card payments fail" and
+- [x] Revenue recovery > Emails: turn on "Send emails when card payments fail" and
       "Send emails about expiring cards", both with **Link to a Stripe hosted page** (it lets
       the customer update their card without signing in to the app). Done in the sandbox on
-      2026-11-17.
+      2026-11-17, live 2026-11-18.
 - [ ] Activate the live account (Stripe asks for identity and bank details; yours to do), then
       in Settings > Business > Business details set: privacy policy
       `https://setups.bike/privacy.html`, terms `https://setups.bike/terms.html`, support
       email `grant@hiregrant.today`. (Not available in the sandbox.)
+- [x] Dashboard part done in live mode 2026-11-18: product "Setups.Bike Pro" with
+      `pro_monthly` ($2.99) and `pro_yearly` ($24); default Customer Portal (email/address,
+      cards, invoices, cancel at period end with survey, switch between both prices, prorate
+      and invoice immediately, yearly->monthly at period end); webhook endpoint
+      `setups-bike-live` (same URL, same 6 events, API 2026-10-28.endive).
 - [ ] Create the Pro product and prices (lookup keys `pro_monthly`, `pro_yearly`), the
       Customer Portal configuration (plan switches use **`always_invoice`**, so an upgrade is
       charged right away; `create_prorations` deferred the difference to the next renewal, as
       found in testing 2026-11-17), and the webhook endpoint again in live mode, then put
       the live `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in the three Lambdas.
+      Use a **restricted** key: Checkout Sessions write, Customer portal write, Customers
+      read, Prices read, Subscriptions read (the only calls the code makes).
 
 - [x] **Stale test-mode Stripe ids** (only user 1 has any). Done 2026-11-18: createCheckoutSession
       and createPortalSession now check the stored customer still exists in the current mode;
