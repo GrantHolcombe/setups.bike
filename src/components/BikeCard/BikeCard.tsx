@@ -1,13 +1,13 @@
 import './BikeCard.css';
-import { useContext, useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import React from 'react';
 import SusMenu from './SusMenu';
 import TokenInput from './TokenInput/TokenInput';
 import SetupPicker from './SetupPicker';
 import SettingInput from './SettingInput';
 import ProActions from './ProActions';
-import { AppContext, IBike, useAppContext } from '../../App';
-import axios from 'axios';
+import useBikeSaver from './useBikeSaver';
+import { IBike, useAppContext } from '../../App';
 
 export interface IBikeCardProps {
   thisBike: IBike
@@ -15,42 +15,45 @@ export interface IBikeCardProps {
 
 function BikeCard({thisBike}: IBikeCardProps) {
   const [bike, setBike] = useState<IBike>(thisBike);
-  const {loading, setLoading, token} = useAppContext();
+  const { token } = useAppContext();
+  const saver = useBikeSaver(thisBike.bike_id, token);
+  // what the server has, so leaving a field without changing it doesn't save anything
+  const saved = useRef<Record<string, number>>({ ...(thisBike as any) });
 
-  //take the server's version when the garage reloads (e.g. after applying a saved setup)
-  useEffect(() => { setBike(thisBike); }, [thisBike]);
+  //take the server's version when the garage reloads (e.g. after applying a saved setup),
+  //keeping any edits that haven't been saved yet
+  useEffect(() => {
+    saved.current = { ...(thisBike as any) };
+    setBike({ ...thisBike, ...saver.unsaved() });
+  }, [thisBike]);
 
   //functional update, so two changes in a row (type, then leave the field) both stick
   const setBikeVal = (target: string, value: number) => {
     setBike((prev) => ({ ...prev, [target]: value }));
   }
 
-  //update bike lambda call; overrides carry a value that was set this instant, before
-  //React has applied it to `bike`
-  const updateBike = (overrides: Partial<IBike> = {}) => {
-    setLoading(true);
-    axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/updateBike`, JSON.stringify({}), { params: { ...bike, ...overrides, token }
-  })
-    .then(response => {
-      setLoading(false);
-    })
-    .catch(err => {
-      setLoading(false);
-      console.warn(err);
-    });
-  }
+  //queue one setting to save; the saver batches quick changes into one request
+  const commit = (name: string, value: number) => {
+    if (Number(saved.current[name] ?? 0) === Number(value)) return;
+    saved.current[name] = value;
+    saver.queue({ [name]: value });
+  };
 
-  const commit = (name: string, value: number) => updateBike({ [name]: value });
-
-  //useEffect(() => { updateBike() }, [hasChange]);
+  const setTokens = (name: 'front_tokens' | 'rear_tokens') => (count: number) => {
+    setBikeVal(name, count);
+    commit(name, count);
+  };
 
   return (
     <div className="cardContainer">
       <div>
-        <div className='modelHeader'>{bike.model}</div>
+        <div className='modelHeader'>
+          {bike.model}
+          <SaveStatus state={saver.state} onRetry={() => saver.flush()} />
+        </div>
         <div className='brandHeader'>{bike.brand}</div>
-        <SetupPicker bike={bike} />
-        <ProActions bike={bike} />
+        <SetupPicker bike={bike} beforeChange={saver.flush} />
+        <ProActions bike={bike} beforeChange={saver.flush} />
       </div>
       <div className='cardBody'>
         <div className='tireSection front'>
@@ -74,7 +77,7 @@ function BikeCard({thisBike}: IBikeCardProps) {
           <div className='suspensionRebound'>
             <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} detail='front_sus_rebound_'/>
           </div>
-          <TokenInput count={bike.front_tokens} refreshCard={() => updateBike()} updateCount={(count:number) => setBikeVal('front_tokens', count)} />
+          <TokenInput count={bike.front_tokens} onChange={setTokens('front_tokens')} />
         </div>
         <div className='suspensionPressureSection rear'>
           <div className='pressureRow'>
@@ -86,12 +89,25 @@ function BikeCard({thisBike}: IBikeCardProps) {
             <div className='suspensionRebound'>
               <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} detail='rear_sus_rebound_'/>
             </div>
-            <TokenInput count={bike.rear_tokens} refreshCard={() => updateBike()} updateCount={(count:number) => setBikeVal('rear_tokens', count)} />
+            <TokenInput count={bike.rear_tokens} onChange={setTokens('rear_tokens')} />
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+// Small save note next to the bike name, instead of the full-screen spinner.
+function SaveStatus({ state, onRetry }: { state: string; onRetry: () => void }) {
+  if (state === 'idle') return null;
+  if (state === 'error') {
+    return (
+      <span className='saveStatus error' role='status'>
+        Couldn't save · <button type='button' className='linkButton' onClick={onRetry}>Retry</button>
+      </span>
+    );
+  }
+  return <span className='saveStatus' role='status'>{state === 'saving' ? 'Saving…' : 'Saved'}</span>;
 }
 
 export default BikeCard;

@@ -1,23 +1,17 @@
-import * as React from 'react';
 import './TokenInput.css';
-import { Refresh } from '@mui/icons-material';
+
 interface ITokenInputProps {
-  count: number;
-  refreshCard: Function;
-  updateCount: Function;
+  count: number | null | undefined;
+  // called only when the rider clicks + or -
+  onChange: (count: number) => void;
 }
 
-export default function TokenInput({count, refreshCard, updateCount}: ITokenInputProps) {
-    const [coins, setCoins] = React.useState<number>(count ? count : 0);
-    const [refresh, setRefresh] = React.useState<number>(0);
-    React.useEffect(() => {
-      updateCount && updateCount(coins);
-      setRefresh(refresh + 1)
-    }, [coins])
+const MAX_TOKENS = 12;
 
-    React.useEffect(() =>{
-      refreshCard && refreshCard();
-    }, [refresh])
+// Volume token counter. Controlled by the bike's value, so it follows applied setups, and it
+// only reports a change when a button is clicked (never on load).
+export default function TokenInput({ count, onChange }: ITokenInputProps) {
+  const coins = Math.min(MAX_TOKENS, Math.max(0, Number(count) || 0));
 
   return (
   <div style={{display: "flex", width:"100%"}}>
@@ -28,11 +22,11 @@ export default function TokenInput({count, refreshCard, updateCount}: ITokenInpu
         })}
         </div>
     </div>
-  
+
     <div className='controls'>
-        <button onClick={() => setCoins(Math.max(0, coins - 1))}>-</button>
+        <button aria-label='Remove a token' disabled={coins === 0} onClick={() => onChange(Math.max(0, coins - 1))}>-</button>
         <p className='tokenLabel'>Token Count ({coins})</p>
-        <button onClick={() => setCoins(Math.min(12, coins + 1))}>+</button>
+        <button aria-label='Add a token' disabled={coins === MAX_TOKENS} onClick={() => onChange(Math.min(MAX_TOKENS, coins + 1))}>+</button>
     </div>
   </div>
   );

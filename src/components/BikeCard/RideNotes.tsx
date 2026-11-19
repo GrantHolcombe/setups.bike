@@ -19,6 +19,8 @@ const fieldsOf = (n: IRideNote): IRideFields => ({
 
 interface ILogProps {
   bike: IBike;
+  // saves the card's pending edits first, so the ride keeps the latest settings
+  beforeChange?: () => Promise<void>;
   open: boolean;
   // set when editing an existing note
   editing?: IRideNote | null;
@@ -27,7 +29,7 @@ interface ILogProps {
 }
 
 // Log a ride (or edit one). New notes keep the bike's current settings with them.
-export function RideLogDialog({ bike, open, editing, onClose, onSaved }: ILogProps) {
+export function RideLogDialog({ bike, beforeChange, open, editing, onClose, onSaved }: ILogProps) {
   const { token } = useAppContext();
   const [f, setF] = React.useState<IRideFields>(blank());
   const [busy, setBusy] = React.useState(false);
@@ -46,6 +48,7 @@ export function RideLogDialog({ bike, open, editing, onClose, onSaved }: ILogPro
     }
     setBusy(true);
     try {
+      if (!editing) await beforeChange?.();
       const { note } = editing ? await editRide(token, editing.ride_note_id, f) : await addRide(token, bike.bike_id, f);
       onSaved(note);
     } catch (err: any) {
@@ -92,6 +95,7 @@ export function RideLogDialog({ bike, open, editing, onClose, onSaved }: ILogPro
 
 interface IHistoryProps {
   bike: IBike;
+  beforeChange?: () => Promise<void>;
   open: boolean;
   onClose: () => void;
   onLogRide: () => void;
@@ -102,7 +106,7 @@ interface IHistoryProps {
 type Confirm = { kind: 'reuse' | 'delete'; note: IRideNote } | null;
 
 // The bike's ride history, newest ride first.
-export function RideHistoryDialog({ bike, open, onClose, onLogRide, version }: IHistoryProps) {
+export function RideHistoryDialog({ bike, beforeChange, open, onClose, onLogRide, version }: IHistoryProps) {
   const { token, refreshBikes, setLoading } = useAppContext();
   const [notes, setNotes] = React.useState<IRideNote[] | null>(null);
   const [error, setError] = React.useState('');
@@ -133,6 +137,7 @@ export function RideHistoryDialog({ bike, open, onClose, onLogRide, version }: I
         setNotes((prev) => (prev || []).filter((n) => n.ride_note_id !== c.note.ride_note_id));
       } else {
         setLoading(true);
+        await beforeChange?.();
         await reuseRide(token, c.note.ride_note_id);
         onClose();
         refreshBikes();
@@ -193,7 +198,7 @@ export function RideHistoryDialog({ bike, open, onClose, onLogRide, version }: I
         <MenuItem sx={{ color: 'error.main' }} onClick={() => { setConfirm({ kind: 'delete', note: menu!.note }); setMenu(null); }}>Delete</MenuItem>
       </Menu>
 
-      <RideLogDialog bike={bike} open={!!editing} editing={editing} onClose={() => setEditing(null)}
+      <RideLogDialog bike={bike} beforeChange={beforeChange} open={!!editing} editing={editing} onClose={() => setEditing(null)}
         onSaved={(note) => { setEditing(null); setNotes((prev) => (prev || []).map((n) => (n.ride_note_id === note.ride_note_id ? note : n))); }} />
 
       <Dialog open={!!confirm} onClose={() => setConfirm(null)} maxWidth='xs' fullWidth>

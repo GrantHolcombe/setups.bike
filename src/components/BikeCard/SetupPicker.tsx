@@ -11,13 +11,15 @@ import {
 
 interface ISetupPickerProps {
   bike: IBike;
+  // saves the card's pending edits first, so setups read and overwrite the latest values
+  beforeChange?: () => Promise<void>;
 }
 
 type NameDialog = { mode: 'save' | 'rename'; value: string; error?: string } | null;
 
 // Pro feature 2.1: switch between, save, update, rename and delete named setups for a bike.
 // Names and settings are the user's own; nothing here suggests values.
-export default function SetupPicker({ bike }: ISetupPickerProps) {
+export default function SetupPicker({ bike, beforeChange }: ISetupPickerProps) {
   const { account, token, setups, refreshSetups, refreshBikes, setLoading } = useAppContext();
   const [anchor, setAnchor] = React.useState<null | HTMLElement>(null);
   const [nameDialog, setNameDialog] = React.useState<NameDialog>(null);
@@ -40,6 +42,7 @@ export default function SetupPicker({ bike }: ISetupPickerProps) {
     setAnchor(null);
     setLoading(true);
     try {
+      await beforeChange?.();
       await work();
       await refreshSetups();
       if (reloadBikes) refreshBikes();
@@ -64,6 +67,7 @@ export default function SetupPicker({ bike }: ISetupPickerProps) {
     const mode = nameDialog.mode;
     setLoading(true);
     try {
+      await beforeChange?.();
       if (mode === 'save') await saveSetup(token, bike.bike_id, name);
       else if (active) await renameSetup(token, active.bike_setup_id, name);
       setNameDialog(null);

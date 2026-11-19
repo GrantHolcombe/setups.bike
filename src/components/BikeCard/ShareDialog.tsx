@@ -8,13 +8,15 @@ import { createShare, revokeShare, shareUrl } from '../../shares';
 
 interface IShareDialogProps {
   bike: IBike;
+  // saves the card's pending edits first, so the link has the latest settings
+  beforeChange?: () => Promise<void>;
   open: boolean;
   onClose: () => void;
 }
 
 // Pro feature 2.3: make a read-only link to this bike's current settings, and list or
 // remove the bike's existing links. Removing a link works without Pro.
-export default function ShareDialog({ bike, open, onClose }: IShareDialogProps) {
+export default function ShareDialog({ bike, beforeChange, open, onClose }: IShareDialogProps) {
   const { token, account, shares, refreshShares } = useAppContext();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState('');
@@ -30,6 +32,7 @@ export default function ShareDialog({ bike, open, onClose }: IShareDialogProps) 
     setBusy(true);
     setError('');
     try {
+      await beforeChange?.();
       const { share } = await createShare(token, bike.bike_id);
       setLatest(share.share_id);
       await refreshShares();
