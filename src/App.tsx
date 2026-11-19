@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext, createContext } from 'react';
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import { Radio } from 'react-loader-spinner';
 import './App.css';
 import BikeCard from './components/BikeCard/BikeCard';
 import Header from './components/Header/Header';
@@ -12,7 +11,7 @@ import { IAccount, getAccount, openBillingPortal } from './billing';
 import { IBikeSetup, listSetups } from './setups';
 import { IShare, SHARE_PARAM, copyShare, listShares } from './shares';
 import SharedSetupView from './components/Shared/SharedSetupView';
-import { SPINNER_COLORS } from './components/Spinner';
+import { LoadingOverlay } from './components/Spinner';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -463,15 +462,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
     <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading, token: jwt, refreshBikes: getBikes, account, refreshAccount, openUpgrade, manageBilling, setups, refreshSetups, shares, refreshShares }}>
-      <Radio
-        visible={isLoading}
-        height="80px"
-        width="80px"
-        colors={SPINNER_COLORS}
-        ariaLabel="radio-loading"
-        wrapperStyle={{boxSizing: "border-box", height: "100%", zIndex: "1400", width: "100vw", padding: "35vh 35vw", position: "fixed", top: "0", left: "0", background: "rgba(0, 0, 0, 0.5)" }}
-        wrapperClass="test"
-      />
+      <LoadingOverlay visible={isLoading} />
       <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}/>
       {offline && (
         <Alert severity='info' sx={{ maxWidth: 600, mx: 'auto', mb: 2, position: 'relative', zIndex: 1 }}>
