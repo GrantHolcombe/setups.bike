@@ -65,6 +65,12 @@ Rules:
       Deleted by Grant 2026-11-20 (confirmed). Their ten leftover customer-managed policies
       (`AWSLambdaBasicExecutionRole-…`, `AWSLambdaVPCAccessExecutionRole-…`,
       `AWSLambdaRDSProxyExecutionRole-…`) are unattached and can be deleted.
+      Second sweep 2026-11-20: removed the unused public `/getUsers` route (old function with no
+      sign-in check, pointed at the deleted RDS proxy), deleted the 2024 functions
+      `SetupsDotBike_GetUsers`, `SetupsDotBike_CORSResponse`, `SetupsDotBike_JWTLayer` and
+      `NetworkAuth` with their logs, and Grant deleted their roles plus the RDS-era roles
+      (`postgres`, `rds-monitoring-role`, two `rds-proxy-role-…`). Left alone on purpose:
+      `write-db` and `writeCsv-role-…` (2018-19 projects, not Setups.Bike).
       **Keep** `Setups.Bike_CD_Role` (the pipeline) and `SetupsDotBikeCodeBuildSR` (the build).
 - [x] **Database migrations.** Set up 2026-11-17 (`000` and `001` applied). Schema changes go in `db/migrations/NNN_name.sql` in this repo.
       You run each one against the Neon **direct** host and type the password at the prompt:
