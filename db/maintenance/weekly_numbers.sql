@@ -66,6 +66,18 @@ SELECT metric, this_window, previous_window FROM (
 -- "active users" has no previous window: last_active_at only keeps the latest visit.
 
 \echo
+\echo '== Sign-ups by source (this window, and all time) =='
+-- source/medium/campaign come from the link's utm tags, ref from ?ref=; 'share' = arrived on a
+-- shared-setup link; (none) = no tags, or signed up before migration 008 (2026-11-20)
+SELECT coalesce(signup_source, '(none)') AS source, coalesce(signup_medium, '') AS medium,
+       coalesce(signup_campaign, '') AS campaign, coalesce(signup_ref, '') AS ref,
+       count(*) FILTER (WHERE created_at >= now() - make_interval(days => :days)) AS this_window,
+       count(*) AS all_time,
+       count(*) FILTER (WHERE plan = 'pro' AND plan_source = 'stripe') AS paying_pro
+FROM app_user WHERE app_user_id NOT IN (:exclude)
+GROUP BY 1, 2, 3, 4 ORDER BY this_window DESC, all_time DESC;
+
+\echo
 \echo '== Totals today (excluded accounts left out) =='
 SELECT
   (SELECT count(*) FROM app_user WHERE app_user_id NOT IN (:exclude)) AS users,

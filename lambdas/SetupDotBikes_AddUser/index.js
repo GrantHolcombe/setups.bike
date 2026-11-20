@@ -16,6 +16,12 @@ const TOKEN_LIFETIME = "7d";
 
 const reply = (statusCode, body) => ({ statusCode, body: JSON.stringify(body), headers });
 
+// First-touch sign-up source (campaign tags from the link the user arrived through). Saved only
+// when the account is created. Anything that isn't a short plain tag is dropped.
+const TAG = /^[A-Za-z0-9._~-]{1,64}$/;
+const tag = (v) => (typeof v === "string" && TAG.test(v) ? v : null);
+const signupSource = (q) => [tag(q.utm_source), tag(q.utm_medium), tag(q.utm_campaign), tag(q.ref)];
+
 // Ask Google who the access token belongs to. Returns null if it isn't a valid token
 // issued to this app for a verified email address.
 async function googleUser(accessToken) {
@@ -51,7 +57,8 @@ exports.handler = async (event) => {
   });
 
   try {
-    const profile = await googleUser((event.queryStringParameters || {}).accessToken);
+    const query = event.queryStringParameters || {};
+    const profile = await googleUser(query.accessToken);
     if (!profile) return reply(401, { error: "Google sign-in could not be verified" });
 
     await client.connect();
@@ -61,12 +68,14 @@ exports.handler = async (event) => {
     let res = await client.query(select, [profile.email]);
     if (res.rows.length === 0) {
       res = await client.query(
-        `INSERT INTO app_user (first_name, last_name, email_address)
-         VALUES ($1, $2, $3)
+        `INSERT INTO app_user (first_name, last_name, email_address,
+                               signup_source, signup_medium, signup_campaign, signup_ref)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (email_address) DO NOTHING
          RETURNING *`,
-        [profile.given_name || "", profile.family_name || "", profile.email]
+        [profile.given_name || "", profile.family_name || "", profile.email, ...signupSource(query)]
       );
+      if (res.rows.length) console.log("new user", res.rows[0].app_user_id, "source", res.rows[0].signup_source || "-");
       // Two first logins at the same moment: the other one inserted the row.
       if (res.rows.length === 0) res = await client.query(select, [profile.email]);
     }

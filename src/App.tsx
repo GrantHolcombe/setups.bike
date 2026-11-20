@@ -12,6 +12,7 @@ import { IShare, SHARE_PARAM, copyShare, listShares } from './shares';
 import { LoadingOverlay } from './components/Spinner';
 import { SharedSetupView, UpgradeDialog, WhenOpened, preloadParts } from './lazy';
 import { applyUpdate, useUpdateAvailable } from './pwa';
+import { readSignupSource } from './signupSource';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
@@ -201,6 +202,9 @@ const returnedFrom = (() => {
 //a shared setup link: setups.bike/?s=<id>
 const initialShareId = new URLSearchParams(window.location.search).get(SHARE_PARAM);
 
+//first-touch sign-up source from this visit's link (memory only; see src/signupSource.ts)
+const signupSource = readSignupSource(window.location.search, SHARE_PARAM);
+
 function App() {
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)', { noSsr: true });
   const theme = React.useMemo(() => makeTheme(prefersDark ? 'dark' : 'light'), [prefersDark]);
@@ -383,7 +387,8 @@ function App() {
         userId: parseInt(profile.id),
         firstName: profile.given_name,
         lastName: profile.family_name,
-        emailAddress: profile.email
+        emailAddress: profile.email,
+        ...signupSource
       }
       addUser(reqObj);
     }
