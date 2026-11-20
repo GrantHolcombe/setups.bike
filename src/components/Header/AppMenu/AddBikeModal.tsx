@@ -1,64 +1,33 @@
 import * as React from 'react';
-import { Modal, Box, TextField, Typography, Button, Tooltip } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from '@mui/material';
 import { useAppContext } from '../../../App';
 
 export interface IAppMenuProps {
     open: boolean;
     closeModal: Function;
 }
-interface INewBike {
-    brand: string;
-    model: string;
-}
 
-export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
-    const [newBike, setNewBike] = React.useState<INewBike>({brand: "", model: ""})
+const EMPTY = { brand: '', model: '' };
+
+// Add a bike. Follows the dialog pattern in docs/STYLE_GUIDE.md.
+export default function AddBikeModal({ open, closeModal }: IAppMenuProps) {
+    const [newBike, setNewBike] = React.useState(EMPTY);
     const { token, setLoading, refreshBikes, openUpgrade } = useAppContext();
-    const style = {
-        position: 'absolute' as 'absolute',
-        top: '225px',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 315,
-        bgcolor: 'background.paper',
-        boxShadow: 24,
-        outline: "none",
-        borderRadius: '8px',
-        p: 4,
-    };
+    const valid = newBike.brand.trim().length > 0 && newBike.model.trim().length > 0;
 
-    const actionStyles = {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        padding: "15px 0px",
-        marginTop: "30px",
-        borderTop: "1px solid var(--border)"
-    }
-
-    const inputStyle = {
-        width: '100%',
-        marginTop: 1,
-    }
-    
-    const saveValidation = ():boolean => {
-        //return true if either string is empty
-        return newBike.brand.length === 0 || newBike.model.length === 0
-    }
+    const cancel = () => { setNewBike(EMPTY); closeModal(); };
 
     const saveNewBike = async () => {
+        if (!valid) return;
         closeModal();
         setLoading(true);
-        const req = {
-            token,
-            brand: newBike.brand,
-            model: newBike.model
-        }
+        const req = { token, brand: newBike.brand.trim(), model: newBike.model.trim() };
         const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/AddBike?' + new URLSearchParams(req).toString();
         try {
-            const data = await fetch(url, {method: 'POST'});
+            const data = await fetch(url, { method: 'POST' });
             if (data.status === 200) {
                 refreshBikes();
-                setNewBike({brand:"",model:""});
+                setNewBike(EMPTY);
                 return;
             }
             setLoading(false);
@@ -69,31 +38,29 @@ export default function AddBikeModal({open, closeModal}: IAppMenuProps) {
             setLoading(false);
             console.warn(err);
         }
-    }
+    };
+
+    const submitOnEnter = (e: React.KeyboardEvent) => { if (e.key === 'Enter') saveNewBike(); };
 
     return (
-        <Modal
-            open={open}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-        >
-            <Box sx={style}>
-                <Typography sx={{ paddingBottom: 1 }} id="modal-modal-title" variant="h6" component="h2">
-                    Add a Steed to the Stable!
+        <Dialog open={open} onClose={cancel} maxWidth='xs' fullWidth>
+            <DialogTitle>Add a bike</DialogTitle>
+            <DialogContent>
+                <Typography variant='body2' sx={{ mb: 1, color: 'text.secondary' }}>
+                    Add a steed to the stable!
                 </Typography>
-                <TextField sx={inputStyle} autoComplete='off' id="bikeBrand" label="Brand" variant="standard" value={newBike.brand} onChange={e => {setNewBike({brand: e.target.value, model: {...newBike}.model})}} />
-                <TextField sx={inputStyle} autoComplete='off' id="bikeModel" label="Model" variant="standard" value={newBike.model} onChange={e => {setNewBike({brand: {...newBike}.brand, model: e.target.value})}} />
-                <Box sx={actionStyles}>
-                    <Button color='error' sx={{marginRight: 2}} variant="outlined" onClick={() => { setNewBike({brand:"",model:""}); closeModal()}}>Cancel</Button>
-                    {saveValidation() ? 
-                        <Tooltip title="Both fields require some input in order to save" arrow placement='bottom-start'>
-                            <span><Button disabled variant="outlined">Save</Button></span>
-                        </Tooltip>
-                    :
-                        <Button variant="contained" onClick={saveNewBike}>Save</Button>
-                    }
-                </Box>
-            </Box>
-        </Modal>
+                <TextField autoFocus fullWidth autoComplete='off' id='bikeBrand' label='Brand' variant='standard'
+                    inputProps={{ maxLength: 255 }} sx={{ mb: 1 }} value={newBike.brand} onKeyDown={submitOnEnter}
+                    onChange={(e) => setNewBike((b) => ({ ...b, brand: e.target.value }))} />
+                <TextField fullWidth autoComplete='off' id='bikeModel' label='Model' variant='standard'
+                    inputProps={{ maxLength: 255 }} value={newBike.model} onKeyDown={submitOnEnter}
+                    helperText={valid ? ' ' : 'Enter a brand and model to save'}
+                    onChange={(e) => setNewBike((b) => ({ ...b, model: e.target.value }))} />
+            </DialogContent>
+            <DialogActions>
+                <Button color='inherit' onClick={cancel}>Cancel</Button>
+                <Button variant='contained' disabled={!valid} onClick={saveNewBike}>Save</Button>
+            </DialogActions>
+        </Dialog>
     );
 }

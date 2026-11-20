@@ -53,3 +53,21 @@ body {
 .legalFooter a {
   color: var(--text-muted);
 }
+
+/* Reorder garage dialog: a numbered list with up/down buttons (numbers drawn in the row) */
+.reorderList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reorderList li {
+  display: flex;
+  align-items: center;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.reorderList li:last-child {
+  border-bottom: none;
+}

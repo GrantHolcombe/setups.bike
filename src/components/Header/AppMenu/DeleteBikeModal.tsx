@@ -1,6 +1,8 @@
 import * as React from 'react';
-import { Modal, Box, FormGroup, FormControlLabel, Checkbox, Typography, Button } from '@mui/material'
-import { DeleteOutline, Delete } from '@mui/icons-material';
+import {
+    Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, FormGroup, Typography,
+} from '@mui/material';
+import { Delete, DeleteOutline } from '@mui/icons-material';
 import { useAppContext, IBike } from '../../../App';
 
 interface IDeleteBikesProps {
@@ -9,90 +11,56 @@ interface IDeleteBikesProps {
     bikeList?: IBike[];
 }
 
-export default function DeleteBikeModal({open, closeModal, bikeList}: IDeleteBikesProps) {
-    const [deleteList, setDeleteList] = React.useState<Number[]>([])
+// Retire (delete) bikes. Follows the dialog pattern in docs/STYLE_GUIDE.md.
+export default function DeleteBikeModal({ open, closeModal, bikeList }: IDeleteBikesProps) {
+    const [deleteList, setDeleteList] = React.useState<number[]>([]);
     const { token, setLoading, refreshBikes } = useAppContext();
 
-    const style = {
-        position: 'absolute' as 'absolute',
-        top: '225px',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 315,
-        bgcolor: 'background.paper',
-        boxShadow: 24,
-        outline: "none",
-        borderRadius: '8px',
-        p: 4,
-    };
-
-    const actionStyles = {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        padding: "15px 0px",
-        marginTop: "30px",
-        borderTop: "1px solid var(--border)"
-    }
-
-    const handleClose = ():void => {
+    const handleClose = (): void => {
         setDeleteList([]);
         closeModal();
-    }
+    };
+
+    const toggle = (id: number) =>
+        setDeleteList((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
 
     const deleteBike = async () => {
+        const ids = deleteList;
+        setDeleteList([]);
         closeModal();
         setLoading(true);
-        
-        const req = {
-            token,
-            deleteList: deleteList
-        }
-
-        const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/DeleteBike'
-        await fetch(url, {method: "POST", body: JSON.stringify(req)})
-
+        const url = 'https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/DeleteBike';
+        await fetch(url, { method: 'POST', body: JSON.stringify({ token, deleteList: ids }) });
         refreshBikes();
-    }
+    };
 
+    const n = deleteList.length;
     return (
-        <Modal
-            open={open}
-            onClose={handleClose}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-        >
-            <Box sx={style}>
-                <Typography sx={{ paddingBottom: 1 }} id="modal-modal-title" variant="h6" component="h2">
-                    All Trail's End
+        <Dialog open={open} onClose={handleClose} maxWidth='xs' fullWidth>
+            <DialogTitle>Retire bikes</DialogTitle>
+            <DialogContent>
+                <Typography variant='body2' sx={{ mb: 1, color: 'text.secondary' }}>
+                    All trail's end. Pick the bikes to remove. Their saved setups, ride notes and share
+                    links are removed too, and this can't be undone.
                 </Typography>
-                <Typography variant="subtitle2" sx={{paddingTop: 2, paddingBottom: 1}} component="div">
-                    Select bikes to remove from your garage:
-                </Typography>
-                {bikeList && bikeList.map((e: IBike) => {
-                    return(
-                        <FormGroup key={e.bike_id}>
-                            <FormControlLabel sx={{color: deleteList.includes(e.bike_id) ? 'red' : 'inherit'}} control={
-                                <Checkbox 
-                                    onChange={ () => {
-                                        deleteList.includes(e.bike_id) ? 
-                                            setDeleteList( deleteList.filter((item) => {return item !== e.bike_id}) ) 
-                                            : 
-                                            setDeleteList([...deleteList, e.bike_id]) } 
-                                    }
-                                    checked={deleteList.includes(e.bike_id)}
-                                    icon={<DeleteOutline />}
-                                    checkedIcon={<Delete color='secondary' />}
-                                    />} 
-                                    label={`${e.brand} ${e.model}`} 
-                                />
-                        </FormGroup>
-                    )
-                })}
-                <Box sx={actionStyles}>
-                    <Button color='warning' sx={{marginRight: 2}} variant="outlined" onClick={() => handleClose()}>Cancel</Button>
-                    <Button variant="contained" color='secondary' disabled={deleteList.length === 0} onClick={() => deleteBike()}>Remove Selected</Button>
-                </Box>
-            </Box>
-        </Modal>
+                <FormGroup>
+                    {bikeList?.map((b) => {
+                        const checked = deleteList.includes(b.bike_id);
+                        return (
+                            <FormControlLabel key={b.bike_id} label={`${b.brand} ${b.model}`}
+                                sx={{ color: checked ? 'error.main' : 'inherit' }}
+                                control={<Checkbox checked={checked} onChange={() => toggle(b.bike_id)}
+                                    icon={<DeleteOutline />} checkedIcon={<Delete />} color='error' />} />
+                        );
+                    })}
+                </FormGroup>
+            </DialogContent>
+            <DialogActions>
+                <Button color='inherit' onClick={handleClose}>Cancel</Button>
+                <Button variant='contained' color='error' disabled={n === 0} onClick={deleteBike}>
+                    {n > 1 ? `Remove ${n} bikes` : 'Remove bike'}
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 }
