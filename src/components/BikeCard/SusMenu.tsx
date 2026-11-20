@@ -55,9 +55,11 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
 
   return (
     <div className='suspensionCompression'>
-        <div className='featureTitle'>{isComp ? 'Compression' : 'Rebound'}</div>
-        <SettingsOutlinedIcon onClick={handleClick} onKeyDown={handleKey} role='button' tabIndex={0} aria-hidden={false}
-          aria-label={`${isComp ? 'Compression' : 'Rebound'} adjusters`} aria-haspopup='menu' />
+        <div className='featureTitle'>
+          {isComp ? 'Compression' : 'Rebound'}
+          <SettingsOutlinedIcon className='adjusterCog' onClick={handleClick} onKeyDown={handleKey} role='button' tabIndex={0} aria-hidden={false}
+            aria-label={`${isComp ? 'Compression' : 'Rebound'} adjusters`} aria-haspopup='menu' />
+        </div>
         <Menu
             anchorEl={anchorEl}
             open={open}
@@ -69,12 +71,14 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
         </Menu>
         {Array(detailLength).fill(0).map((e, i) => {
         const key = `${detail}${i + 1}`;
+        const inputId = `${key}-${bikeDetail.bike_id}`; //unique across bike cards
+        //one row per adjuster, label left and value right, like the Fork and Shock rows
         return (
-        <span key={key}>
-            <label className='susComponentLabel' htmlFor={key}>{i === 1 ? `HS${isComp ? 'C' : 'R'}` : `LS${isComp ? 'C' : 'R'}`}</label>
-            <SettingInput name={key} value={valueOf(key)} onChange={setBikeVal} invalid={failed.includes(key)}
+        <div key={key} className='adjusterRow'>
+            <label className='susComponentLabel' htmlFor={inputId}>{i === 1 ? `HS${isComp ? 'C' : 'R'}` : `LS${isComp ? 'C' : 'R'}`}</label>
+            <SettingInput id={inputId} name={key} value={valueOf(key)} onChange={setBikeVal} invalid={failed.includes(key)}
               onCommit={(name, value) => { if (saveBike) saveBike(name, value); }} />
-        </span>)})}
+        </div>)})}
     </div>
   );
 }

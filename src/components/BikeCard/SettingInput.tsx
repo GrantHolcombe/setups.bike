@@ -2,6 +2,8 @@ import * as React from 'react';
 
 interface ISettingInputProps {
   name: string;
+  // for a <label htmlFor>
+  id?: string;
   value: number | null | undefined;
   //called as the user types (valid whole numbers only), so the card updates live
   onChange: (name: string, value: number) => void;
@@ -19,7 +21,7 @@ const clean = (raw: string) => raw.replace(/[^0-9]/g, '').slice(0, 5);
 //  - never goes below 0 (no minus sign, and the arrow keys and spinner stop at 0)
 //  - empties a 0 when you click in, so you can just type
 //  - puts the last value back if you leave it empty
-export default function SettingInput({ name, value, onChange, onCommit, className = 'componentInput', invalid = false }: ISettingInputProps) {
+export default function SettingInput({ id, name, value, onChange, onCommit, className = 'componentInput', invalid = false }: ISettingInputProps) {
   const current = Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
   const [text, setText] = React.useState<string>(String(current));
   const focused = React.useRef(false);
@@ -38,6 +40,7 @@ export default function SettingInput({ name, value, onChange, onCommit, classNam
       step={1}
       className={invalid ? `${className} saveFailed` : className}
       aria-invalid={invalid || undefined}
+      id={id}
       name={name}
       value={text}
       onFocus={() => {

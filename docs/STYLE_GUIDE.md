@@ -120,4 +120,7 @@ Every modal is an MUI `Dialog`. Don't use `Modal` with a hand-positioned `Box`.
 
 - `.cardContainer`: `--surface` background, `--border` border, 8 px radius, shadow.
 - Pro actions sit under the setup picker; settings are grouped front/rear.
+- Front and rear columns use the same markup, so their rows line up: pressure, then Compression
+  and Rebound (title with its cog beside it), one row per adjuster (`.adjusterRow`: muted LSC/HSC
+  label left, value right), and the token counter pinned to the bottom of the column.
 - Read-only settings (ride notes, shared setups) use `SettingsSummary`.

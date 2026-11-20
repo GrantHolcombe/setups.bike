@@ -84,14 +84,14 @@ function BikeCard({thisBike}: IBikeCardProps) {
           <div className='pressureRow'>
             <div className='componentLabel'>Shock</div>
             <SettingInput name='rear_sus_pressure' value={bike.rear_sus_pressure} onChange={setBikeVal} onCommit={commit} invalid={saver.failed.includes('rear_sus_pressure')} />
-            <div className='suspensionCompression'>
-              <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} failed={saver.failed} detail='rear_sus_comp_'/>
-            </div>
-            <div className='suspensionRebound'>
-              <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} failed={saver.failed} detail='rear_sus_rebound_'/>
-            </div>
-            <TokenInput count={bike.rear_tokens} onChange={setTokens('rear_tokens')} invalid={saver.failed.includes('rear_tokens')} />
           </div>
+          <div className='suspensionCompression'>
+            <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} failed={saver.failed} detail='rear_sus_comp_'/>
+          </div>
+          <div className='suspensionRebound'>
+            <SusMenu bikeDetail={bike} setBikeVal={setBikeVal} saveBike={commit} failed={saver.failed} detail='rear_sus_rebound_'/>
+          </div>
+          <TokenInput count={bike.rear_tokens} onChange={setTokens('rear_tokens')} invalid={saver.failed.includes('rear_tokens')} />
         </div>
       </div>
     </div>
