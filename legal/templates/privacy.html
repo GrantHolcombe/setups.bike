@@ -19,8 +19,16 @@ and what you can ask us to do with your data. Questions: <a href="mailto:{{suppo
   <li><strong>Technical logs:</strong> when the app's servers handle a request they write a log,
     which can include your user ID and the time. We use these only to keep the app working and to
     fix problems, and keep them for up to {{logRetentionDays}} days.</li>
+  <li><strong>Activity dates:</strong> when you created your account, when you added each bike,
+    and when you last opened your garage. We use these only to count sign-ups and active users.</li>
+  <li><strong>How you found us:</strong> if you first arrive through a link with a campaign or
+    referral tag (for example a sticker's QR code, a partner's link or an ad), we note that tag
+    with your account when you sign up, so we can tell which promotions work.</li>
 </ul>
-<p>We don't use analytics, advertising or tracking tools, and we don't sell or rent your data.</p>
+<p>To count visits we use <strong>Cloudflare Web Analytics</strong>. It doesn't use cookies or
+fingerprinting, doesn't follow you across other sites, and doesn't store your IP address; we see
+totals such as visits, pages and referring sites, not individuals. We don't use advertising or
+cross-site tracking tools, and we don't sell or rent your data.</p>
 
 <h2>Why we use it</h2>
 <ul>
@@ -28,6 +36,8 @@ and what you can ask us to do with your data. Questions: <a href="mailto:{{suppo
   <li>To save and show your bikes and settings.</li>
   <li>To run Pro subscriptions: billing, renewals, receipts and failed-payment notices.</li>
   <li>To keep the app secure and working, and to answer you when you contact us.</li>
+  <li>To understand, in totals, how many people visit, sign up and keep using the app, and which
+    promotions bring them.</li>
 </ul>
 
 <h2>Shared setups</h2>
@@ -42,7 +52,8 @@ working.</p>
   <li><strong>Amazon Web Services:</strong> hosting the app and its servers, and storing logs
     (United States).</li>
   <li><strong>Neon:</strong> our database (United States).</li>
-  <li><strong>Cloudflare:</strong> delivering the website securely.</li>
+  <li><strong>Cloudflare:</strong> delivering the website securely, and counting visits (Web
+    Analytics).</li>
   <li><strong>Stripe:</strong> payments for Pro. Stripe handles your card details under its own
     privacy policy.</li>
 </ul>
@@ -51,6 +62,8 @@ working.</p>
 <h2>Your browser</h2>
 <p>To keep you signed in between visits, the app stores a sign-in token and your basic profile
 in your browser's local storage. Logging out removes them. The token expires after 7 days.
+If you arrive through a tagged link, the tag is also kept there for up to 30 days, until you sign
+up, so it can be noted with your new account.
 Google's sign-in and Stripe's checkout pages may set their own cookies.</p>
 
 <h2>How long we keep it</h2>

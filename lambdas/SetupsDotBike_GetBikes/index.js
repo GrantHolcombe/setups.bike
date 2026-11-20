@@ -44,6 +44,13 @@ exports.handler = async (event) => {
         ORDER BY g.garage_order`,
       [userId]
     );
+    // "last active" for the weekly numbers: at most one write per user per hour, and a failure
+    // here never stops the garage from loading
+    await client.query(
+      `UPDATE app_user SET last_active_at = now()
+        WHERE app_user_id = $1 AND (last_active_at IS NULL OR last_active_at < now() - interval '1 hour')`,
+      [userId]
+    ).catch((err) => console.warn("last_active_at not updated:", err.message));
     return reply(200, res.rows);
   } catch (err) {
     console.error(err);
