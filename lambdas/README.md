@@ -19,7 +19,8 @@ All DB access uses parameterized queries (`$1`, `$2`, ...). Keep it that way: ne
 by joining strings with request values.
 
 ## Config (Lambda environment variables)
-`RDS_HOSTNAME` (Neon pooled host), `RDS_USERNAME`, `RDS_PASSWORD`, `RDS_DATABASE`,
+`NEON_HOSTNAME` (Neon pooled host), `NEON_USERNAME` (`setupsbike_app`, the least-privilege role from
+migration 006; never the owner), `NEON_PASSWORD`, `NEON_DATABASE`,
 `PGSSLMODE=require`, and `JWT` on `addBike`. Secrets stay in the Lambda console, never in this repo.
 
 ## Deploy one function

@@ -18,10 +18,10 @@ const json = (statusCode, body) => ({
 });
 
 const newClient = () => new Client({
-  host: process.env.RDS_HOSTNAME,
-  user: process.env.RDS_USERNAME,
-  password: process.env.RDS_PASSWORD,
-  database: process.env.RDS_DATABASE
+  host: process.env.NEON_HOSTNAME,
+  user: process.env.NEON_USERNAME,
+  password: process.env.NEON_PASSWORD,
+  database: process.env.NEON_DATABASE
 });
 
 // Statuses that keep Pro. past_due keeps it while Stripe retries the card; if every retry
