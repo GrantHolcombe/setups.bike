@@ -62,6 +62,7 @@ Rules:
 - [ ] Delete the four old roles nothing uses any more (IAM, yours to do):
       `SetupDotBikes_AddUser-role-prmqlqlf`, `SetupsDotBike_addBike-role-x63taabc`,
       `SetupsDotBike_updateBike-role-295612hm`, `SetupsDotBike_DeleteBike-role-mz88xe3q`.
+      (All four still existed on 2026-11-19.)
       **Keep** `Setups.Bike_CD_Role` (the pipeline) and `SetupsDotBikeCodeBuildSR` (the build).
 - [x] **Database migrations.** Set up 2026-11-17 (`000` and `001` applied). Schema changes go in `db/migrations/NNN_name.sql` in this repo.
       You run each one against the Neon **direct** host and type the password at the prompt:
@@ -179,22 +180,25 @@ rate, freemium, Customer Portal, Smart Retries):
       "Send emails about expiring cards", both with **Link to a Stripe hosted page** (it lets
       the customer update their card without signing in to the app). Done in the sandbox on
       2026-11-17, live 2026-11-18.
-- [ ] Activate the live account (Stripe asks for identity and bank details; yours to do), then
+- [x] Activate the live account (Stripe asks for identity and bank details; yours to do), then
       in Settings > Business > Business details set: privacy policy
       `https://setups.bike/privacy.html`, terms `https://setups.bike/terms.html`, support
-      email `grant@hiregrant.today`. (Not available in the sandbox.)
+      email `grant@hiregrant.today`. (Not available in the sandbox.) Done: account verified
+      2026-11-19; the terms and privacy links show in the live Customer Portal.
 - [x] Dashboard part done in live mode 2026-11-18: product "Setups.Bike Pro" with
       `pro_monthly` ($2.99) and `pro_yearly` ($24); default Customer Portal (email/address,
       cards, invoices, cancel at period end with survey, switch between both prices, prorate
       and invoice immediately, yearly->monthly at period end); webhook endpoint
       `setups-bike-live` (same URL, same 6 events, API 2026-10-28.endive).
-- [ ] Create the Pro product and prices (lookup keys `pro_monthly`, `pro_yearly`), the
+- [x] Create the Pro product and prices (lookup keys `pro_monthly`, `pro_yearly`), the
       Customer Portal configuration (plan switches use **`always_invoice`**, so an upgrade is
       charged right away; `create_prorations` deferred the difference to the next renewal, as
       found in testing 2026-11-17), and the webhook endpoint again in live mode, then put
       the live `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in the three Lambdas.
       Use a **restricted** key: Checkout Sessions write, Customer portal write, Customers
-      read, Prices read, Subscriptions read (the only calls the code makes).
+      read, Prices read, Subscriptions read (the only calls the code makes). Done 2026-11-19:
+      restricted live key in all three Lambdas and the live webhook secret in stripeWebhook,
+      checked by prefix; a real $2.99 purchase and cancel went through the live webhook.
 
 - [x] **Stale test-mode Stripe ids** (only user 1 has any). Done 2026-11-18: createCheckoutSession
       and createPortalSession now check the stored customer still exists in the current mode;
@@ -379,10 +383,14 @@ subscriber gets a discount, and the partner gets a finder's fee on what that sub
 ---
 
 ## Open decisions
-1. Whether Claude may create Lambdas (option a in Phase 0) or you create the shells (option b).
-2. Whether to keep using the `test` API Gateway stage for production, or add a `prod` stage
-   while adding the new routes.
-3. A support email address and who writes the legal pages.
+1. ~~Whether Claude may create Lambdas~~ Decided 2026-11-17: option (a), the shared
+   `setupsbike-lambda-role`.
+2. Whether to keep using the `test` API Gateway stage for production, or add a `prod` stage.
+   For now production runs on `test`; a `prod` stage would mean updating the app's API URL
+   and the Stripe webhook URL together.
+3. ~~A support email address and who writes the legal pages~~ Decided 2026-11-17:
+   `grant@hiregrant.today` (set in `legal/site.config.json`); pages drafted, still worth a
+   professional review (board card "Waiting on Grant").
 4. Partner referrals (Phase 3.5): discount size and length, finder's fee % and how long it lasts, and manual payouts versus Stripe Connect.
 
 ## Done so far (Nov 2026)
@@ -391,3 +399,10 @@ subscriber gets a discount, and the partner gets a finder's fee on what that sub
   every function.
 - Reorder is about 8× faster. Sessions survive a page refresh.
 - Lambda source is in `lambdas/`, with a README for deploying.
+- Pro plan with Stripe: built, tested in the sandbox, then launched live 2026-11-19 for everyone.
+- Pro features: saved setups, ride notes and setup sharing (with per-link previews).
+- PWA: icons, manifest, offline app shell, update notice, install option; Lighthouse PWA,
+  accessibility and SEO 100, performance 76 on the live site.
+- Batched saves, readable gold colors, dark mode, and one dialog style for every modal.
+- Living docs: `docs/DATABASE.md` (generated diagram) and `docs/STYLE_GUIDE.md`.
+- Progress board: GitHub Project "Setups.Bike" (private).
