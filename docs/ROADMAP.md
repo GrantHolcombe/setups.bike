@@ -69,8 +69,9 @@ Rules:
       sign-in check, pointed at the deleted RDS proxy), deleted the 2024 functions
       `SetupsDotBike_GetUsers`, `SetupsDotBike_CORSResponse`, `SetupsDotBike_JWTLayer` and
       `NetworkAuth` with their logs, and Grant deleted their roles plus the RDS-era roles
-      (`postgres`, `rds-monitoring-role`, two `rds-proxy-role-…`). Left alone on purpose:
-      `write-db` and `writeCsv-role-…` (2018-19 projects, not Setups.Bike).
+      (`postgres`, `rds-monitoring-role`, two `rds-proxy-role-…`), the IAM user `postgres`, and
+      the 2018-19 projects (two APIs, six Lambdas, a DynamoDB table, a test bucket, and the
+      over-powered `write-db` role). Final IAM: 1 user, 4 roles, 4 policies, all in use.
       **Keep** `Setups.Bike_CD_Role` (the pipeline) and `SetupsDotBikeCodeBuildSR` (the build).
 - [x] **Database migrations.** Set up 2026-11-17 (`000` and `001` applied). Schema changes go in `db/migrations/NNN_name.sql` in this repo.
       You run each one against the Neon **direct** host and type the password at the prompt:
