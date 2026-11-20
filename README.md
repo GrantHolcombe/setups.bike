@@ -7,3 +7,8 @@ A simple app for recording suspension settings for a fleet of bicycles
 Open [https://Setups.Bike](https://Setups.Bike) and authenticate with google to view it in the browser.
 
 ### Happy trails!
+
+---
+
+Source shown for portfolio purposes. All rights reserved; see [LICENSE](LICENSE).
+

@@ -94,7 +94,8 @@ Rules:
 
 **Keeping the public repo safe** (the repo stays public as a portfolio piece; Pro is enforced
 by the Lambdas, so readable code doesn't open a way around it):
-- [ ] **Decide on a license.** With no `LICENSE` file, others can read the code but have no
+- [x] **Decide on a license.** Done 2026-11-20: all rights reserved, with a `LICENSE` file
+      saying so and a line in the README. With no `LICENSE` file, others can read the code but have no
       right to reuse it, which suits a portfolio project you sell. Don't add an open-source
       license (MIT and the like) unless you mean to allow reuse. Optionally add a README line:
       "Source shown for portfolio purposes. All rights reserved."
