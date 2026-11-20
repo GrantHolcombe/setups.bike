@@ -112,7 +112,9 @@ by the Lambdas, so readable code doesn't open a way around it):
       Confirmed on 2026-11-17.
       Free for public repos; it blocks a push that contains a Stripe or AWS key. The only secret
       ever committed is the old JWT secret, rotated twice on 2026-11-17 and now useless.
-- [ ] **Optional: limit which IPs can reach Neon.** Low priority while the password stays
+- [x] **Optional: limit which IPs can reach Neon.** Decided 2026-11-20: not doing it. IP Allow is
+      on Neon's Scale plan only, and fixed Lambda IPs need a NAT gateway (~$30+/mo). Instead:
+      a least-privilege database role for the Lambdas (board card). Low priority while the password stays
       private. The Lambdas have no fixed IPs, so this may need a paid Neon feature or a
       different network setup.
 - [ ] **Later: keep curated data out of the repo.** If the Phase 2.4 suggested-settings table
