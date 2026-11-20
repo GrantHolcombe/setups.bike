@@ -66,6 +66,7 @@ erDiagram
     varchar_255 brand
     varchar_255 model
     bigint active_setup_id FK "nullable"
+    timestamptz created_at "nullable"
   }
   app_user {
     varchar_255 first_name "nullable"
@@ -81,6 +82,8 @@ erDiagram
     timestamptz plan_updated_at "nullable"
     text stripe_customer_id UK "nullable"
     text stripe_subscription_id UK "nullable"
+    timestamptz created_at "nullable"
+    timestamptz last_active_at "nullable"
   }
   bike_setup {
     bigint bike_setup_id PK
@@ -159,13 +162,19 @@ erDiagram
 
 | Table | What it holds | Written by |
 |---|---|---|
-| `app_user` | One row per Google account: name, email, and the plan (`free`/`pro`), its source (`stripe`, `comp`, later `apple`/`google`), status, renewal date and Stripe ids. | AddUser (sign-in), stripeWebhook (plan), `db/maintenance/comp_user.sql` |
-| `bike` | A bike in a garage and its **current** settings: tire pressures, fork/shock pressure, compression and rebound (count = how many adjusters: 0 none, 1 single, 2 dual), volume tokens. `active_setup_id` is the saved setup last applied or saved. | addBike, updateBike, DeleteBike, bikeSetups (apply), rideNotes (reuse), sharedSetups (copy) |
+| `app_user` | One row per Google account: name, email, and the plan (`free`/`pro`), its source (`stripe`, `comp`, later `apple`/`google`), status, renewal date and Stripe ids. `created_at` (sign-up) and `last_active_at` (garage last opened, stamped by getBikes at most hourly) feed the weekly numbers; accounts from before 2026-11-20 have no `created_at`. | AddUser (sign-in), getBikes (`last_active_at`), stripeWebhook (plan), `db/maintenance/comp_user.sql` |
+| `bike` | A bike in a garage and its **current** settings: tire pressures, fork/shock pressure, compression and rebound (count = how many adjusters: 0 none, 1 single, 2 dual), volume tokens. `active_setup_id` is the saved setup last applied or saved. `created_at` is when it was added (none for bikes from before 2026-11-20). | addBike, updateBike, DeleteBike, bikeSetups (apply), rideNotes (reuse), sharedSetups (copy) |
 | `garage_order` | The bike's position in its owner's garage. A trigger adds a row for every new bike; deleting a bike removes it. | trigger, reorderGarage, DeleteBike |
 | `bike_setup` | Pro: named saved setups ("Bike park", "Wet") with a full copy of the 18 settings. Names are unique per bike, ignoring case. Max 20 per bike. | bikeSetups |
 | `ride_note` | Pro: how a ride went (date, trail, conditions, 1–5 rating, note) plus a snapshot of the bike's settings at the time, in `settings` (jsonb). Max 500 per bike. | rideNotes |
 | `shared_setup` | Pro: a public, read-only snapshot of a bike's settings behind an unguessable `share_id` (`setups.bike/?s=<id>`). Never holds the owner's name or email. `revoked_at` hides it for good. | sharedSetups |
 | `stripe_event` | Ids of Stripe webhook events already handled, so a retried event isn't processed twice. | stripeWebhook |
+
+## Reports
+
+- `db/maintenance/weekly_numbers.sql`: read-only weekly report (sign-ups, active users, bikes,
+  setups, ride notes, share links, plans). Leaves the e2e test account (user 6) out of activity
+  counts; `-v days=30` changes the window, `-v exclude=6,1` leaves out more accounts.
 
 ## Rules worth knowing
 

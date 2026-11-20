@@ -2,9 +2,9 @@
 -- PostgreSQL database dump
 --
 
-\restrict n7x4f0lhSCFkeprnyno2Gj9fsyaZtWN7FOcC380Oaf1CJmYzRHQSt4n36eSZoQC
+\restrict HkDZme9p53Rm9qGfeVkcnzWgJHkm4rQKeOqidFUQMnn3XEx2o8xOxeZSB5GCig4
 
--- Dumped from database version 18.7 (a21afb5)
+-- Dumped from database version 18.7 (84da7d8)
 -- Dumped by pg_dump version 18.6
 
 SET statement_timeout = 0;
@@ -69,9 +69,11 @@ CREATE TABLE public.bike (
     app_user_id bigint,
     brand character varying(255) NOT NULL,
     model character varying(255) NOT NULL,
-    active_setup_id bigint
+    active_setup_id bigint,
+    created_at timestamp with time zone DEFAULT now()
 );
 ALTER TABLE ONLY public.bike ALTER COLUMN active_setup_id SET (pg_attver=33243952);
+ALTER TABLE ONLY public.bike ALTER COLUMN created_at SET (pg_attver=40123504);
 
 
 --
@@ -106,6 +108,8 @@ CREATE TABLE public.app_user (
     plan_updated_at timestamp with time zone,
     stripe_customer_id text,
     stripe_subscription_id text,
+    created_at timestamp with time zone DEFAULT now(),
+    last_active_at timestamp with time zone,
     CONSTRAINT app_user_plan_check CHECK ((plan = ANY (ARRAY['free'::text, 'pro'::text]))),
     CONSTRAINT app_user_plan_interval_check CHECK (((plan_interval IS NULL) OR (plan_interval = ANY (ARRAY['month'::text, 'year'::text])))),
     CONSTRAINT app_user_plan_source_check CHECK (((plan_source IS NULL) OR (plan_source = ANY (ARRAY['stripe'::text, 'apple'::text, 'google'::text, 'comp'::text]))))
@@ -119,6 +123,8 @@ ALTER TABLE ONLY public.app_user ALTER COLUMN plan_cancel_at_period_end SET (pg_
 ALTER TABLE ONLY public.app_user ALTER COLUMN plan_updated_at SET (pg_attver=31959704);
 ALTER TABLE ONLY public.app_user ALTER COLUMN stripe_customer_id SET (pg_attver=31960160);
 ALTER TABLE ONLY public.app_user ALTER COLUMN stripe_subscription_id SET (pg_attver=31960616);
+ALTER TABLE ONLY public.app_user ALTER COLUMN created_at SET (pg_attver=40121696);
+ALTER TABLE ONLY public.app_user ALTER COLUMN last_active_at SET (pg_attver=40123000);
 
 
 --
@@ -511,5 +517,5 @@ ALTER TABLE ONLY public.shared_setup
 -- PostgreSQL database dump complete
 --
 
-\unrestrict n7x4f0lhSCFkeprnyno2Gj9fsyaZtWN7FOcC380Oaf1CJmYzRHQSt4n36eSZoQC
+\unrestrict HkDZme9p53Rm9qGfeVkcnzWgJHkm4rQKeOqidFUQMnn3XEx2o8xOxeZSB5GCig4
 
