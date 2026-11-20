@@ -42,6 +42,25 @@ Standing rules, set early and kept throughout:
 
 ---
 
+## 2026-11-20: Privacy-first analytics, with sign-up source kept in memory only
+
+**Situation:** Marketing needs numbers before the first sticker or post goes out: visits,
+sign-ups, and which campaign brought each sign-up. I asked to be told whenever the work would
+bring in GDPR requirements.
+
+**Decision:**
+- **Visits:** Cloudflare Web Analytics, which uses no cookies, no fingerprinting and stores no
+  IP addresses. Activity dates are counted in the app's own database.
+- **Sign-up source:** a campaign tag (from a QR code or partner link) is kept **in memory for
+  that visit only** and saved with the account only if the person signs up then. It is never
+  stored in the browser. Ad click IDs are skipped until ads actually start.
+- **Privacy Policy:** updated before any of it goes live.
+
+**Why:** Storing a tag in the browser for 30 days would catch more returning visitors. But for EU
+visitors, storing non-essential data on the device generally needs a consent banner. Memory-only
+avoids that, and the trade-off (a sign-up days later isn't attributed) is small at this stage.
+It can move to 30-day storage later with a small code change and a one-line policy update.
+
 ## 2026-11-19: End-to-end tests with Playwright
 
 **Situation:** After moving the Lambdas to a new database role, the plan was for me to click
