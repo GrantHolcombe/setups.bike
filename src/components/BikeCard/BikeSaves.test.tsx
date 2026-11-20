@@ -3,8 +3,6 @@ import { AppContext, AppContent } from '../../App';
 import BikeCard from './BikeCard';
 import { SAVE_DELAY_MS, SAVED_SHOWN_MS } from './useBikeSaver';
 
-// App.tsx pulls in axios, which jest (CRA) can't parse; these tests never call it (jest hoists this)
-jest.mock('axios', () => ({ __esModule: true, default: {} }));
 
 const bike: any = {
   bike_id: 7, brand: 'Giant', model: 'Trance', front_tire: 20, rear_tire: 22, front_sus_pressure: 97,

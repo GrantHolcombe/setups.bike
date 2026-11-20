@@ -2,9 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App';
 
-// axios ships as an ES module that jest (CRA) can't parse; signed out, the app never calls it
-jest.mock('axios', () => ({ __esModule: true, default: {} }));
-
 test('signed out, the app shows sign-in and the legal links', () => {
   render(
     <GoogleOAuthProvider clientId='test-client'>

@@ -4,8 +4,6 @@ import AddBikeModal from './AddBikeModal';
 import DeleteBikeModal from './DeleteBikeModal';
 import ReorderGarageModal from './ReorderGarageModal';
 
-// App.tsx pulls in axios, which jest (CRA) can't parse; these tests never call it (jest hoists this)
-jest.mock('axios', () => ({ __esModule: true, default: {} }));
 
 const ctx = (): AppContent => ({
   loading: false, setLoading: jest.fn(), token: 'tok', refreshBikes: jest.fn(), account: undefined,

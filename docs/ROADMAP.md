@@ -325,6 +325,12 @@ after a logo or tagline change. There's no service worker yet.
 - [x] Check with Lighthouse's PWA audit. Done 2026-11-19 with Lighthouse 9 (v12 dropped the PWA
       category): PWA, accessibility and SEO 100; performance 37 -> 81 after replacing
       react-loader-spinner (local production build, simulated slow phone).
+- [x] Largest contentful paint. Done 2026-11-20 (Lighthouse 13, mobile, live site): LCP 4.9 s ->
+      3.6 s after a 13 KB preloaded WebP header logo (was 88 KB). Then axios was swapped for `fetch`
+      and the dialogs and Pro features moved into lazy-loaded chunks (`src/lazy.tsx`, preloaded in
+      the background once a signed-in garage shows): main bundle 160 -> 127 KB gzipped, blocking
+      time -25% locally. Cloudflare Bot Fight Mode's script costs ~0.2-0.4 s of main-thread time;
+      kept on. Measure on an idle machine: a busy CPU skewed one run to a 7 s blocking time.
 - Service worker notes: `src/service-worker.ts` precaches the app shell and same-origin images,
   never the API; updates wait for "A new version is ready · Reload"; `service-worker.js` and
   `manifest.json` are uploaded with no-cache (buildspec).

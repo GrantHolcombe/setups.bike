@@ -2,8 +2,7 @@ import * as React from 'react';
 import { Button } from '@mui/material';
 import { EditNote, History, Share } from '@mui/icons-material';
 import { IBike, useAppContext } from '../../App';
-import { RideHistoryDialog, RideLogDialog } from './RideNotes';
-import ShareDialog from './ShareDialog';
+import { RideHistoryDialog, RideLogDialog, ShareDialog, WhenOpened } from '../../lazy';
 
 // Pro actions on a bike card: log a ride, ride history (2.2) and share (2.3).
 // Share also shows for a lapsed Pro user who still has links, so they can remove them.
@@ -25,13 +24,19 @@ export default function ProActions({ bike, beforeChange }: { bike: IBike; before
       {isPro && <Button size='small' startIcon={<History />} sx={sx} onClick={() => setHistoryOpen(true)}>Rides</Button>}
       <Button size='small' startIcon={<Share />} sx={sx} onClick={() => setShareOpen(true)}>Share</Button>
 
-      <RideLogDialog bike={bike} beforeChange={beforeChange} open={logOpen} onClose={() => setLogOpen(false)}
-        onSaved={() => { setLogOpen(false); setVersion((v) => v + 1); setHistoryOpen(true); }} />
+      <WhenOpened open={logOpen}>
+        <RideLogDialog bike={bike} beforeChange={beforeChange} open={logOpen} onClose={() => setLogOpen(false)}
+          onSaved={() => { setLogOpen(false); setVersion((v) => v + 1); setHistoryOpen(true); }} />
+      </WhenOpened>
       {isPro && (
-        <RideHistoryDialog bike={bike} beforeChange={beforeChange} open={historyOpen} version={version} onClose={() => setHistoryOpen(false)}
-          onLogRide={() => { setHistoryOpen(false); setLogOpen(true); }} />
+        <WhenOpened open={historyOpen}>
+          <RideHistoryDialog bike={bike} beforeChange={beforeChange} open={historyOpen} version={version} onClose={() => setHistoryOpen(false)}
+            onLogRide={() => { setHistoryOpen(false); setLogOpen(true); }} />
+        </WhenOpened>
       )}
-      <ShareDialog bike={bike} beforeChange={beforeChange} open={shareOpen} onClose={() => setShareOpen(false)} />
+      <WhenOpened open={shareOpen}>
+        <ShareDialog bike={bike} beforeChange={beforeChange} open={shareOpen} onClose={() => setShareOpen(false)} />
+      </WhenOpened>
     </div>
   );
 }

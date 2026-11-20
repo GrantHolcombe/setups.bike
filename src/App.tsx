@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
-import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import './App.css';
 import BikeCard from './components/BikeCard/BikeCard';
 import Header from './components/Header/Header';
 import { Alert, Button, Snackbar } from '@mui/material';
-import UpgradeDialog, { UpgradeReason } from './components/Billing/UpgradeDialog';
+import type { UpgradeReason } from './components/Billing/UpgradeDialog';
 import { IAccount, getAccount, openBillingPortal } from './billing';
 import { IBikeSetup, listSetups } from './setups';
 import { IShare, SHARE_PARAM, copyShare, listShares } from './shares';
-import SharedSetupView from './components/Shared/SharedSetupView';
 import { LoadingOverlay } from './components/Spinner';
+import { SharedSetupView, UpgradeDialog, WhenOpened, preloadParts } from './lazy';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -147,6 +146,13 @@ export const AppContext = createContext<AppContent>({
   refreshShares: async () => {}
 })
 export const useAppContext = () => useContext(AppContext)
+
+//query string for the older GET/POST Lambdas that read their input from the URL
+//(skips missing values, as axios's `params` did)
+const queryString = (params: Record<string, unknown>) =>
+  new URLSearchParams(Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== null)
+    .map(([k, v]) => [k, String(v)])).toString();
 
 //signed-in session kept across page reloads, until the app token expires
 const SESSION_KEY = 'setupsBikeSession';
@@ -345,15 +351,19 @@ function App() {
   useEffect(
     () => {
         if (user) {
-            axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${user.credentialStr}`, {
+            fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${user.credentialStr}`, {
                     headers: {
                         Authorization: `Bearer ${user.credentialStr}`,
                         Accept: 'application/json'
                     }
                 })
                 .then((res) => {
+                    if (!res.ok) throw new Error(`userinfo ${res.status}`);
+                    return res.json();
+                })
+                .then((data) => {
                     //set FE profile data
-                    setProfile(res.data);
+                    setProfile(data);
                     //toggles login/app screens
                     setIsAuthenticated(true);
                 })
@@ -381,6 +391,11 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
+  //garage is showing: fetch the dialogs and Pro features in the background, so opening one is instant
+  useEffect(() => {
+    if (isAauthenticated && bikes) preloadParts();
+  }, [isAauthenticated, bikes]);
+
   //back online with a signed-in garage that never loaded: try again
   useEffect(() => {
     if (!offline && jwt !== "" && !bikes) getBikes();
@@ -398,13 +413,13 @@ function App() {
   }, [jwt]);
 
   //add user lambda call
-  const addUser = (reqObj: object) => {
+  const addUser = (reqObj: Record<string, unknown>) => {
 
-    axios.post(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/addUser`,
-      JSON.stringify({}), 
-      { params: reqObj })
-      .then(response => {
-        setJwt(response.data.token);
+    fetch(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/addUser?${queryString(reqObj)}`,
+      { method: 'POST', body: JSON.stringify({}) })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`addUser ${res.status}`);
+        setJwt((await res.json()).token);
       })
       .catch(err => {
         console.warn(err);
@@ -419,19 +434,23 @@ function App() {
       token: jwt,
       userId: decodedJwt.app_user_id,
     }
-    axios.get(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes`, { params: reqObj})
-                .then((res) => {
-                    setBikes(res.data.sort((a: IBike, b: IBike) => a.garage_order - b.garage_order));
+    fetch(`https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/getBikes?${queryString(reqObj)}`)
+                .then(async (res) => {
+                    //expired or invalid token: back to the sign-in screen
+                    if (res.status === 401) { logout(); return; }
+                    if (!res.ok) { console.warn('getBikes failed', res.status); return; }
+                    const data = await res.json();
+                    setBikes(data.sort((a: IBike, b: IBike) => a.garage_order - b.garage_order));
                     setIsLoading(false);
                     //keeps the bike count and limit current after adds and deletes
                     refreshAccount();
                 })
                 .catch((err) => {
+                  //fetch only rejects when the request never got an answer (no connection):
+                  //stop the spinner; the offline banner explains, and it retries when back online
                   console.log(err);
-                  //expired or invalid token: back to the sign-in screen
-                  if (err.response?.status === 401) logout();
-                  //no connection: stop the spinner; the offline banner explains, and it retries when back online
-                  else if (!err.response) { setIsLoading(false); setOffline(!navigator.onLine); }
+                  setIsLoading(false);
+                  setOffline(!navigator.onLine);
                 });
   }
   
@@ -470,8 +489,10 @@ function App() {
         </Alert>
       )}
       {sharedId ?
+        <React.Suspense fallback={<LoadingOverlay visible />}>
         <SharedSetupView shareId={sharedId} signedIn={!!jwt} belowWelcome={isAauthenticated} copying={copying} copyError={copyError}
           onCopy={copySharedToGarage} onClose={closeShared} />
+        </React.Suspense>
       : isAauthenticated && profile && bikes ? 
         <div className='bikeInputForm'>
           {pastDue && (
@@ -496,7 +517,9 @@ function App() {
         </div>
 
       }
-      <UpgradeDialog open={upgrade.open} reason={upgrade.reason} onClose={() => setUpgrade({ ...upgrade, open: false })} />
+      <WhenOpened open={upgrade.open}>
+        <UpgradeDialog open={upgrade.open} reason={upgrade.reason} onClose={() => setUpgrade({ ...upgrade, open: false })} />
+      </WhenOpened>
       <Snackbar open={updateReady} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         <Alert severity='info' variant='filled'
           action={<Button color='inherit' size='small' onClick={applyUpdate}>Reload</Button>}>

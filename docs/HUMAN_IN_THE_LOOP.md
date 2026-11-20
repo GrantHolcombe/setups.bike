@@ -4,10 +4,16 @@
 says is fastest on the leaderboard. An AI agent can ride any line you point it at. Knowing which
 line to take is the developer's job, and this log is where I wrote down the lines I chose.*
 
-Setups.Bike is built with an AI coding agent (Claude Code) doing much of the typing. This log
-records the calls I made along the way: where I steered, corrected or overruled the agent, set
-its limits, or weighed a trade-off myself. It sits next to the code because the code shows *what*
-was built; this shows the engineering judgment behind it.
+I built Setups.Bike by hand starting in July 2024: the React and MUI front end, the
+API Gateway and Lambda back end, the Postgres database, and the AWS hosting and deploy pipeline.
+In November 2026 I brought in an AI coding agent (Claude Code) as a tool to speed up
+development. I used it to harden what I'd built (auth, a least-privilege database role, an AWS
+cleanup), to add the Pro plan and its features, and to write tests and docs. The architecture
+and the product were already mine; the agent made a solo project move like a small team.
+
+This log records the calls I made once the agent was involved: where I steered, corrected or
+overruled it, set its limits, or weighed a trade-off myself. It sits next to the code because the
+code shows *what* was built; this shows the engineering judgment behind it.
 
 Newest first. Each entry: the situation, what I decided, and why.
 

@@ -2,12 +2,9 @@ import * as React from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import PedalBikeIcon from '@mui/icons-material/PedalBike';
-import AddBikeModal from './AddBikeModal';
-import DeleteBikeModal from './DeleteBikeModal';
-import ReorderGarageModal from './ReorderGarageModal';
 import { IAppMenuProps } from '../Header';
 import { useAppContext } from '../../../App';
-import InstallHelpDialog from './InstallHelpDialog';
+import { AddBikeModal, DeleteBikeModal, InstallHelpDialog, ReorderGarageModal, WhenOpened } from '../../../lazy';
 import { promptInstall, useInstallOption } from '../../../pwa';
 
 export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}: IAppMenuProps) {
@@ -94,10 +91,10 @@ export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}:
             )}
             <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)'}} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
         </Menu>
-        <AddBikeModal open={addBikeOpen} closeModal={handleModalClose} />
-        <DeleteBikeModal open={deleteBikeOpen} closeModal={() => setDeleteBikeOpen(false)} bikeList={bikeList} />
-        <InstallHelpDialog open={installHelpOpen} onClose={() => setInstallHelpOpen(false)} />
-        <ReorderGarageModal open={reorderGarageOpen} closeModal={() => setReorderGarageOpen(false)} bikeList={bikeList} />
+        <WhenOpened open={addBikeOpen}><AddBikeModal open={addBikeOpen} closeModal={handleModalClose} /></WhenOpened>
+        <WhenOpened open={deleteBikeOpen}><DeleteBikeModal open={deleteBikeOpen} closeModal={() => setDeleteBikeOpen(false)} bikeList={bikeList} /></WhenOpened>
+        <WhenOpened open={installHelpOpen}><InstallHelpDialog open={installHelpOpen} onClose={() => setInstallHelpOpen(false)} /></WhenOpened>
+        <WhenOpened open={reorderGarageOpen}><ReorderGarageModal open={reorderGarageOpen} closeModal={() => setReorderGarageOpen(false)} bikeList={bikeList} /></WhenOpened>
     </div>
     );
 }
