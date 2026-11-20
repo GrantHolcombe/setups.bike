@@ -59,10 +59,12 @@ Rules:
       Both now use `setupsbike-lambda-role`, and both write logs.
 - [x] **All six app Lambdas on `setupsbike-lambda-role`.** Done 2026-11-17. AddUser's old
       role had full RDS Data and VPC access plus the old Aurora secret; that's gone now.
-- [ ] Delete the four old roles nothing uses any more (IAM, yours to do):
+- [x] Delete the four old roles nothing uses any more (IAM, yours to do):
       `SetupDotBikes_AddUser-role-prmqlqlf`, `SetupsDotBike_addBike-role-x63taabc`,
       `SetupsDotBike_updateBike-role-295612hm`, `SetupsDotBike_DeleteBike-role-mz88xe3q`.
-      (All four still existed on 2026-11-19.)
+      Deleted by Grant 2026-11-20 (confirmed). Their ten leftover customer-managed policies
+      (`AWSLambdaBasicExecutionRole-…`, `AWSLambdaVPCAccessExecutionRole-…`,
+      `AWSLambdaRDSProxyExecutionRole-…`) are unattached and can be deleted.
       **Keep** `Setups.Bike_CD_Role` (the pipeline) and `SetupsDotBikeCodeBuildSR` (the build).
 - [x] **Database migrations.** Set up 2026-11-17 (`000` and `001` applied). Schema changes go in `db/migrations/NNN_name.sql` in this repo.
       You run each one against the Neon **direct** host and type the password at the prompt:
