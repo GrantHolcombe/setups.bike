@@ -26,7 +26,7 @@ def white(img):
 
 
 logo = white(Image.open(LOGO).convert("RGBA"))
-glyph = logo.crop(logo.split()[3].crop((0, 0, 1200, 760)).getbbox())  # cloud + pump, no text
+glyph = logo.crop(logo.split()[3].crop((0, 0, 1200, 760)).getbbox())  # brain + pump, no text
 full = logo.crop(logo.split()[3].getbbox())                            # with the wordmark
 
 
