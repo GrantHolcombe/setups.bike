@@ -3,7 +3,10 @@ body {
   top: 0;
   left: 0;
   width: 100%;
+  /* clip, not just hide: a hidden overflow can still be scrolled (the token coins stick out past
+     the right edge), clip can't. Older browsers ignore the second line and keep hidden. */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .cardWrapper {

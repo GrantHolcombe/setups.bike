@@ -52,8 +52,6 @@ html {
 html, body {
   touch-action: pan-y;
   overflow-x: hidden;
+  overflow-x: clip;
   overscroll-behavior-x: none;
-}
-@supports (overflow-x: clip) {
-  html, body { overflow-x: clip; }
 }
