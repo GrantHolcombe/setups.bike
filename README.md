@@ -11,7 +11,7 @@ Open [https://Setups.Bike](https://Setups.Bike) and authenticate with google to 
 - `npm start` runs the app on localhost:3000 against the live API (Node 26).
 - `npm test` runs the component tests (Jest, API mocked).
 - `npm run e2e` runs the end-to-end tests (Playwright, real API and database); see [e2e/README.md](e2e/README.md).
-- Docs: [roadmap](docs/ROADMAP.md), [database](docs/DATABASE.md), [style guide](docs/STYLE_GUIDE.md), [Line Choice: decisions log](docs/DECISIONS.md).
+- Docs: [roadmap](docs/ROADMAP.md), [database](docs/DATABASE.md), [style guide](docs/STYLE_GUIDE.md), [human in the loop: decisions log](docs/HUMAN_IN_THE_LOOP.md).
 
 ### Happy trails!
 

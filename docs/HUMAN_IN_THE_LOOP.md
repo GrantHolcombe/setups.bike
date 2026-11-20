@@ -1,7 +1,8 @@
-# Line Choice
+# It Pays To Know The Strava Line
 
-*On the trail, line choice is the call you make before a technical section: which way through,
-and why. This is that, for the code.*
+*Riders say it pays to know the Strava line: the route through a trail that local knowledge
+says is fastest on the leaderboard. An AI agent can ride any line you point it at. Knowing which
+line to take is the developer's job, and this log is where I wrote down the lines I chose.*
 
 Setups.Bike is built with an AI coding agent (Claude Code) doing much of the typing. This log
 records the calls I made along the way: where I steered, corrected or overruled the agent, set
@@ -93,6 +94,26 @@ and whether migrations could still run as the owner. We settled on:
 Lambdas need the same table access. One app role removes the real risk (a leaked Lambda
 credential being able to destroy the schema). Provider-generated passwords are stronger than
 anything typed, and never have to be seen.
+
+## 2026-11-19: A style guide, and database docs beyond the schema dump
+
+**Situation:** The UI had grown one screen at a time, and the dialogs had drifted apart in
+layout, button order and wording. The only database documentation was `db/schema.sql`, a raw
+dump that says what the columns are but not what they mean or how the tables connect.
+
+**Decision:** Write both down as living docs:
+- **[Style guide](STYLE_GUIDE.md)** covers color tokens with contrast rules for light and
+  dark mode, type, spacing, the one dialog pattern, buttons, inputs, feedback messages and
+  cards. The existing dialogs were then brought into line with it.
+- **[Database doc](DATABASE.md)** has an entity-relationship diagram generated from the schema
+  (`npm run db:diagram`, so it can't drift from the real tables), plus notes on what each table
+  is for, which Lambdas use it, its indexes and triggers, and the roles.
+
+**Why:** When an agent writes much of the code, its "memory" of conventions is whatever is
+written down. A style guide makes new screens match without re-explaining the rules every
+time, and reviewing a change against a written standard is faster than going by gut feel. A
+generated diagram stays accurate, and the table notes record the meaning a schema dump can't.
+Both double as onboarding docs for anyone reading the repo.
 
 ## 2026-11-20: Don't restrict Neon by IP address
 
