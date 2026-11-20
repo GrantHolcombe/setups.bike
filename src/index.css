@@ -45,3 +45,15 @@ body {
 html {
   background: var(--bg);
 }
+
+/* Mobile: no pinch or double-tap zoom, and the page never slides sideways. touch-action allows
+   only vertical scrolling (iPhone Safari ignores user-scalable=no in the viewport tag, but honors
+   this). Inputs stay at 16px so iOS doesn't auto-zoom when one is focused. */
+html, body {
+  touch-action: pan-y;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+@supports (overflow-x: clip) {
+  html, body { overflow-x: clip; }
+}

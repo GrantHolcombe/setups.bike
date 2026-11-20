@@ -50,7 +50,10 @@ Rules:
 
 - MUI's 8 px grid: `sx={{ mb: 2 }}` = 16 px. Prefer `sx` spacing over pixel values.
 - Cards are max 360 px wide in an auto-fit grid; dialogs are `maxWidth="xs"` (`"sm"` for lists).
-- Everything must work at phone width (375 px) with no sideways scrolling.
+- Everything must work at phone width (360 px and up) with no sideways scrolling.
+- The page is locked on mobile (`src/index.css`): `touch-action: pan-y` allows vertical scrolling
+  only (no pinch or double-tap zoom, no sideways drag), with horizontal overflow clipped and no
+  sideways bounce. Keep inputs at 16 px or larger, or iOS zooms in when one is focused.
 
 ## Dialogs (the one modal pattern)
 

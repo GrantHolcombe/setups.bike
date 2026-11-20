@@ -14,13 +14,16 @@ const MAX_TOKENS = 12;
 // only reports a change when a button is clicked (never on load).
 export default function TokenInput({ count, onChange, invalid = false }: ITokenInputProps) {
   const coins = Math.min(MAX_TOKENS, Math.max(0, Number(count) || 0));
+  // coins fan out 10px apart, closer together when there are many, so the stack stays inside
+  // its column (55px coin + at most 80px of fan)
+  const step = coins > 1 ? Math.min(10, 80 / (coins - 1)) : 0;
 
   return (
   <div style={{display: "flex", width:"100%"}}>
     <div className='tokenRelContainer'>
         <div className='tokenContainer'>
         {Array(coins).fill(0).map((e,i) => {
-            return <img src="/img/fox_token.png" key={i} width={55} height={55} className='coinShadow' style={{left: (i * 10) +"px", top: (i + 1) +"px", height: "55px", width: "55px",transform: "rotate(-3deg)"}} alt="logo" />
+            return <img src="/img/fox_token.png" key={i} width={55} height={55} className='coinShadow' style={{left: (i * step) + "px", top: (i + 1) +"px", height: "55px", width: "55px",transform: "rotate(-3deg)"}} alt="logo" />
         })}
         </div>
     </div>

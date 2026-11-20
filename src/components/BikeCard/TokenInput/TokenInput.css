@@ -3,7 +3,8 @@
     position: absolute;
     height: 40px;
     bottom: 200px;
-    width: 190px;
+    /* narrow enough for the right-hand column on a 360px phone (190px spilled past the screen) */
+    width: 140px;
     transform: translateX(-50%);
     transform: rotate(-6deg);
 
