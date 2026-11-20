@@ -38,7 +38,10 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "prebuild": "npm run legal",
-    "db:diagram": "node scripts/db-diagram.js"
+    "db:diagram": "node scripts/db-diagram.js",
+    "e2e": "playwright test",
+    "e2e:login": "node e2e/save-session.mjs",
+    "e2e:report": "playwright show-report"
   },
   "eslintConfig": {
     "extends": [
@@ -57,5 +60,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1"
   }
 }

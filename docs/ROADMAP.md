@@ -113,10 +113,17 @@ by the Lambdas, so readable code doesn't open a way around it):
       Free for public repos; it blocks a push that contains a Stripe or AWS key. The only secret
       ever committed is the old JWT secret, rotated twice on 2026-11-17 and now useless.
 - [x] **Optional: limit which IPs can reach Neon.** Decided 2026-11-20: not doing it. IP Allow is
-      on Neon's Scale plan only, and fixed Lambda IPs need a NAT gateway (~$30+/mo). Instead:
-      a least-privilege database role for the Lambdas (board card). Low priority while the password stays
-      private. The Lambdas have no fixed IPs, so this may need a paid Neon feature or a
-      different network setup.
+      on Neon's Scale plan only, and fixed Lambda IPs need a NAT gateway (~$30+/mo). Done instead: the least-privilege role below.
+- [x] **Least-privilege database role for the Lambdas.** Done 2026-11-19: migration 006 adds
+      `setupsbike_app` (row read/write only). All 13 Lambdas use it through `NEON_*` env vars
+      (renamed from `RDS_*`), the owner login was removed from every Lambda, and only Grant
+      holds the owner password, for migrations. See [DATABASE.md](DATABASE.md#roles).
+- [x] **End-to-end tests.** Done 2026-11-19: a Playwright suite in `e2e/` runs the whole app
+      against the live API as a comped test account. Run `npm run e2e` before batching a deploy
+      and after any Lambda or database change. See [e2e/README.md](../e2e/README.md).
+- [ ] **Move the Lambdas off Node 20.** `nodejs20.x` reached end of support on 2026-04-30;
+      function updates are blocked from 2027-08-31. Move them to `nodejs24.x` (local dev and
+      CodeBuild are on Node 26 since 2026-11-19).
 - [ ] **Later: keep curated data out of the repo.** If the Phase 2.4 suggested-settings table
       becomes valuable, store it only in the database rather than in a migration file.
 - [x] **Sales tax: not collected at launch** (decided 2026-11-17). Turn on Stripe Tax's free
