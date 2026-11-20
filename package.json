@@ -37,7 +37,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "prebuild": "npm run legal"
+    "prebuild": "npm run legal",
+    "db:diagram": "node scripts/db-diagram.js"
   },
   "eslintConfig": {
     "extends": [

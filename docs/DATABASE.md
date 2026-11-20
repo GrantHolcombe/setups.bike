@@ -1,0 +1,166 @@
+# Setups.Bike database
+
+Postgres on Neon (`neondb`, us-west-2). The Lambdas connect through the pooled host; schema
+work uses the direct host. The full schema is in [`db/schema.sql`](../db/schema.sql) and changes
+go through numbered migrations in [`db/migrations/`](../db/migrations/).
+
+**Keeping this page current:** after applying a migration, re-dump the schema and regenerate the
+diagram:
+
+```powershell
+& "C:\Program Files\PostgreSQL\18\bin\pg_dump.exe" -h ep-shiny-mountain-bfjvu2jn.c-5.us-west-2.aws.neon.tech -U neondb_owner -d neondb --schema-only --no-owner --no-acl -f db\schema.sql
+npm run db:diagram
+```
+
+Then update the table notes below if the meaning of anything changed.
+
+## Diagram
+
+<!-- GENERATED:START (npm run db:diagram) -->
+_Generated from `db/schema.sql`. 7 tables, 8 foreign keys._
+
+```mermaid
+erDiagram
+  bike_setup |o--o{ bike : "active_setup_id (on delete set null)"
+  bike ||--o{ bike_setup : "bike_id (on delete cascade)"
+  app_user |o--o{ bike : "app_user_id"
+  bike ||--o{ garage_order : "bike_id (on delete cascade)"
+  app_user ||--o{ garage_order : "app_user_id"
+  bike ||--o{ ride_note : "bike_id (on delete cascade)"
+  app_user ||--o{ shared_setup : "app_user_id (on delete cascade)"
+  bike ||--o{ shared_setup : "bike_id (on delete cascade)"
+  bike {
+    bigint bike_id PK
+    integer front_tire "nullable"
+    integer front_sus_pressure "nullable"
+    integer front_sus_comp_1 "nullable"
+    integer front_sus_comp_2 "nullable"
+    integer front_sus_comp_count "nullable"
+    integer front_sus_rebound_1 "nullable"
+    integer front_sus_rebound_2 "nullable"
+    integer front_sus_rebound_count "nullable"
+    integer front_tokens "nullable"
+    integer rear_tire "nullable"
+    integer rear_sus_pressure "nullable"
+    integer rear_sus_comp_1 "nullable"
+    integer rear_sus_comp_2 "nullable"
+    integer rear_sus_comp_count "nullable"
+    integer rear_sus_rebound_1 "nullable"
+    integer rear_sus_rebound_2 "nullable"
+    integer rear_sus_rebound_count "nullable"
+    integer rear_tokens "nullable"
+    bigint app_user_id FK "nullable"
+    varchar_255 brand
+    varchar_255 model
+    bigint active_setup_id FK "nullable"
+  }
+  app_user {
+    varchar_255 first_name "nullable"
+    varchar_255 last_name "nullable"
+    varchar_255 email_address UK
+    bigint app_user_id PK
+    text plan
+    text plan_source "nullable"
+    text plan_status "nullable"
+    text plan_interval "nullable"
+    timestamptz plan_renews_at "nullable"
+    boolean plan_cancel_at_period_end
+    timestamptz plan_updated_at "nullable"
+    text stripe_customer_id UK "nullable"
+    text stripe_subscription_id UK "nullable"
+  }
+  bike_setup {
+    bigint bike_setup_id PK
+    bigint bike_id FK
+    varchar_40 name
+    integer front_tire
+    integer front_sus_pressure
+    integer front_sus_comp_1
+    integer front_sus_comp_2
+    integer front_sus_comp_count
+    integer front_sus_rebound_1
+    integer front_sus_rebound_2
+    integer front_sus_rebound_count
+    integer front_tokens
+    integer rear_tire
+    integer rear_sus_pressure
+    integer rear_sus_comp_1
+    integer rear_sus_comp_2
+    integer rear_sus_comp_count
+    integer rear_sus_rebound_1
+    integer rear_sus_rebound_2
+    integer rear_sus_rebound_count
+    integer rear_tokens
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  garage_order {
+    bigint garage_order_id PK
+    bigint app_user_id FK
+    bigint garage_order
+    bigint bike_id FK
+  }
+  ride_note {
+    bigint ride_note_id PK
+    bigint bike_id FK
+    date ride_date
+    varchar_80 trail "nullable"
+    varchar_12 conditions "nullable"
+    smallint rating "nullable"
+    varchar_2000 note "nullable"
+    varchar_40 setup_name "nullable"
+    jsonb settings
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  shared_setup {
+    varchar_32 share_id PK
+    bigint app_user_id FK
+    bigint bike_id FK
+    varchar_255 brand
+    varchar_255 model
+    varchar_40 setup_name "nullable"
+    jsonb settings
+    integer views
+    integer copies
+    timestamptz created_at
+    timestamptz revoked_at "nullable"
+  }
+  stripe_event {
+    text event_id PK
+    text event_type
+    timestamptz received_at
+  }
+```
+
+**Triggers**
+- `insert_garage_order_after_add_bike`: after insert on `bike`, runs `insert_garage_order()`
+
+**Extra indexes** (besides primary keys and unique constraints)
+- `bike_setup_name_per_bike` on `bike_setup` (bike_id, lower(btrim((name)::text))), unique
+- `ride_note_by_bike` on `ride_note` (bike_id, ride_date DESC, ride_note_id DESC)
+- `shared_setup_by_owner` on `shared_setup` (app_user_id, created_at DESC)
+<!-- GENERATED:END -->
+
+## Tables
+
+| Table | What it holds | Written by |
+|---|---|---|
+| `app_user` | One row per Google account: name, email, and the plan (`free`/`pro`), its source (`stripe`, `comp`, later `apple`/`google`), status, renewal date and Stripe ids. | AddUser (sign-in), stripeWebhook (plan), `db/maintenance/comp_user.sql` |
+| `bike` | A bike in a garage and its **current** settings: tire pressures, fork/shock pressure, compression and rebound (count = how many adjusters: 0 none, 1 single, 2 dual), volume tokens. `active_setup_id` is the saved setup last applied or saved. | addBike, updateBike, DeleteBike, bikeSetups (apply), rideNotes (reuse), sharedSetups (copy) |
+| `garage_order` | The bike's position in its owner's garage. A trigger adds a row for every new bike; deleting a bike removes it. | trigger, reorderGarage, DeleteBike |
+| `bike_setup` | Pro: named saved setups ("Bike park", "Wet") with a full copy of the 18 settings. Names are unique per bike, ignoring case. Max 20 per bike. | bikeSetups |
+| `ride_note` | Pro: how a ride went (date, trail, conditions, 1–5 rating, note) plus a snapshot of the bike's settings at the time, in `settings` (jsonb). Max 500 per bike. | rideNotes |
+| `shared_setup` | Pro: a public, read-only snapshot of a bike's settings behind an unguessable `share_id` (`setups.bike/?s=<id>`). Never holds the owner's name or email. `revoked_at` hides it for good. | sharedSetups |
+| `stripe_event` | Ids of Stripe webhook events already handled, so a retried event isn't processed twice. | stripeWebhook |
+
+## Rules worth knowing
+
+- **Deleting a bike** removes its garage position, saved setups, ride notes and share links
+  (`ON DELETE CASCADE`).
+- **Deleting a saved setup** clears `bike.active_setup_id` (`ON DELETE SET NULL`).
+- **Pro limits are enforced in the Lambdas**, not the database: free plan 3 bikes, 20 setups per
+  bike, 500 ride notes per bike, 100 active share links per user.
+- **Snapshots never change:** `ride_note.settings` and `shared_setup.settings` keep the values from
+  when they were made, even if the bike changes later.
+- **Comped accounts** (`plan_source = 'comp'`) are never changed by Stripe webhooks.
