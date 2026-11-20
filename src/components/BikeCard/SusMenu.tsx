@@ -55,11 +55,7 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
 
   return (
     <div className='suspensionCompression'>
-        <div className='featureTitle'>
-          {isComp ? 'Compression' : 'Rebound'}
-          <SettingsOutlinedIcon className='adjusterCog' onClick={handleClick} onKeyDown={handleKey} role='button' tabIndex={0} aria-hidden={false}
-            aria-label={`${isComp ? 'Compression' : 'Rebound'} adjusters`} aria-haspopup='menu' />
-        </div>
+        <div className='featureTitle'>{isComp ? 'Compression' : 'Rebound'}</div>
         <Menu
             anchorEl={anchorEl}
             open={open}
@@ -69,16 +65,23 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
               <MenuItem key={o.count} selected={o.count === detailLength} onClick={() => choose(o.count)}>{o.label}</MenuItem>
             ))}
         </Menu>
-        {Array(detailLength).fill(0).map((e, i) => {
-        const key = `${detail}${i + 1}`;
-        const inputId = `${key}-${bikeDetail.bike_id}`; //unique across bike cards
-        //one row per adjuster, label left and value right, like the Fork and Shock rows
-        return (
-        <div key={key} className='adjusterRow'>
-            <label className='susComponentLabel' htmlFor={inputId}>{i === 1 ? `HS${isComp ? 'C' : 'R'}` : `LS${isComp ? 'C' : 'R'}`}</label>
-            <SettingInput id={inputId} name={key} value={valueOf(key)} onChange={setBikeVal} invalid={failed.includes(key)}
-              onCommit={(name, value) => { if (saveBike) saveBike(name, value); }} />
-        </div>)})}
+        {/* one row: the cog on the left, then low- and high-speed side by side on the right
+            (lined up with the Fork and Shock values) */}
+        <div className='adjusterRow'>
+          <SettingsOutlinedIcon className='adjusterCog' onClick={handleClick} onKeyDown={handleKey} role='button' tabIndex={0} aria-hidden={false}
+            aria-label={`${isComp ? 'Compression' : 'Rebound'} adjusters`} aria-haspopup='menu' />
+          <div className='adjusters'>
+          {Array(detailLength).fill(0).map((e, i) => {
+            const key = `${detail}${i + 1}`;
+            const inputId = `${key}-${bikeDetail.bike_id}`; //unique across bike cards
+            return (
+            <div key={key} className='adjuster'>
+              <label className='susComponentLabel' htmlFor={inputId}>{i === 1 ? `HS${isComp ? 'C' : 'R'}` : `LS${isComp ? 'C' : 'R'}`}</label>
+              <SettingInput id={inputId} name={key} value={valueOf(key)} onChange={setBikeVal} invalid={failed.includes(key)}
+                onCommit={(name, value) => { if (saveBike) saveBike(name, value); }} />
+            </div>)})}
+          </div>
+        </div>
     </div>
   );
 }

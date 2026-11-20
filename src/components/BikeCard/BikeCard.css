@@ -12,24 +12,38 @@
     padding: 0px 15px;
 }
 
-/* one low- or high-speed adjuster: label left, value right (like the Fork and Shock rows) */
+/* one row under Compression / Rebound: the cog on the left, the low- and high-speed adjusters
+   side by side on the right, so their values line up with the Fork and Shock values above */
 .adjusterRow {
     display: flex;
     width: 100%;
     justify-content: space-between;
     align-items: center;
-    margin-top: 6px;
+    min-height: 30px;
+}
+
+.adjusters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* one adjuster: small label, then its value */
+.adjuster {
+    display: flex;
+    align-items: center;
+    gap: 3px;
 }
 
 .susComponentLabel {
-    font-size: 12px;
-    letter-spacing: 0.04em;
+    font-size: 11px;
     color: var(--text-muted);
 }
 
 
 .tireSection, .suspensionPressureSection {
     width: 50%;
+    min-width: 0; /* never let a wide row push the divider off-center */
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -65,10 +79,8 @@
 .featureTitle {
     display: flex;
     flex: 0 0 100%;
-    align-items: center;
-    gap: 6px;
     margin-top: 15px;
-    margin-bottom: 0;
+    margin-bottom: 5px;
 }
 
 .adjusterCog {

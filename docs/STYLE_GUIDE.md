@@ -121,6 +121,8 @@ Every modal is an MUI `Dialog`. Don't use `Modal` with a hand-positioned `Box`.
 - `.cardContainer`: `--surface` background, `--border` border, 8 px radius, shadow.
 - Pro actions sit under the setup picker; settings are grouped front/rear.
 - Front and rear columns use the same markup, so their rows line up: pressure, then Compression
-  and Rebound (title with its cog beside it), one row per adjuster (`.adjusterRow`: muted LSC/HSC
-  label left, value right), and the token counter pinned to the bottom of the column.
+  and Rebound, each title followed by one `.adjusterRow`: the cog on the left and the low/high-speed
+  adjusters side by side on the right (small muted LSC/HSC label, then the value), so the last
+  value lines up with the Fork/Shock value above. The token counter sits at the bottom of the
+  column. Columns have `min-width: 0`; check a 360 px-wide phone when changing this row.
 - Read-only settings (ride notes, shared setups) use `SettingsSummary`.
