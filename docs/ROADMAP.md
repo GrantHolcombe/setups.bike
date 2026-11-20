@@ -121,9 +121,10 @@ by the Lambdas, so readable code doesn't open a way around it):
 - [x] **End-to-end tests.** Done 2026-11-19: a Playwright suite in `e2e/` runs the whole app
       against the live API as a comped test account. Run `npm run e2e` before batching a deploy
       and after any Lambda or database change. See [e2e/README.md](../e2e/README.md).
-- [ ] **Move the Lambdas off Node 20.** `nodejs20.x` reached end of support on 2026-04-30;
-      function updates are blocked from 2027-08-31. Move them to `nodejs24.x` (local dev and
-      CodeBuild are on Node 26 since 2026-11-19).
+- [x] **Move the Lambdas off Node 20.** Done 2026-11-20: all 13 run `nodejs24.x` (`nodejs20.x`
+      reached end of support on 2026-04-30). One function first as a canary, a rollback version
+      published for each, then the e2e suite and log checks. AddUser's two unused layers
+      (JWTLayer, Secrets Manager extension) were removed. Local dev and CodeBuild are on Node 26.
 - [ ] **Later: keep curated data out of the repo.** If the Phase 2.4 suggested-settings table
       becomes valuable, store it only in the database rather than in a migration file.
 - [x] **Sales tax: not collected at launch** (decided 2026-11-17). Turn on Stripe Tax's free

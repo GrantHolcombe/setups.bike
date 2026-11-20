@@ -1,6 +1,6 @@
 # Setups.Bike Lambdas
 
-Source for the API's Lambda functions (us-west-1, Node 20). Each folder is named after its
+Source for the API's Lambda functions (us-west-1, Node 24: runtime `nodejs24.x`, async handlers only). Each folder is named after its
 Lambda function and deploys on its own. These aren't part of the CodePipeline frontend build.
 
 | Folder | API route | What it does |
