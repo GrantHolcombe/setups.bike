@@ -40,7 +40,12 @@ export default function Header({logout, isAuth, profile, bikeList, addBikeOpen, 
     return (
         <div>
             <div style={headerBarStyle}>
-                <img src='img/logos/Setups.png' className='logo' alt='Setups.Bike' width={175} height={175} />
+                {/* 350px logo (2x its display size), WebP with a PNG fallback; preloaded in index.html */}
+                <picture>
+                    <source srcSet='img/logos/Setups-350.webp' type='image/webp' />
+                    <img src='img/logos/Setups-350.png' className='logo' alt='Setups.Bike' width={175} height={175}
+                        {...{ fetchpriority: 'high' }} />
+                </picture>
                 {isAuth && <AppMenu bikeList={bikeList} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout} />}
             </div>
             {isAuth && <WelcomeMsg welcomeProfile={profile} hasBikes={bikeList ? bikeList.length > 0 : false} />}

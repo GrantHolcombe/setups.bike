@@ -90,3 +90,12 @@ d.text((x, 175), TITLE, font=title_font, fill=INK)
 d.multiline_text((x, 300), TAGLINE, font=tag_font, fill=INK, spacing=14)
 d.text((x, 430), "setups.bike", font=tag_font, fill=(90, 62, 0))
 save(og.convert("RGB"), "og-image.png")
+
+# Header logo at 2x its 175px display size (the 1200px original was the page's slowest image).
+# Same light-grey line art on transparent; the red tile comes from CSS.
+src = Image.open(LOGO).convert("RGBA")
+for fmt, ext, opts in [("PNG", "png", {"optimize": True}), ("WEBP", "webp", {"quality": 90, "method": 6})]:
+    out = src.resize((350, 350), Image.LANCZOS)
+    path = PUBLIC / "img" / "logos" / f"Setups-350.{ext}"
+    out.save(path, fmt, **opts)
+    print("wrote", path.relative_to(ROOT), out.size, f"{path.stat().st_size // 1024} KB")

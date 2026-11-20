@@ -11,6 +11,9 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
+    <!-- The header logo is the largest thing on screen: start fetching it before the app's JS runs -->
+    <link rel="preload" as="image" href="%PUBLIC_URL%/img/logos/Setups-350.webp" type="image/webp" fetchpriority="high" />
+
     <!-- Open connections early to Google sign-in and the Setups.Bike API -->
     <link rel="preconnect" href="https://accounts.google.com" />
     <link rel="preconnect" href="https://l7s3m81i09.execute-api.us-west-1.amazonaws.com" crossorigin />
