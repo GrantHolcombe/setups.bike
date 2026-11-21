@@ -5,51 +5,60 @@ Usage (from the setups.bike folder):
     python docs/marketing/displays/make_shop_display.py shop-tw --module 3.2 --error q
 
 Writes docs/marketing/displays/out/<code>/:
-    <code>-display.3mf    plaque + stand, parts pre-assigned to AMS slots (Bambu Studio)
+    <code>-display.3mf    plaque + stand as a Bambu Studio project, parts pre-assigned to AMS slots
     <code>-*.stl          one STL per color, as a fallback
     <code>-qr.svg         the QR code on its own, for checking with a phone
+    <code>-preview.png    top view of the plaque's colors
 
-AMS slots:  1 = white   2 = black (QR)   3 = gold (frame, band, stand)   4 = red (add text)
-The plaque prints flat, QR face up. The top 0.6 mm is the color layer (QR modules inlaid, so
-the face is flat). Text ("Setups.Bike", "Dialed it in? Save it.") goes on the gold band with
-Bambu Studio's Text tool. See README.md.
+AMS slots:  1 = white   2 = black   3 = gold   4 = red
+The plaque prints flat, face up. The top 0.6 mm is the color layer: QR modules and the logo are
+inlaid (flat), and the text is raised 0.6 mm on the gold band. See README.md.
 
-Needs: Python 3 and segno (pip install --user segno). Nothing else.
+Needs Python 3 plus: pip install --user segno fonttools mapbox-earcut pillow
 """
-import argparse, math, os, re, struct, sys, urllib.request, urllib.error, zipfile
+import argparse, math, os, re, struct, sys, urllib.request, urllib.error, uuid, zipfile
 
 import segno
+import numpy as np
+import mapbox_earcut as earcut
+from fontTools.ttLib import TTFont
+from fontTools.pens.basePen import BasePen
+from PIL import Image
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
+LOGO_PNG = os.path.join(REPO, "public", "logo512.png")      # white mark on red
+FONT_BOLD = r"C:\Windows\Fonts\segoeuib.ttf"                  # matches the app's system font on Windows
 BASE_URL = "https://setups.bike/q/"
+BRAND, HEADLINE = "Setups.Bike", "Dialed it in? Save it."
 WHITE, BLACK, GOLD, RED = 1, 2, 3, 4
+COLORS = {WHITE: "#f4f4f4", BLACK: "#1c1c1c", GOLD: "#daa520", RED: "#ff0000"}
 
 
 # ---------- geometry: a mesh is a list of triangles ((x,y,z),(x,y,z),(x,y,z)) ----------
 
+_BOX_FACES = [(0, 2, 1), (0, 3, 2), (4, 5, 6), (4, 6, 7), (0, 1, 5), (0, 5, 4),
+              (1, 2, 6), (1, 6, 5), (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7)]
+
+
 def box(x0, y0, z0, x1, y1, z1):
     v = [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0),
          (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)]
-    f = [(0, 2, 1), (0, 3, 2), (4, 5, 6), (4, 6, 7), (0, 1, 5), (0, 5, 4),
-         (1, 2, 6), (1, 6, 5), (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7)]
-    return [(v[a], v[b], v[c]) for a, b, c in f]
+    return [(v[a], v[b], v[c]) for a, b, c in _BOX_FACES]
 
 
 def tilted_box(x0, x1, depth, height, y_front, z_bottom, lean_deg):
     """Box leaning back by lean_deg from vertical; its bottom-front edge sits at (y_front, z_bottom)."""
     t = math.radians(lean_deg)
-    up = (math.sin(t), math.cos(t))       # along the lean (y, z)
-    back = (math.cos(t), -math.sin(t))    # thickness direction
-    def p(x, a, b):  # a along `back`, b along `up`
+    up, back = (math.sin(t), math.cos(t)), (math.cos(t), -math.sin(t))
+    def p(x, a, b):
         return (x, y_front + a * back[0] + b * up[0], z_bottom + a * back[1] + b * up[1])
     v = [p(x0, 0, 0), p(x1, 0, 0), p(x1, depth, 0), p(x0, depth, 0),
          p(x0, 0, height), p(x1, 0, height), p(x1, depth, height), p(x0, depth, height)]
-    f = [(0, 2, 1), (0, 3, 2), (4, 5, 6), (4, 6, 7), (0, 1, 5), (0, 5, 4),
-         (1, 2, 6), (1, 6, 5), (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7)]
-    return [(v[a], v[b], v[c]) for a, b, c in f]
+    return [(v[a], v[b], v[c]) for a, b, c in _BOX_FACES]
 
 
 def runs(row, value):
-    """Yield (start, end) column runs where row[c] == value."""
     c, n = 0, len(row)
     while c < n:
         if row[c] == value:
@@ -61,60 +70,212 @@ def runs(row, value):
             c += 1
 
 
+# ---------- text: font outlines -> extruded meshes ----------
+
+class _FlatPen(BasePen):
+    """Collects glyph contours as flat polygons (curves split into short lines)."""
+    def __init__(self, glyphset, steps=8):
+        super().__init__(glyphset)
+        self.contours, self.cur, self.steps = [], [], steps
+    def _moveTo(self, p):
+        self.cur = [p]
+    def _lineTo(self, p):
+        self.cur.append(p)
+    def _qCurveToOne(self, p1, p2):
+        p0 = self.cur[-1]
+        for i in range(1, self.steps + 1):
+            t = i / self.steps
+            self.cur.append(((1-t)**2*p0[0] + 2*(1-t)*t*p1[0] + t*t*p2[0],
+                             (1-t)**2*p0[1] + 2*(1-t)*t*p1[1] + t*t*p2[1]))
+    def _curveToOne(self, p1, p2, p3):
+        p0 = self.cur[-1]
+        for i in range(1, self.steps + 1):
+            t = i / self.steps
+            a, b, c, d = (1-t)**3, 3*(1-t)**2*t, 3*(1-t)*t*t, t**3
+            self.cur.append((a*p0[0] + b*p1[0] + c*p2[0] + d*p3[0], a*p0[1] + b*p1[1] + c*p2[1] + d*p3[1]))
+    def _closePath(self):
+        if len(self.cur) > 2:
+            if self.cur[0] == self.cur[-1]:
+                self.cur.pop()
+            self.contours.append(self.cur)
+        self.cur = []
+    _endPath = _closePath
+
+
+def _area(poly):
+    return 0.5 * sum(poly[i][0]*poly[(i+1) % len(poly)][1] - poly[(i+1) % len(poly)][0]*poly[i][1]
+                     for i in range(len(poly)))
+
+
+def _inside(pt, poly):
+    x, y, inside = pt[0], pt[1], False
+    for i in range(len(poly)):
+        (x1, y1), (x2, y2) = poly[i], poly[(i+1) % len(poly)]
+        if (y1 > y) != (y2 > y) and x < (x2-x1)*(y-y1)/(y2-y1) + x1:
+            inside = not inside
+    return inside
+
+
+class Font:
+    def __init__(self, path):
+        self.f = TTFont(path)
+        self.gs = self.f.getGlyphSet()
+        self.cmap = self.f.getBestCmap()
+        self.upm = self.f["head"].unitsPerEm
+        self.cap = getattr(self.f["OS/2"], "sCapHeight", 0) or 0.7 * self.upm
+
+    def width(self, text, size):
+        return sum(self.gs[self.cmap[ord(ch)]].width for ch in text) * size / self.upm
+
+    def polygons(self, text, size, x, y):
+        """Polygons (outer CCW, holes CW) grouped as [(outer, [holes])] in mm, baseline at y."""
+        s, groups, pen_x = size / self.upm, [], 0
+        for ch in text:
+            g = self.gs[self.cmap[ord(ch)]]
+            pen = _FlatPen(self.gs)
+            g.draw(pen)
+            contours = [[(x + (pen_x + px) * s, y + py * s) for px, py in c] for c in pen.contours]
+            pen_x += g.width
+            outers, holes = [], []
+            # Classify by nesting depth, not winding, so any font direction works.
+            for c in contours:
+                depth = sum(_inside(c[0], o) for o in contours if o is not c)
+                (outers if depth % 2 == 0 else holes).append(c)
+            for o in outers:
+                if _area(o) < 0:
+                    o.reverse()
+                mine = [h for h in holes if _inside(h[0], o)]
+                for h in mine:
+                    if _area(h) > 0:
+                        h.reverse()
+                groups.append((o, mine))
+        return groups
+
+
+def extrude(groups, z0, z1):
+    tris = []
+    for outer, holes in groups:
+        rings = [outer] + holes
+        verts = np.array([p for r in rings for p in r], dtype=np.float64)
+        ends = np.array(np.cumsum([len(r) for r in rings]), dtype=np.uint32)
+        idx = earcut.triangulate_float64(verts, ends).reshape(-1, 3)
+        for a, b, c in idx:
+            pa, pb, pc = verts[a], verts[b], verts[c]
+            if (pb[0]-pa[0])*(pc[1]-pa[1]) - (pb[1]-pa[1])*(pc[0]-pa[0]) < 0:
+                pb, pc = pc, pb
+            tris.append(((pa[0], pa[1], z1), (pb[0], pb[1], z1), (pc[0], pc[1], z1)))   # top, normal +z
+            tris.append(((pa[0], pa[1], z0), (pc[0], pc[1], z0), (pb[0], pb[1], z0)))   # bottom, normal -z
+        for r in rings:  # outer CCW and holes CW -> walls face outward
+            for i in range(len(r)):
+                (ax, ay), (bx, by) = r[i], r[(i+1) % len(r)]
+                tris.append(((ax, ay, z0), (bx, by, z0), (bx, by, z1)))
+                tris.append(((ax, ay, z0), (bx, by, z1), (ax, ay, z1)))
+    return [tuple(tuple(float(v) for v in p) for p in t) for t in tris]
+
+
+# ---------- logo: the PNG sampled to a grid of inlaid cells ----------
+
+def logo_cells(grid):
+    """grid x grid booleans, True = white stroke. Row 0 is the top of the image."""
+    from PIL import ImageFilter
+    # Thicken the strokes first so none is thinner than about two nozzle widths once printed.
+    im = Image.open(LOGO_PNG).convert("L").filter(ImageFilter.MaxFilter(5))
+    im = im.resize((grid, grid), Image.LANCZOS)
+    px = im.load()
+    return [[px[c, r] > 100 for c in range(grid)] for r in range(grid)]
+
+
 # ---------- the display ----------
 
-def build(code, module, error, thickness=4.0, color_layer=0.6, border=6.0, band=46.0,
-          lean=15.0):
+def build(code, module, error, thickness=4.0, color_layer=0.6, text_height=0.6, border=6.0,
+          lean=15.0, tile=24.0, logo_grid=44):
     url = BASE_URL + code
     qr = segno.make(url, error=error, micro=False)
     matrix = [list(r) for r in qr.matrix]
-    n = len(matrix)
-    quiet = 4
+    n, quiet = len(matrix), 4
     cells = n + 2 * quiet
     panel = cells * module
     W = panel + 2 * border
-    H = border + panel + band
-    zc = thickness - color_layer
+    zc, ztop = thickness - color_layer, thickness
 
-    white = box(0, 0, 0, W, H, zc)               # body under the color layer
-    black, gold = [], []
-    # QR panel: row 0 of the matrix is the top of the code, so flip to plaque y (up = back).
+    # Band layout (y up): headline row near the QR, logo tile + brand row above it.
+    font = Font(FONT_BOLD)
+    inner = W - 2 * border
+    head_size = min(9.0, inner / font.width(HEADLINE, 1.0))
+    head_cap = font.cap * head_size / font.upm
+    gap = 5.0
+    y_band = border + panel
+    head_base = y_band + gap
+    tile_y0 = head_base + head_cap + gap
+    tile_y1 = tile_y0 + tile
+    H = tile_y1 + border
+    brand_room = inner - tile - 4.0
+    brand_size = min(14.0, brand_room / font.width(BRAND, 1.0))
+    brand_cap = font.cap * brand_size / font.upm
+    brand_base = (tile_y0 + tile_y1) / 2 - brand_cap / 2
+    brand_x = border + tile + 4.0
+
+    white = box(0, 0, 0, W, H, zc)                       # body under the color layer
+    black, gold, red = [], [], []
+
+    # QR panel (matrix row 0 = top of the code).
     for r in range(cells):
         mr = r - quiet
         row = [bool(matrix[mr][c - quiet]) if 0 <= mr < n and 0 <= c - quiet < n else False
                for c in range(cells)]
         y1 = border + panel - r * module
-        y0 = y1 - module
         for s, e in runs(row, True):
-            black += box(border + s * module, y0, zc, border + e * module, y1, thickness)
+            black += box(border + s * module, y1 - module, zc, border + e * module, y1, ztop)
         for s, e in runs(row, False):
-            white += box(border + s * module, y0, zc, border + e * module, y1, thickness)
-    # Gold frame and top band (text goes on the band).
-    gold += box(0, 0, zc, W, border, thickness)
-    gold += box(0, border, zc, border, border + panel, thickness)
-    gold += box(W - border, border, zc, W, border + panel, thickness)
-    gold += box(0, border + panel, zc, W, H, thickness)
+            white += box(border + s * module, y1 - module, zc, border + e * module, y1, ztop)
 
-    # Stand: base slab, front lip, and a back support leaning `lean` degrees.
-    slab_d, slab_t, lip_d, lip_h, gap = 55.0, 5.0, 6.0, 9.0, 0.6
+    # Gold frame and band, leaving a hole for the logo tile.
+    tx0, tx1 = border, border + tile
+    gold += box(0, 0, zc, W, border, ztop)
+    gold += box(0, border, zc, border, y_band, ztop)
+    gold += box(W - border, border, zc, W, y_band, ztop)
+    gold += box(0, y_band, zc, tx0, H, ztop)
+    gold += box(tx1, y_band, zc, W, H, ztop)
+    gold += box(tx0, y_band, zc, tx1, tile_y0, ztop)
+    gold += box(tx0, tile_y1, zc, tx1, H, ztop)
+
+    # Logo tile: red with the white mark, rounded corners (corner cells left gold).
+    cell = tile / logo_grid
+    rad = 4.0 / cell
+    lc = logo_cells(logo_grid)
+    for r in range(logo_grid):
+        y1 = tile_y1 - r * cell
+        kinds = []
+        for c in range(logo_grid):
+            cx, cy = c + 0.5, r + 0.5
+            dx = max(rad - cx, cx - (logo_grid - rad), 0)
+            dy = max(rad - cy, cy - (logo_grid - rad), 0)
+            kinds.append("g" if dx * dx + dy * dy > rad * rad else ("w" if lc[r][c] else "r"))
+        for kind, mesh in (("g", gold), ("w", white), ("r", red)):
+            for s, e in runs(kinds, kind):
+                mesh += box(tx0 + s * cell, y1 - cell, zc, tx0 + e * cell, y1, ztop)
+
+    # Raised text in black on the band.
+    text = extrude(font.polygons(BRAND, brand_size, brand_x, brand_base), ztop, ztop + text_height)
+    text += extrude(font.polygons(HEADLINE, head_size, border, head_base), ztop, ztop + text_height)
+    black += text
+
+    # Stand: base slab, front lip, two posts and a brace leaning `lean` degrees.
+    slab_d, slab_t, lip_d, lip_h, clearance = 55.0, 5.0, 6.0, 9.0, 0.6
     t = math.radians(lean)
-    rest_y = lip_d + thickness / math.cos(t) + gap      # where the support's front face meets the slab
+    rest_y = lip_d + thickness / math.cos(t) + clearance
     stand = box(0, 0, 0, W, slab_d, slab_t)
     stand += box(0, 0, slab_t - 0.01, W, lip_d, slab_t + lip_h)
-    support_h = min(0.45 * H, 80.0)
-    # Two side posts instead of a full wall, so the QR's back doesn't need support and
-    # less filament is used. Each post sinks 1 mm into the slab so the parts fuse.
-    post_w = 14.0
+    support_h, post_w = min(0.45 * H, 80.0), 14.0
     for x0 in (0.0, W - post_w):
         stand += tilted_box(x0, x0 + post_w, 6.0, support_h, rest_y, slab_t - 1.0, lean)
-    # A short brace between the posts at the bottom, leaning with them so it never
-    # pokes into the plaque.
     stand += tilted_box(0.0, W, 6.0, 10.0, rest_y, slab_t - 1.0, lean)
 
     info = dict(url=url, version=qr.version, error=qr.error, modules=n, width=W, height=H,
-                panel=panel, stand_depth=slab_d)
-    parts = {"plaque": [("white", white, WHITE), ("qr-black", black, BLACK), ("gold", gold, GOLD)],
-             "stand": [("stand-gold", stand, GOLD)]}
+                stand_depth=slab_d, brand_size=brand_size, head_size=head_size)
+    parts = {"plaque": [("white", white, WHITE), ("black", black, BLACK),
+                        ("gold", gold, GOLD), ("red", red, RED)],
+             "stand": [("stand", stand, GOLD)]}
     return qr, parts, info
 
 
@@ -128,7 +289,10 @@ def write_stl(path, tris):
             f.write(struct.pack("<12fH", 0, 0, 0, *a, *b, *c, 0))
 
 
-def mesh_xml(tris):
+PAINT = {1: "4", 2: "8", 3: "0C", 4: "1C"}   # Bambu paint_color codes for AMS slots 1-4
+
+
+def mesh_xml(tris, slot=None):
     idx, verts, out = {}, [], []
     for tri in tris:
         ids = []
@@ -138,49 +302,90 @@ def mesh_xml(tris):
                 idx[key] = len(verts)
                 verts.append(key)
             ids.append(idx[key])
-        out.append(ids)
+        if len(set(ids)) == 3:
+            out.append(ids)
     v = "".join(f'<vertex x="{x}" y="{y}" z="{z}"/>' for x, y, z in verts)
-    t = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in out)
-    return f"<mesh><vertices>{v}</vertices><triangles>{t}</triangles></mesh>"
+    paint = f' paint_color="{PAINT[slot]}"' if slot in PAINT else ""
+    t = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"{paint}/>' for a, b, c in out)
+    return f"<mesh><vertices>{v}</vertices><triangles>{t}</triangles></mesh>", len(out)
+
+
+NS = ('xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" '
+      'xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" '
+      'xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" requiredextensions="p"')
+IDENTITY = "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"
 
 
 def write_3mf(path, code, parts, info):
-    res, build_items, config = [], [], []
-    oid = 0
-    x_off = 0.0
-    for obj_name, plist in parts.items():
-        comp_ids = []
+    """Bambu Studio layout (as in the 3MFs Bambu Studio ships): each object's meshes live in
+    3D/Objects/object_N.model, the main model holds component objects, and
+    Metadata/model_settings.config assigns each part an extruder (AMS slot). Triangles also carry
+    paint_color. No "Application: BambuStudio" tag: with it, Bambu Studio expects full printer
+    settings in the file and crashes without them. Checked with a load-and-save round trip
+    through bambu-studio.exe --export-3mf (2026-11-21): all parts and slots survived."""
+    files, rels, res, items, config = {}, [], [], [], []
+    oid, y_off = 0, 10.0
+    pid = 0   # mesh ids must be unique across the whole file: Bambu resolves components by id alone
+    for k, (obj_name, plist) in enumerate(parts.items(), start=1):
+        sub, comps, cparts = [], [], []
         for pname, tris, slot in plist:
-            oid += 1
-            res.append(f'<object id="{oid}" type="model">{mesh_xml(tris)}</object>')
-            comp_ids.append((oid, pname, slot))
-        oid += 1
-        comps = "".join(f'<component objectid="{c}"/>' for c, _, _ in comp_ids)
-        res.append(f'<object id="{oid}" type="model"><components>{comps}</components></object>')
-        build_items.append(f'<item objectid="{oid}" transform="1 0 0 0 1 0 0 0 1 {x_off:.2f} 0 0"/>')
-        x_off += info["width"] + 10
-        p = "".join(f'<part id="{c}" subtype="normal_part"><metadata key="name" value="{pn}"/>'
-                    f'<metadata key="extruder" value="{s}"/></part>' for c, pn, s in comp_ids)
+            if not tris:
+                continue
+            pid += 1
+            mxml, faces = mesh_xml(tris, slot)
+            sub.append(f'<object id="{pid}" p:UUID="{uuid.uuid4()}" type="model">{mxml}</object>')
+            comps.append(f'<component p:path="/3D/Objects/object_{k}.model" objectid="{pid}" '
+                         f'p:UUID="{uuid.uuid4()}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>')
+            cparts.append(f'<part id="{pid}" subtype="normal_part"><metadata key="name" value="{pname}"/>'
+                          f'<metadata key="matrix" value="{IDENTITY}"/><metadata key="extruder" value="{slot}"/>'
+                          f'<mesh_stat face_count="{faces}" edges_fixed="0" degenerate_facets="0" '
+                          f'facets_removed="0" facets_reversed="0" backwards_edges="0"/></part>')
+        files[f"3D/Objects/object_{k}.model"] = (
+            f'<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" {NS}>'
+            f'<metadata name="BambuStudio:3mfVersion">1</metadata><resources>{"".join(sub)}</resources><build/></model>')
+        rels.append(f'<Relationship Target="/3D/Objects/object_{k}.model" Id="rel-{k}" '
+                    'Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>')
+        oid = 100 + k
+        res.append(f'<object id="{oid}" p:UUID="{uuid.uuid4()}" type="model"><components>{"".join(comps)}</components></object>')
+        items.append(f'<item objectid="{oid}" p:UUID="{uuid.uuid4()}" '
+                     f'transform="1 0 0 0 1 0 0 0 1 10 {y_off:.3f} 0" printable="1"/>')
+        y_off += info["height"] + 10
         config.append(f'<object id="{oid}"><metadata key="name" value="{code}-{obj_name}"/>'
-                      f'<metadata key="extruder" value="{comp_ids[0][2]}"/>{p}</object>')
-    model = ('<?xml version="1.0" encoding="UTF-8"?>'
-             '<model unit="millimeter" xml:lang="en-US" '
-             'xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">'
-             f'<metadata name="Title">Setups.Bike display {code}</metadata>'
-             f'<resources>{"".join(res)}</resources><build>{"".join(build_items)}</build></model>')
+                      f'<metadata key="extruder" value="{plist[0][2]}"/>{"".join(cparts)}</object>')
+    files["3D/3dmodel.model"] = (
+        f'<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" {NS}>'
+        '<metadata name="BambuStudio:3mfVersion">1</metadata>'
+        f'<metadata name="Title">Setups.Bike display {code}</metadata>'
+        f'<resources>{"".join(res)}</resources><build p:UUID="{uuid.uuid4()}">{"".join(items)}</build></model>')
+    files["3D/_rels/3dmodel.model.rels"] = (
+        '<?xml version="1.0" encoding="UTF-8"?><Relationships '
+        f'xmlns="http://schemas.openxmlformats.org/package/2006/relationships">{"".join(rels)}</Relationships>')
+    files["Metadata/model_settings.config"] = f'<?xml version="1.0" encoding="UTF-8"?><config>{"".join(config)}</config>'
+    files["[Content_Types].xml"] = (
+        '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>'
+        '<Default Extension="png" ContentType="image/png"/></Types>')
+    files["_rels/.rels"] = (
+        '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Target="/3D/3dmodel.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>'
+        '</Relationships>')
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("[Content_Types].xml",
-                   '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-                   '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-                   '<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>'
-                   '<Default Extension="config" ContentType="text/xml"/></Types>')
-        z.writestr("_rels/.rels",
-                   '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-                   '<Relationship Target="/3D/3dmodel.model" Id="rel0" '
-                   'Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>')
-        z.writestr("3D/3dmodel.model", model)
-        z.writestr("Metadata/model_settings.config",
-                   f'<?xml version="1.0" encoding="UTF-8"?><config>{"".join(config)}</config>')
+        for name, data in files.items():
+            z.writestr(name, data)
+
+
+def write_preview(path, parts, info, scale=4):
+    """Top view of the plaque as a PNG: upward-facing top triangles in each part's color."""
+    from PIL import ImageDraw
+    W, H = info["width"], info["height"]
+    im = Image.new("RGB", (int((W + 10) * scale), int((H + 10) * scale)), "#888888")
+    d = ImageDraw.Draw(im)
+    for _, tris, slot in sorted(parts["plaque"], key=lambda p: p[0] == "black"):  # raised text last
+        for a, b, c in tris:
+            if min(a[2], b[2], c[2]) >= 3.99 and a[2] == b[2] == c[2]:
+                d.polygon([((q[0] + 5) * scale, (H - q[1] + 5) * scale) for q in (a, b, c)], fill=COLORS[slot])
+    im.save(path)
 
 
 # ---------- safety check: is the code live? ----------
@@ -201,7 +406,7 @@ def check_live(url):
             loc = e.headers.get("Location", "")
             return ("utm_" in loc), loc
         return None, f"HTTP {e.code}; open the link on your phone to check"
-    except Exception as e:  # offline etc.
+    except Exception as e:
         return None, str(e)
 
 
@@ -228,16 +433,19 @@ def main():
             print(f"Live: {url} -> {detail}")
 
     qr, parts, info = build(a.code, a.module, a.error)
-    out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", a.code)
+    out = os.path.join(HERE, "out", a.code)
     os.makedirs(out, exist_ok=True)
     write_3mf(os.path.join(out, f"{a.code}-display.3mf"), a.code, parts, info)
     for obj in parts.values():
         for pname, tris, _ in obj:
-            write_stl(os.path.join(out, f"{a.code}-{pname}.stl"), tris)
+            if tris:
+                write_stl(os.path.join(out, f"{a.code}-{pname}.stl"), tris)
     qr.save(os.path.join(out, f"{a.code}-qr.svg"), scale=10, border=4)
+    write_preview(os.path.join(out, f"{a.code}-preview.png"), parts, info)
     print(f"QR version {info['version']}-{info['error']} ({info['modules']}x{info['modules']} modules, "
           f"{a.module} mm each). Plaque {info['width']:.0f} x {info['height']:.0f} mm, "
-          f"stand {info['width']:.0f} x {info['stand_depth']:.0f} mm.")
+          f"stand {info['width']:.0f} x {info['stand_depth']:.0f} mm. "
+          f"Text {info['brand_size']:.1f} / {info['head_size']:.1f} mm.")
     print(f"Files in {out}")
 
 
