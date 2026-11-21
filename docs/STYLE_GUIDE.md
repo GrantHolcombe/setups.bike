@@ -124,7 +124,7 @@ Every modal is an MUI `Dialog`. Don't use `Modal` with a hand-positioned `Box`.
 - `.cardContainer`: `--surface` background, `--border` border, 8 px radius, shadow.
 - Pro actions sit under the setup picker; settings are grouped front/rear.
 - Front and rear columns use the same markup, so their rows line up: pressure, then Compression
-  and Rebound, each title with its cog beside it, then one `.adjusterRow` with the low/high-speed
+  and Rebound, each title with its cog at the right end of the row, then one `.adjusterRow` with the low/high-speed
   adjusters side by side and right-aligned (small muted LSC/HSC label, then the value), so the last
   value lines up with the Fork/Shock value above. No row when the adjuster is set to None. The
   token counter sits at the bottom of the column. Columns have `min-width: 0`; check a 360 px-wide

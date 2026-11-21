@@ -76,10 +76,12 @@
     flex-wrap: wrap;
 }
 
+/* section title on the left, its cog on the right edge (same spot for Compression and Rebound) */
 .featureTitle {
     display: flex;
     flex: 0 0 100%;
     align-items: center;
+    justify-content: space-between;
     gap: 6px;
     margin-top: 15px;
     margin-bottom: 5px;
