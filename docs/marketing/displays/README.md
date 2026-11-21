@@ -15,9 +15,10 @@ the Bambu with an AMS, QR code included.
 - **Stand**, 123 × 55 mm, in gold: a base slab, a front lip, and two posts plus a brace leaning
   back 15°. The plaque slides in behind the lip and rests on the posts with about 0.8 mm
   clearance.
-- `<code>-display.3mf`: both objects on one plate, every part already assigned to its AMS slot.
-  Also one STL per color (fallback), the QR code alone as SVG, and `<code>-preview.png` (top
-  view).
+- `<code>-display.3mf`: a real Bambu Studio project for your **P1S** (`--printer X1C`, `A1`
+  and so on for others), with four filaments already colored white, black, gold and red, and
+  every part on its slot. Also `<code>-parts.3mf` (plain 3MF, fallback), one STL per color, the
+  QR code alone as SVG, and `<code>-preview.png` (top view).
 
 | AMS slot | Filament | Used for |
 |---|---|---|
@@ -43,20 +44,25 @@ Matte filament matters: glossy PLA reflects shop lights and can stop the code sc
    check counts as one scan in the KV counts. Options: `--module 3.2` (bigger modules),
    `--error q` (more damage tolerance; default `m` is fine indoors).
    Needs: `pip install --user segno fonttools mapbox-earcut pillow`.
-3. Open `docs/marketing/displays/out/shop-<name>/shop-<name>-display.3mf` in Bambu Studio. Load white,
-   black, gold and red into AMS slots 1-4 (or remap the slots in Bambu's filament list).
+3. Open `docs/marketing/displays/out/shop-<name>/shop-<name>-display.3mf` in Bambu Studio (Open Project).
+   It opens as a project with the four colors in the filament list. Load matching filament
+   into AMS slots 1-4, or remap them in the filament list.
 4. Print. Then scan the printed plaque with an iPhone and an Android under the shop's lighting
    before leaving it there.
 
 ## How the file was checked (2026-11-21)
 
-- Bambu Studio only keeps part colors from a 3MF laid out like its own projects. Meshes go in
-  `3D/Objects/`, every mesh ID is unique across the file, and slots are set in
-  `Metadata/model_settings.config`. The file also has no "Application: BambuStudio" tag:
-  with that tag, Bambu expects full printer settings inside the file and crashes without them.
-- Checked by loading and re-saving it with `bambu-studio.exe --export-3mf`. Both objects
-  survived intact, with every slot as above, and Bambu's own render showed the text, stand and
-  plaque correctly.
+- A plain 3MF opened in the Bambu Studio app is "not from Bambu Lab": it loads geometry and
+  painted colors only, and painted slots beyond the project's filament count all fall back to
+  filament 1. The first test came out all yellow because the project had one yellow filament.
+- So the script writes the parts file (meshes in `3D/Objects/`, file-unique mesh IDs, slots
+  in `model_settings.config`, plus paint codes), then has `bambu-studio.exe` itself turn it
+  into a project with your printer's bundled profiles and four filaments, and sets their
+  colors. A hand-written Bambu project header without full printer settings crashes Bambu, which
+  is why Bambu's own command line builds that part.
+- Checked by reloading through the command line: P1S printer, colors `#F4F4F4 / #1C1C1C /
+  #DAA520 / #FF0000`, and parts on slots 1-4 all survive. The command line can't render
+  filament colors, so the colors on screen still need a look in the app.
 - **Not checked yet:** a real print. Things to watch on the first one (try `trailhead`, which is
   live): the stand's fit, how well the inlaid QR scans, and the logo mark. It's sampled to
   0.55 mm cells on a 24 mm tile, so it's the lowest-detail part of the display.

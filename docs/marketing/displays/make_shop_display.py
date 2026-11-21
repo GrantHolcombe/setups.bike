@@ -5,7 +5,8 @@ Usage (from the setups.bike folder):
     python docs/marketing/displays/make_shop_display.py shop-tw --module 3.2 --error q
 
 Writes docs/marketing/displays/out/<code>/:
-    <code>-display.3mf    plaque + stand as a Bambu Studio project, parts pre-assigned to AMS slots
+    <code>-display.3mf    Bambu Studio project (P1S by default): 4 filaments, colors and AMS slots set
+    <code>-parts.3mf      plain 3MF with painted colors (fallback, and the input for the project)
     <code>-*.stl          one STL per color, as a fallback
     <code>-qr.svg         the QR code on its own, for checking with a phone
     <code>-preview.png    top view of the plaque's colors
@@ -388,6 +389,52 @@ def write_preview(path, parts, info, scale=4):
     im.save(path)
 
 
+# ---------- Bambu Studio project (opens with the printer, 4 filaments and colors set) ----------
+
+BAMBU_EXE = os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "Bambu Studio", "bambu-studio.exe")
+BAMBU_PROFILES = os.path.join(os.path.dirname(BAMBU_EXE), "resources", "profiles", "BBL")
+PROCESS_FOR = {"P1S": "0.20mm Standard @BBL X1C", "P1P": "0.20mm Standard @BBL X1C",
+               "X1C": "0.20mm Standard @BBL X1C", "X1E": "0.20mm Standard @BBL X1C",
+               "A1": "0.20mm Standard @BBL A1", "A1M": "0.20mm Standard @BBL A1M"}
+
+
+def make_bambu_project(parts_3mf, out_path, printer):
+    """Let Bambu Studio's own command line turn the parts file into a real project for `printer`
+    (e.g. P1S) with four filaments, then set the filament colors. A plain 3MF opened in the app is
+    "not from Bambu Lab": only geometry and painted colors load, and painted slots beyond the
+    project's filament count all fall back to filament 1. Returns an error string, or None."""
+    import json, subprocess, tempfile
+    if not os.path.exists(BAMBU_EXE):
+        return "Bambu Studio not found"
+    machine = os.path.join(BAMBU_PROFILES, "machine", f"Bambu Lab {printer} 0.4 nozzle.json")
+    process = os.path.join(BAMBU_PROFILES, "process", PROCESS_FOR.get(printer, "0.20mm Standard @BBL X1C") + ".json")
+    fil = os.path.join(BAMBU_PROFILES, "filament", f"Bambu PLA Basic @BBL {printer} 0.4 nozzle.json")
+    if not os.path.exists(fil):
+        fil = os.path.join(BAMBU_PROFILES, "filament", f"Bambu PLA Basic @BBL {printer}.json")
+    missing = [x for x in (machine, process, fil) if not os.path.exists(x)]
+    if missing:
+        return "no bundled profile: " + ", ".join(os.path.basename(x) for x in missing)
+    with tempfile.TemporaryDirectory() as tmp:
+        raw = os.path.join(tmp, "raw.3mf")
+        r = subprocess.run([BAMBU_EXE, "--load-settings", f"{machine};{process}",
+                            "--load-filaments", ";".join([fil] * 4),
+                            "--export-3mf", "raw.3mf", "--outputdir", tmp, parts_3mf],
+                           cwd=tmp, capture_output=True, timeout=600)
+        if not os.path.exists(raw):
+            return f"bambu-studio exited {r.returncode}"
+        with zipfile.ZipFile(raw) as z:
+            files = {n: z.read(n) for n in z.namelist()}
+    ps = json.loads(files["Metadata/project_settings.config"])
+    ps["filament_colour"] = [COLORS[i].upper() for i in (WHITE, BLACK, GOLD, RED)]
+    if isinstance(ps.get("default_filament_colour"), list):
+        ps["default_filament_colour"] = [""] * 4
+    files["Metadata/project_settings.config"] = json.dumps(ps, indent=4).encode()
+    with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as z:
+        for n, data in files.items():
+            z.writestr(n, data)
+    return None
+
+
 # ---------- safety check: is the code live? ----------
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -416,6 +463,7 @@ def main():
     ap.add_argument("--module", type=float, default=3.0, help="QR module size in mm (default 3.0; keep >= 3 for a 0.4 mm nozzle)")
     ap.add_argument("--error", default="m", choices="lmqh", help="QR error correction (default m; fine indoors)")
     ap.add_argument("--skip-live-check", action="store_true", help="don't check that the code redirects with tags")
+    ap.add_argument("--printer", default="P1S", help="Bambu printer model for the project file (default P1S; also X1C, P1P, A1, A1M)")
     a = ap.parse_args()
     if not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", a.code):
         sys.exit("Code must be lowercase letters, digits and single hyphens, e.g. shop-trailworks")
@@ -435,7 +483,15 @@ def main():
     qr, parts, info = build(a.code, a.module, a.error)
     out = os.path.join(HERE, "out", a.code)
     os.makedirs(out, exist_ok=True)
-    write_3mf(os.path.join(out, f"{a.code}-display.3mf"), a.code, parts, info)
+    parts_file = os.path.join(out, f"{a.code}-parts.3mf")
+    write_3mf(parts_file, a.code, parts, info)
+    err = make_bambu_project(parts_file, os.path.join(out, f"{a.code}-display.3mf"), a.printer)
+    stray = os.path.join(out, "result.json")       # bambu-studio's CLI writes this beside its input
+    if os.path.exists(stray):
+        os.remove(stray)
+    if err:
+        print(f"Note: couldn't make the Bambu project ({err}). Open {a.code}-parts.3mf instead and give the "
+              "project four filaments (white, black, gold, red) first, or the colors collapse onto one.")
     for obj in parts.values():
         for pname, tris, _ in obj:
             if tris:
