@@ -5,10 +5,14 @@ mockups are placeholders and don't scan.
 
 ## Layouts (4 × 4 in, 100 SVG units = 1 in)
 
+**Chosen direction (2026-11-20): gold layout with the red draft's text.** Gold is mostly
+yellow ink with little magenta, and magenta is the ink that fades fastest in sun, so a gold
+background fades less than a full red one. It still needs a UV laminate.
+
 | File | Look | Headline |
 |---|---|---|
-| [sticker-a-gold-DRAFT.svg](sticker-a-gold-DRAFT.svg) | Gold, like the app header and link preview; red logo tile | "Forgot your rebound clicks?" |
-| [sticker-b-red-DRAFT.svg](sticker-b-red-DRAFT.svg) | Red with white text, gold footer with the name | "Dialed it in? Save it." |
+| [sticker-a-gold-DRAFT.svg](sticker-a-gold-DRAFT.svg) | **Chosen.** Gold, like the app header and link preview; small red logo tile | "Dialed it in? Save it." |
+| [sticker-b-red-DRAFT.svg](sticker-b-red-DRAFT.svg) | Earlier option: red with white text, gold footer with the name | "Dialed it in? Save it." |
 
 Both have the logo, the "We remember the clicks" line (already on the link preview image),
 what the app saves, "Free. No card." and a QR code on a white panel. The dashed line is the
@@ -28,11 +32,18 @@ Copy rule: it must never sound like the app recommends settings. All of the abov
 
 ## QR code
 
-- URL: `https://setups.bike/?utm_source=sticker&utm_campaign=trailhead` (the shorter the URL, the
-  less dense the code and the easier it scans in bad light). The shop version uses
-  `utm_source=shop&utm_campaign=<shopname>`.
-- Dark on white, error correction level M or Q, at least 1.2 in square with a white border.
-- Generate it as vector (SVG or PDF), not a screenshot.
+- **Encodes a permanent short link: `https://setups.bike/q/trailhead`** (decided 2026-11-20).
+  A Cloudflare redirect sends it to `https://setups.bike/?utm_source=sticker&utm_campaign=trailhead`.
+  If the destination ever changes, only the redirect changes, and stickers already out keep
+  working. Never reuse a code for something else. Shops get `/q/shop-<name>`. Dev card:
+  "QR short links: /q/<code> redirects". The QR code won't work until that ships.
+- The real QR code is in the gold layout. There's also a standalone vector file,
+  [qr-trailhead.svg](qr-trailhead.svg), for the printer. Version 3 (29 × 29 modules), error
+  correction Q (about 25% can be damaged), dark on white with a 4-module quiet zone, about
+  1.22 in square. Generated with `segno`.
+- Screen scan checked 2026-11-20: decodes to the right URL (it shows a 404 until the redirect
+  ships). Still to do: a paper proof scanned on iPhone and Android.
+- The red layout still has a placeholder.
 - Print a proof on paper first and scan it with an iPhone and an Android at arm's length, in
   sun and in shade.
 - Don't print until the Dev cards "Basic analytics" and "Signup source tracking" ship, so
