@@ -175,6 +175,11 @@ erDiagram
 - `db/maintenance/weekly_numbers.sql`: read-only weekly report (sign-ups, active users, bikes,
   setups, ride notes, share links, plans). Leaves the e2e test account (user 6) out of activity
   counts; `-v days=30` changes the window, `-v exclude=6,1` leaves out more accounts.
+  It ends with **capacity** numbers: database size as a share of Neon's free-plan 0.5 GB, active
+  users in the last 24 h and 7 days, and the largest tables (the Scaling 2 triggers).
+- Live health (requests, latency, errors, concurrency) is on the CloudWatch dashboard
+  **SetupsBike** (us-west-1), with five `setupsbike-*` alarms that email Grant through the
+  `ec2-watch` SNS topic.
 
 ## Rules worth knowing
 

@@ -109,4 +109,18 @@ FROM shared_setup WHERE revoked_at IS NULL AND app_user_id NOT IN (:exclude);
 SELECT share_id, s.brand || ' ' || s.model AS bike, views, copies, to_char(s.created_at, 'YYYY-MM-DD') AS made
 FROM shared_setup s WHERE revoked_at IS NULL AND app_user_id NOT IN (:exclude) ORDER BY views DESC, copies DESC LIMIT 5;
 
+\echo
+\echo '== Capacity (Scaling 2 trigger: Neon free plan storage is about 0.5 GB) =='
+SELECT pg_size_pretty(pg_database_size(current_database())) AS database_size,
+       round(100.0 * pg_database_size(current_database()) / (512 * 1024 * 1024), 1) AS pct_of_free_plan,
+       (SELECT count(*) FROM app_user WHERE app_user_id NOT IN (:exclude) AND last_active_at >= now() - interval '1 day') AS active_last_24h,
+       (SELECT count(*) FROM app_user WHERE app_user_id NOT IN (:exclude) AND last_active_at >= now() - interval '7 days') AS active_last_7d;
+
+\echo
+\echo '== Largest tables =='
+SELECT relname AS table_name, pg_size_pretty(pg_total_relation_size(relid)) AS total_size, n_live_tup AS rows
+FROM pg_stat_user_tables ORDER BY pg_total_relation_size(relid) DESC LIMIT 7;
+-- Request rates, latency, errors and concurrency: CloudWatch dashboard "SetupsBike" (us-west-1).
+-- Neon CPU, connections and compute hours: the Neon console.
+
 ROLLBACK;
