@@ -60,10 +60,13 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
           <SettingsOutlinedIcon className='adjusterCog' onClick={handleClick} onKeyDown={handleKey} role='button' tabIndex={0} aria-hidden={false}
             aria-label={`${isComp ? 'Compression' : 'Rebound'} adjusters`} aria-haspopup='menu' />
         </div>
+        {/* opens to the left of the cog: the menu's top-right corner sits at the cog's top-left */}
         <Menu
             anchorEl={anchorEl}
             open={open}
             onClose={closeMenu}
+            anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
             {OPTIONS.map((o) => (
               <MenuItem key={o.count} selected={o.count === detailLength} onClick={() => choose(o.count)}>{o.label}</MenuItem>
