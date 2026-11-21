@@ -8,10 +8,12 @@ the Bambu with an AMS, QR code included.
 
 `make_shop_display.py` makes, for one code:
 
-- **Plaque**, about 123 × 163 mm × 4 mm, printed flat, face up:
+- **Plaque**, about 123 × 160 mm × 4 mm, printed flat, face up:
   - The QR code inlaid black on white (flat, no shadows), with a gold frame.
-  - A gold band with the red logo tile (white mark, inlaid) and **raised** black text (0.6 mm):
-    "Setups.Bike" (14 mm) and "Dialed it in? Save it." (9 mm), set in Segoe UI Bold.
+  - A gold band with a 32 mm red logo tile on the left (inlaid). The white mark is traced from
+    `public/logo512.png` and raised 0.6 mm, with strokes about 1.4 mm wide. To its right,
+    raised black text, left-aligned: "Setups.Bike" (13.8 mm), with "Dialed it in? Save it."
+    (8.1 mm) under it. Set in Segoe UI Bold.
 - **Stand**, 123 × 55 mm, in gold: a base slab, a front lip, and two posts plus a brace leaning
   back 15°. The plaque slides in behind the lip and rests on the posts with about 0.8 mm
   clearance.
@@ -64,5 +66,7 @@ Matte filament matters: glossy PLA reflects shop lights and can stop the code sc
   #DAA520 / #FF0000`, and parts on slots 1-4 all survive. The command line can't render
   filament colors, so the colors on screen still need a look in the app.
 - **Not checked yet:** a real print. Things to watch on the first one (try `trailhead`, which is
-  live): the stand's fit, how well the inlaid QR scans, and the logo mark. It's sampled to
-  0.55 mm cells on a 24 mm tile, so it's the lowest-detail part of the display.
+  live): the stand's fit, how well the inlaid QR scans, and the raised logo mark's finest
+  details.
+- Text and logo meshes are checked as closed solids (every edge shared by exactly two
+  triangles). The logo needed a T-junction repair after triangulation, and the script does it.

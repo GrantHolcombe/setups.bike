@@ -13,11 +13,11 @@ Writes docs/marketing/displays/out/<code>/:
 
 AMS slots:  1 = white   2 = black   3 = gold   4 = red
 The plaque prints flat, face up. The top 0.6 mm is the color layer: QR modules and the logo are
-inlaid (flat), and the text is raised 0.6 mm on the gold band. See README.md.
+inlaid (flat); the text and the logo's white mark are raised 0.6 mm. See README.md.
 
 Needs Python 3 plus: pip install --user segno fonttools mapbox-earcut pillow
 """
-import argparse, math, os, re, struct, sys, urllib.request, urllib.error, uuid, zipfile
+import argparse, collections, math, os, re, struct, sys, urllib.request, urllib.error, uuid, zipfile
 
 import segno
 import numpy as np
@@ -153,6 +153,36 @@ class Font:
         return groups
 
 
+def _split_t_junctions(tri, pts, eps=1e-9):
+    """Earcut can lay a triangle edge along a hole's edge, leaving outline points in the middle of
+    that triangle edge (a T-junction, which slicers flag as a mesh error). Fan-split such triangles
+    so every outline point is a triangle corner."""
+    (ax, ay), (bx, by), (cx, cy) = tri
+    if abs((bx - ax) * (cy - ay) - (by - ay) * (cx - ax)) < eps:
+        return []                                   # zero-area sliver: nothing to draw
+    for i in range(3):
+        a, b, c = tri[i], tri[(i + 1) % 3], tri[(i + 2) % 3]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L2 = dx * dx + dy * dy
+        on = []
+        for p in pts:
+            if p == a or p == b:
+                continue
+            cross = (p[0] - a[0]) * dy - (p[1] - a[1]) * dx
+            if abs(cross) > eps * max(1.0, L2):
+                continue
+            t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2
+            if eps < t < 1 - eps:
+                on.append((t, p))
+        if on:
+            chain = [a] + [p for _, p in sorted(set(on))] + [b]
+            out = []
+            for u, v in zip(chain, chain[1:]):
+                out += _split_t_junctions((u, v, c), pts, eps)
+            return out
+    return [tri]
+
+
 def extrude(groups, z0, z1):
     tris = []
     for outer, holes in groups:
@@ -160,8 +190,11 @@ def extrude(groups, z0, z1):
         verts = np.array([p for r in rings for p in r], dtype=np.float64)
         ends = np.array(np.cumsum([len(r) for r in rings]), dtype=np.uint32)
         idx = earcut.triangulate_float64(verts, ends).reshape(-1, 3)
+        pts = [tuple(v) for v in verts.tolist()]
+        flat = []
         for a, b, c in idx:
-            pa, pb, pc = verts[a], verts[b], verts[c]
+            flat += _split_t_junctions((pts[a], pts[b], pts[c]), pts)
+        for pa, pb, pc in flat:
             if (pb[0]-pa[0])*(pc[1]-pa[1]) - (pb[1]-pa[1])*(pc[0]-pa[0]) < 0:
                 pb, pc = pc, pb
             tris.append(((pa[0], pa[1], z1), (pb[0], pb[1], z1), (pc[0], pc[1], z1)))   # top, normal +z
@@ -174,22 +207,93 @@ def extrude(groups, z0, z1):
     return [tuple(tuple(float(v) for v in p) for p in t) for t in tris]
 
 
-# ---------- logo: the PNG sampled to a grid of inlaid cells ----------
+# ---------- logo: the PNG's white mark traced into outlines ----------
 
-def logo_cells(grid):
-    """grid x grid booleans, True = white stroke. Row 0 is the top of the image."""
-    from PIL import ImageFilter
-    # Thicken the strokes first so none is thinner than about two nozzle widths once printed.
-    im = Image.open(LOGO_PNG).convert("L").filter(ImageFilter.MaxFilter(5))
-    im = im.resize((grid, grid), Image.LANCZOS)
+def _group_rings(rings):
+    """Group closed rings into (outer CCW, [holes CW]) by nesting depth."""
+    groups, outers, holes = [], [], []
+    for r in rings:
+        depth = sum(_inside(r[0], o) for o in rings if o is not r)
+        (outers if depth % 2 == 0 else holes).append(r)
+    for o in outers:
+        if _area(o) < 0:
+            o.reverse()
+        mine = [h for h in holes if _inside(h[0], o)
+                and not any(o2 is not o and _inside(h[0], o2) and _inside(o2[0], o) for o2 in outers)]
+        for h in mine:
+            if _area(h) > 0:
+                h.reverse()
+        groups.append((o, mine))
+    return groups
+
+
+def logo_polygons(x0, y0, size, res=200, crop=0.09):
+    """The white mark as polygons (mm) filling a size x size square at (x0, y0), y up.
+    Traces pixel edges of the thresholded image, white kept on the left of each edge."""
+    im = Image.open(LOGO_PNG).convert("L")
+    w, h = im.size
+    im = im.crop((int(w * crop), int(h * crop), int(w * (1 - crop)), int(h * (1 - crop))))
+    im = im.resize((res, res), Image.LANCZOS)
     px = im.load()
-    return [[px[c, r] > 100 for c in range(grid)] for r in range(grid)]
+    white = [[px[c, r] > 128 for c in range(res)] for r in range(res)]
+    # Pixels that touch only at a corner make pinched outlines; bridge them so every ring is clean.
+    changed = True
+    while changed:
+        changed = False
+        for r in range(res - 1):
+            for c in range(res - 1):
+                a, b, cc, d = white[r][c], white[r][c + 1], white[r + 1][c], white[r + 1][c + 1]
+                if (a and d and not b and not cc) or (b and cc and not a and not d):
+                    white[r][c] = white[r][c + 1] = white[r + 1][c] = white[r + 1][c + 1] = True
+                    changed = True
+    def on(r, c):
+        return 0 <= r < res and 0 <= c < res and white[r][c]
+    out = {}  # start vertex -> list of end vertices (y up: pixel row r spans y = res-r-1 .. res-r)
+    for r in range(res):
+        for c in range(res):
+            if not white[r][c]:
+                continue
+            yb, yt = res - r - 1, res - r
+            if not on(r + 1, c): out.setdefault((c, yb), []).append((c + 1, yb))
+            if not on(r, c + 1): out.setdefault((c + 1, yb), []).append((c + 1, yt))
+            if not on(r - 1, c): out.setdefault((c + 1, yt), []).append((c, yt))
+            if not on(r, c - 1): out.setdefault((c, yt), []).append((c, yb))
+    rings, raw_rings = [], []
+    while out:
+        start = next(iter(out))
+        ring, prev, cur = [start], None, start
+        while True:
+            nxts = out[cur]
+            if len(nxts) > 1 and prev is not None:
+                d = (cur[0] - prev[0], cur[1] - prev[1])
+                left = (-d[1], d[0])
+                nxts.sort(key=lambda n: 0 if (n[0] - cur[0], n[1] - cur[1]) == left else 1)
+            nxt = nxts.pop(0)
+            if not nxts:
+                del out[cur]
+            prev, cur = cur, nxt
+            if cur == start:
+                break
+            ring.append(cur)
+        raw_rings.append(ring)
+    # Drop points in the middle of straight runs, except points another ring also uses (a hole
+    # touching the outline at a point): dropping those leaves T-junctions in the mesh.
+    seen = collections.Counter(p for ring in raw_rings for p in set(ring))
+    for ring in raw_rings:
+        simple = [p for i, p in enumerate(ring)
+                  if seen[p] > 1
+                  or (ring[i - 1][0] - p[0]) * (ring[(i + 1) % len(ring)][1] - p[1])
+                  != (ring[i - 1][1] - p[1]) * (ring[(i + 1) % len(ring)][0] - p[0])]
+        if len(simple) >= 3:
+            k = size / res
+            rings.append([(x0 + x * k, y0 + y * k) for x, y in simple])
+    return _group_rings(rings)
 
 
 # ---------- the display ----------
 
 def build(code, module, error, thickness=4.0, color_layer=0.6, text_height=0.6, border=6.0,
-          lean=15.0, tile=24.0, logo_grid=44):
+          lean=15.0, tile=32.0, logo_grid=64):
     url = BASE_URL + code
     qr = segno.make(url, error=error, micro=False)
     matrix = [list(r) for r in qr.matrix]
@@ -199,22 +303,24 @@ def build(code, module, error, thickness=4.0, color_layer=0.6, text_height=0.6, 
     W = panel + 2 * border
     zc, ztop = thickness - color_layer, thickness
 
-    # Band layout (y up): headline row near the QR, logo tile + brand row above it.
+    # Band layout (y up): the logo tile on the left, the brand name with the headline under it
+    # on the right, both left-aligned and the pair centered on the tile's height.
     font = Font(FONT_BOLD)
-    inner = W - 2 * border
-    head_size = min(9.0, inner / font.width(HEADLINE, 1.0))
-    head_cap = font.cap * head_size / font.upm
     gap = 5.0
     y_band = border + panel
-    head_base = y_band + gap
-    tile_y0 = head_base + head_cap + gap
+    tile_y0 = y_band + gap
     tile_y1 = tile_y0 + tile
     H = tile_y1 + border
-    brand_room = inner - tile - 4.0
-    brand_size = min(14.0, brand_room / font.width(BRAND, 1.0))
-    brand_cap = font.cap * brand_size / font.upm
-    brand_base = (tile_y0 + tile_y1) / 2 - brand_cap / 2
     brand_x = border + tile + 4.0
+    room = W - border - brand_x
+    brand_size = min(14.0, room / font.width(BRAND, 1.0))
+    head_size = min(9.0, room / font.width(HEADLINE, 1.0))
+    brand_cap = font.cap * brand_size / font.upm
+    head_cap = font.cap * head_size / font.upm
+    line_gap = 0.22 * brand_size + 3.0                 # clears the descender of the "p"
+    block = brand_cap + line_gap + head_cap
+    head_base = (tile_y0 + tile_y1) / 2 - block / 2
+    brand_base = head_base + head_cap + line_gap
 
     white = box(0, 0, 0, W, H, zc)                       # body under the color layer
     black, gold, red = [], [], []
@@ -240,10 +346,10 @@ def build(code, module, error, thickness=4.0, color_layer=0.6, text_height=0.6, 
     gold += box(tx0, y_band, zc, tx1, tile_y0, ztop)
     gold += box(tx0, tile_y1, zc, tx1, H, ztop)
 
-    # Logo tile: red with the white mark, rounded corners (corner cells left gold).
+    # Logo tile: flat red inlay with rounded corners (corner cells left gold), and the white mark
+    # traced from the logo and raised like the text.
     cell = tile / logo_grid
     rad = 4.0 / cell
-    lc = logo_cells(logo_grid)
     for r in range(logo_grid):
         y1 = tile_y1 - r * cell
         kinds = []
@@ -251,14 +357,15 @@ def build(code, module, error, thickness=4.0, color_layer=0.6, text_height=0.6, 
             cx, cy = c + 0.5, r + 0.5
             dx = max(rad - cx, cx - (logo_grid - rad), 0)
             dy = max(rad - cy, cy - (logo_grid - rad), 0)
-            kinds.append("g" if dx * dx + dy * dy > rad * rad else ("w" if lc[r][c] else "r"))
-        for kind, mesh in (("g", gold), ("w", white), ("r", red)):
-            for s, e in runs(kinds, kind):
-                mesh += box(tx0 + s * cell, y1 - cell, zc, tx0 + e * cell, y1, ztop)
+            kinds.append("g" if dx * dx + dy * dy > rad * rad else "r")
+        for kind, mesh in (("g", gold), ("r", red)):
+            for s_, e in runs(kinds, kind):
+                mesh += box(tx0 + s_ * cell, y1 - cell, zc, tx0 + e * cell, y1, ztop)
+    white += extrude(logo_polygons(tx0, tile_y0, tile), ztop, ztop + text_height)
 
     # Raised text in black on the band.
     text = extrude(font.polygons(BRAND, brand_size, brand_x, brand_base), ztop, ztop + text_height)
-    text += extrude(font.polygons(HEADLINE, head_size, border, head_base), ztop, ztop + text_height)
+    text += extrude(font.polygons(HEADLINE, head_size, brand_x, head_base), ztop, ztop + text_height)
     black += text
 
     # Stand: base slab, front lip, two posts and a brace leaning `lean` degrees.
@@ -382,10 +489,10 @@ def write_preview(path, parts, info, scale=4):
     W, H = info["width"], info["height"]
     im = Image.new("RGB", (int((W + 10) * scale), int((H + 10) * scale)), "#888888")
     d = ImageDraw.Draw(im)
-    for _, tris, slot in sorted(parts["plaque"], key=lambda p: p[0] == "black"):  # raised text last
-        for a, b, c in tris:
-            if min(a[2], b[2], c[2]) >= 3.99 and a[2] == b[2] == c[2]:
-                d.polygon([((q[0] + 5) * scale, (H - q[1] + 5) * scale) for q in (a, b, c)], fill=COLORS[slot])
+    tops = [(a[2], (a, b, c), slot) for _, tris, slot in parts["plaque"] for a, b, c in tris
+            if min(a[2], b[2], c[2]) >= 3.99 and a[2] == b[2] == c[2]]
+    for _, tri, slot in sorted(tops, key=lambda t: t[0]):          # lowest first, raised parts on top
+        d.polygon([((q[0] + 5) * scale, (H - q[1] + 5) * scale) for q in tri], fill=COLORS[slot])
     im.save(path)
 
 
