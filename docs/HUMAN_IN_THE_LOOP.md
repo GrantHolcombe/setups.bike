@@ -42,6 +42,45 @@ Standing rules, set early and kept throughout:
 
 ---
 
+## 2026-11-21: Measure scalability first, then fix the cheap bottleneck now
+
+**Situation:** With marketing about to start, I asked how far the architecture would scale: how
+many total and simultaneous users, what the bottlenecks would be, and how to get past them.
+
+**Decision:**
+- **Audit:** check the real limits first: Lambda concurrency (1,000), API Gateway throttles
+  (10,000 requests/second), function memory, and the Neon setup.
+- **Bottlenecks in order:** Neon compute, a new database connection on every request, the
+  cross-region hop to Neon, then Lambda concurrency.
+- **Tickets:** I had the agent write a board ticket for each of the three fixes, each saying
+  *when* it becomes necessary and *why*, rather than doing all of them up front.
+- **Do now:** only the one that costs nothing and helps at any size: reusing the database
+  connection across warm Lambda calls.
+
+**Why:** Scaling work that isn't needed yet is wasted effort and money, but knowing where the
+ceilings are means I won't be surprised by them. The connection fix was measured before and
+after on live traffic: `getBikes` went from a 262 ms median to 88 ms, about 3x faster. It was
+rolled out one Lambda first, with rollback versions, and checked with the e2e suite. The paid
+Neon upgrade waits for a few hundred daily users, and the region move waits for real scale.
+
+## 2026-11-21: Replace jsonwebtoken now, not "someday"
+
+**Situation:** While testing locally on Node 26, a Lambda's JWT library crashed: its 2013-era
+dependency uses a Node API that Node 26 removed. The agent first described it as a simple
+update for later. When I asked what the work involved, it checked and found that even the
+newest version still pulls in the broken package, so the real fix is switching libraries.
+
+**Decision:** Do it now rather than wait until 2027, since it wasn't a big lift. All 12
+token-handling Lambdas switched to `jose`, a maintained library with no dependencies. Tokens
+use the same format and secret, so nobody was signed out.
+
+**Why:** Dropping an unmaintained dependency is cheaper while the context is fresh than under
+deadline pressure later. The rollout also showed why the safety steps matter. The first Lambda
+crashed in production, because Lambda's runtime can't `require()` an ES module even though my
+machine could. Deploying one function first kept the outage to about two minutes on that one
+endpoint; it was fixed forward with a dynamic `import()`, and the lesson was written into the
+agent's notes so it tests new dependencies the way Lambda loads them.
+
 ## 2026-11-20: Privacy-first analytics, with sign-up source kept in memory only
 
 **Situation:** Marketing needs numbers before the first sticker or post goes out: visits,
