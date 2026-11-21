@@ -35,8 +35,17 @@ Copy rule: it must never sound like the app recommends settings. All of the abov
 - **Encodes a permanent short link: `https://setups.bike/q/trailhead`** (decided 2026-11-20).
   A Cloudflare redirect sends it to `https://setups.bike/?utm_source=sticker&utm_campaign=trailhead`.
   If the destination ever changes, only the redirect changes, and stickers already out keep
-  working. Never reuse a code for something else. Shops get `/q/shop-<name>`. Dev card:
-  "QR short links: /q/<code> redirects". The QR code won't work until that ships.
+  working. Never reuse a code for something else.
+- **Live since 2026-11-21:** `/q/trailhead` returns a 302 to
+  `https://setups.bike/?utm_source=sticker&utm_medium=qr&utm_campaign=trailhead`. Unknown codes go to
+  the home page. Scans are counted per code per day in Cloudflare KV (`QR_SCANS`, key
+  `scan:<code>:<YYYY-MM-DD>`; Dashboard > Storage & databases > Workers KV > QR_SCANS). The
+  2026-11-21 count includes test scans from both sessions. Sign-ups show by source in the weekly
+  numbers report.
+- **Shop codes:** `https://setups.bike/q/shop-<name>` (lowercase letters, digits, hyphens), which
+  redirects with `utm_source=shop&utm_campaign=<name>`. Each one is a Dev step (Dev card "Add a
+  shop QR code (per shop, on request)"), and the code must be live **before** that shop's
+  sticker is printed. Otherwise scans land untagged.
 - The real QR code is in the gold layout. There's also a standalone vector file,
   [qr-trailhead.svg](qr-trailhead.svg), for the printer. Version 3 (29 × 29 modules), error
   correction Q (about 25% can be damaged), dark on white with a 4-module quiet zone, about
@@ -46,8 +55,8 @@ Copy rule: it must never sound like the app recommends settings. All of the abov
 - The red layout still has a placeholder.
 - Print a proof on paper first and scan it with an iPhone and an Android at arm's length, in
   sun and in shade.
-- Don't print until the Dev cards "Basic analytics" and "Signup source tracking" ship, so
-  the first scans are counted.
+- Dev dependencies (redirect, analytics, source tracking, landing page) all shipped by
+  2026-11-21. What's left is the paper proof, then the order.
 
 ## Print specs to ask for
 
