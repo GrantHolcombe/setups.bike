@@ -1,6 +1,9 @@
 # Setups.Bike Lambdas
 
-Source for the API's Lambda functions (us-west-1, Node 24: runtime `nodejs24.x`, async handlers only). Each folder is named after its
+Source for the API's Lambda functions (us-west-1, Node 24: runtime `nodejs24.x`, async handlers only). App tokens are HS256 JWTs made
+and checked with [`jose`](https://github.com/panva/jose) (since 2026-11-21; it replaced `jsonwebtoken`,
+whose dependencies break on Node 26). jose is an ES module and Lambda's runtime can't `require()`
+one, so the Lambdas load it with `const jose = import("jose")`. Each folder is named after its
 Lambda function and deploys on its own. These aren't part of the CodePipeline frontend build.
 
 | Folder | API route | What it does |

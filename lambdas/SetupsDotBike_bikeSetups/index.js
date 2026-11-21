@@ -11,7 +11,9 @@
 //   delete  {setupId}
 // Every action checks the token, that the user is on Pro, and that they own the bike.
 const { Client } = require("pg");
-const jwt = require("jsonwebtoken");
+// jose (not jsonwebtoken): no dependencies, works on Node 24 and 26. It is an ES module, and
+// Lambda's Node runtime can't require() one, so it is loaded with import() once per cold start.
+const jose = import("jose");
 
 const headers = {
   "Content-Type": "application/json",
@@ -47,10 +49,11 @@ const newClient = () => new Client({
   database: process.env.NEON_DATABASE
 });
 
-const userIdFrom = (token) => {
+const userIdFrom = async (token) => {
   if (!token || !process.env.JWT) return null;
   try {
-    const id = Number(jwt.verify(token, process.env.JWT, { algorithms: ["HS256"] }).app_user_id);
+    const { payload } = await (await jose).jwtVerify(token, new TextEncoder().encode(process.env.JWT), { algorithms: ["HS256"] });
+    const id = Number(payload.app_user_id);
     return Number.isInteger(id) ? id : null;
   } catch {
     return null;
@@ -165,7 +168,7 @@ exports.handler = async (event) => {
   } catch {
     return reply(400, { error: "Bad request" });
   }
-  const userId = userIdFrom(body.token);
+  const userId = await userIdFrom(body.token);
   if (userId === null) return reply(401, { error: "Please sign in again" });
   const action = ACTIONS[body.action];
   if (!action) return reply(400, { error: "Unknown action" });

@@ -14,7 +14,9 @@
 // Links keep working if the owner's Pro lapses; listing and revoking never need Pro.
 const crypto = require("crypto");
 const { Client } = require("pg");
-const jwt = require("jsonwebtoken");
+// jose (not jsonwebtoken): no dependencies, works on Node 24 and 26. It is an ES module, and
+// Lambda's Node runtime can't require() one, so it is loaded with import() once per cold start.
+const jose = import("jose");
 
 const headers = {
   "Content-Type": "application/json",
@@ -49,10 +51,11 @@ const newClient = () => new Client({
   database: process.env.NEON_DATABASE
 });
 
-const userIdFrom = (token) => {
+const userIdFrom = async (token) => {
   if (!token || !process.env.JWT) return null;
   try {
-    const id = Number(jwt.verify(token, process.env.JWT, { algorithms: ["HS256"] }).app_user_id);
+    const { payload } = await (await jose).jwtVerify(token, new TextEncoder().encode(process.env.JWT), { algorithms: ["HS256"] });
+    const id = Number(payload.app_user_id);
     return Number.isInteger(id) ? id : null;
   } catch {
     return null;
@@ -189,7 +192,7 @@ exports.handler = async (event) => {
 
   let userId = null;
   if (body.action !== "view" && body.action !== "preview") {
-    userId = userIdFrom(body.token);
+    userId = await userIdFrom(body.token);
     if (userId === null) return reply(401, { error: "Please sign in again" });
   }
 

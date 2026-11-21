@@ -1,5 +1,7 @@
 const { Client } = require("pg");
-const jwt = require("jsonwebtoken");
+// jose (not jsonwebtoken): no dependencies, works on Node 24 and 26. It is an ES module, and
+// Lambda's Node runtime can't require() one, so it is loaded with import() once per cold start.
+const jose = import("jose");
 
 const headers = {
   "Content-Type": "application/json",
@@ -20,10 +22,11 @@ const newClient = () => new Client({
 
 // The signed-in user, from the token AddUser issued. Returns null if the token is
 // missing, expired or not signed with our secret.
-const userIdFrom = (token) => {
+const userIdFrom = async (token) => {
   if (!token || !process.env.JWT) return null;
   try {
-    const id = Number(jwt.verify(token, process.env.JWT, { algorithms: ["HS256"] }).app_user_id);
+    const { payload } = await (await jose).jwtVerify(token, new TextEncoder().encode(process.env.JWT), { algorithms: ["HS256"] });
+    const id = Number(payload.app_user_id);
     return Number.isInteger(id) ? id : null;
   } catch {
     return null;
@@ -31,7 +34,7 @@ const userIdFrom = (token) => {
 };
 
 exports.handler = async (event) => {
-  const userId = userIdFrom((event.queryStringParameters || {}).token);
+  const userId = await userIdFrom((event.queryStringParameters || {}).token);
   if (userId === null) return reply(401, { error: "Please sign in again" });
 
   const client = newClient();

@@ -1,5 +1,7 @@
 const { Client } = require("pg");
-const jwt = require("jsonwebtoken");
+// jose (not jsonwebtoken): no dependencies, works on Node 24 and 26. It is an ES module, and
+// Lambda's Node runtime can't require() one, so it is loaded with import() once per cold start.
+const jose = import("jose");
 
 const headers = {
   "Content-Type": "application/json",
@@ -81,16 +83,16 @@ exports.handler = async (event) => {
     }
 
     const u = res.rows[0];
-    const token = jwt.sign(
-      {
-        app_user_id: u.app_user_id,
-        first_name: u.first_name,
-        last_name: u.last_name,
-        email_address: u.email_address
-      },
-      secret,
-      { algorithm: "HS256", expiresIn: TOKEN_LIFETIME }
-    );
+    const token = await new (await jose).SignJWT({
+      app_user_id: u.app_user_id,
+      first_name: u.first_name,
+      last_name: u.last_name,
+      email_address: u.email_address
+    })
+      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setIssuedAt()
+      .setExpirationTime(TOKEN_LIFETIME)
+      .sign(new TextEncoder().encode(secret));
     console.log("signed in user", u.app_user_id);
     return reply(200, { token });
   } catch (err) {
