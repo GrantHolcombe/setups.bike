@@ -13,6 +13,7 @@ import { LoadingOverlay } from './components/Spinner';
 import { SharedSetupView, UpgradeDialog, WhenOpened, preloadParts } from './lazy';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { readSignupSource } from './signupSource';
+import Landing from './components/Landing/Landing';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
@@ -514,11 +515,8 @@ function App() {
           </div>
         </div>
         :
-        <div style={{display: isLoading ? 'none' : 'flex'}} className='login'>
-          <br />
-          <br />
-          <p>All of your supspension settings in one place!</p>
-          <Button variant={'contained'} onClick={() => { setIsLoading(true); login();}}>Clip in</Button>
+        <div style={{display: isLoading ? 'none' : 'block'}}>
+          <Landing onSignIn={() => { setIsLoading(true); login(); }} />
         </div>
 
       }

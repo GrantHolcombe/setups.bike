@@ -1,0 +1,152 @@
+/* Signed-out landing page. Colors come from the tokens in src/index.css (light and dark). */
+.landing {
+  max-width: 960px;
+  margin: 205px auto 0; /* clears the 150px header bar and the logo tile below it */
+  padding: 0 16px;
+  color: var(--text);
+}
+
+.landingHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  text-align: center;
+}
+
+.landing h1 {
+  font-size: 1.9rem;
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+
+.landingLead {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin: 0 0 20px;
+}
+
+.landingCta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.landingNote {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.landingShot img {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.landingSection {
+  margin: 48px auto 0;
+  max-width: 640px;
+}
+
+.landing h2 {
+  font-size: 1.4rem;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.landingList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.landingList li {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.landingList li span {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.landingPlans {
+  display: grid;
+  gap: 16px;
+}
+
+.landingPlan {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 16px 20px;
+}
+
+.landingPlan.pro {
+  border-color: var(--gold-text);
+}
+
+.landingPlan h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.landingPlan.pro h3 {
+  color: var(--gold-text);
+}
+
+.landingPrice {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 4px 0 8px;
+}
+
+.landingPrice span {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.landingPlan ul {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+.landingEnd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+/* wider screens: text beside the screenshot, plans side by side */
+@media (min-width: 760px) {
+  .landingHero {
+    flex-direction: row;
+    justify-content: center;
+    text-align: left;
+    gap: 48px;
+  }
+  .landingIntro {
+    max-width: 440px;
+  }
+  .landing h1 {
+    font-size: 2.3rem;
+  }
+  .landingCta {
+    align-items: flex-start;
+  }
+  .landingPlans {
+    grid-template-columns: 1fr 1fr;
+  }
+}

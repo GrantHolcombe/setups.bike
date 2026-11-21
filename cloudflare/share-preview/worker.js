@@ -7,15 +7,27 @@
 // any error falls back to the normal page. Only public fields are used (brand, model, setup
 // name, settings), never the owner's name or email.
 //
+// It also serves QR short links: https://setups.bike/q/<code> redirects (302) to the campaign
+// link in QR_CODES below, so a printed QR code keeps working if the destination changes. Unknown
+// codes go to the home page, never a 404. If a KV namespace is bound as QR_SCANS, each scan adds
+// one to "scan:<code>:<YYYY-MM-DD>" (read them in the dashboard: Workers KV > QR_SCANS).
+//
 // Deploy: paste this file into the Worker in the Cloudflare dashboard (Workers & Pages) and
 // click Deploy. It doesn't go through CodePipeline.
 
 const API = "https://l7s3m81i09.execute-api.us-west-1.amazonaws.com/test/sharedSetups";
 const SHARE_ID = /^[A-Za-z0-9_-]{16,32}$/;
 
+// Printed QR codes: /q/<code> -> where it goes today. Add a line per sticker or shop; never
+// remove a code that has been printed (point it somewhere else instead).
+const QR_CODES = {
+  trailhead: "/?utm_source=sticker&utm_medium=qr&utm_campaign=trailhead",
+};
+
 export default {
-  async fetch(request) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (url.pathname.startsWith("/q/")) return qrRedirect(url, env, ctx);
     const id = url.searchParams.get("s");
     if (request.method !== "GET" || url.pathname !== "/" || !id || !SHARE_ID.test(id)) {
       return fetch(request);
@@ -35,6 +47,28 @@ export default {
     }
   },
 };
+
+// /q/<code>: a 302 to the code's campaign link (or the home page), counting the scan if the
+// QR_SCANS KV namespace is bound. Counting never delays or breaks the redirect.
+function qrRedirect(url, env, ctx) {
+  let code = url.pathname.slice(3);
+  try { code = decodeURIComponent(code); } catch { /* malformed %-escape: treat as unknown */ }
+  code = code.replace(/\/+$/, "").toLowerCase();
+  const target = QR_CODES[code];
+  if (target && env && env.QR_SCANS && ctx) {
+    const key = `scan:${code}:${new Date().toISOString().slice(0, 10)}`;
+    ctx.waitUntil(
+      env.QR_SCANS.get(key)
+        .then((n) => env.QR_SCANS.put(key, String((Number(n) || 0) + 1)))
+        .catch((err) => console.log("qr scan not counted", String(err)))
+    );
+  }
+  console.log("qr", target ? code : `unknown:${code.slice(0, 40)}`);
+  return new Response(null, {
+    status: 302,
+    headers: { Location: new URL(target || "/", "https://setups.bike").toString(), "Cache-Control": "no-store" },
+  });
+}
 
 // The share's public fields, or null. Uses the Lambda's "preview" action, which doesn't count
 // as a view. Gives up after 3 seconds so a slow API never holds up the page.
