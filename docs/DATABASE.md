@@ -179,7 +179,7 @@ erDiagram
   users in the last 24 h and 7 days, and the largest tables (the Scaling 2 triggers).
 - Live health (requests, latency, errors, concurrency) is on the CloudWatch dashboard
   **SetupsBike** (us-west-1), with five `setupsbike-*` alarms that email Grant through the
-  `ec2-watch` SNS topic.
+  `setupsbike-alerts` SNS topic.
 
 ## Rules worth knowing
 
