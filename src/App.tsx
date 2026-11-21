@@ -83,6 +83,10 @@ const makeTheme = (mode: 'light' | 'dark') => createTheme({
     },
   },
   components: {
+    // Dropdown menus don't lock page scrolling. MUI's lock sets overflow: hidden on the page,
+    // which made iPhone Safari jump to the top while a menu was open. Dialogs keep their lock.
+    MuiPopover: { defaultProps: { disableScrollLock: true } },
+    MuiMenu: { defaultProps: { disableScrollLock: true } },
     // Gold used as text or an outline follows --gold-text (deeper in light mode, bright in dark)
     MuiButton: {
       styleOverrides: {

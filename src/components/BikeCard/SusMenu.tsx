@@ -55,7 +55,11 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
 
   return (
     <div className='suspensionCompression'>
-        <div className='featureTitle'>{isComp ? 'Compression' : 'Rebound'}</div>
+        <div className='featureTitle'>
+          {isComp ? 'Compression' : 'Rebound'}
+          <SettingsOutlinedIcon className='adjusterCog' onClick={handleClick} onKeyDown={handleKey} role='button' tabIndex={0} aria-hidden={false}
+            aria-label={`${isComp ? 'Compression' : 'Rebound'} adjusters`} aria-haspopup='menu' />
+        </div>
         <Menu
             anchorEl={anchorEl}
             open={open}
@@ -65,11 +69,10 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
               <MenuItem key={o.count} selected={o.count === detailLength} onClick={() => choose(o.count)}>{o.label}</MenuItem>
             ))}
         </Menu>
-        {/* one row: the cog on the left, then low- and high-speed side by side on the right
-            (lined up with the Fork and Shock values) */}
+        {/* low- and high-speed side by side, right-aligned with the Fork and Shock values; the cog
+            sits next to the title above so this row has the full column width */}
+        {detailLength > 0 && (
         <div className='adjusterRow'>
-          <SettingsOutlinedIcon className='adjusterCog' onClick={handleClick} onKeyDown={handleKey} role='button' tabIndex={0} aria-hidden={false}
-            aria-label={`${isComp ? 'Compression' : 'Rebound'} adjusters`} aria-haspopup='menu' />
           <div className='adjusters'>
           {Array(detailLength).fill(0).map((e, i) => {
             const key = `${detail}${i + 1}`;
@@ -82,6 +85,7 @@ export default function SusMenu({bikeDetail, detail, setBikeVal, saveBike, faile
             </div>)})}
           </div>
         </div>
+        )}
     </div>
   );
 }

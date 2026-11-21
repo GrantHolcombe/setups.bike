@@ -12,12 +12,12 @@
     padding: 0px 15px;
 }
 
-/* one row under Compression / Rebound: the cog on the left, the low- and high-speed adjusters
-   side by side on the right, so their values line up with the Fork and Shock values above */
+/* the low- and high-speed adjusters, side by side and right-aligned so their values line up
+   with the Fork and Shock values above (the cog sits beside the section title) */
 .adjusterRow {
     display: flex;
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     min-height: 30px;
 }
@@ -25,7 +25,7 @@
 .adjusters {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
 }
 
 /* one adjuster: small label, then its value */
@@ -79,6 +79,8 @@
 .featureTitle {
     display: flex;
     flex: 0 0 100%;
+    align-items: center;
+    gap: 6px;
     margin-top: 15px;
     margin-bottom: 5px;
 }
