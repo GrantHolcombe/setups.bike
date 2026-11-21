@@ -3,7 +3,11 @@
 Source for the API's Lambda functions (us-west-1, Node 24: runtime `nodejs24.x`, async handlers only). App tokens are HS256 JWTs made
 and checked with [`jose`](https://github.com/panva/jose) (since 2026-11-21; it replaced `jsonwebtoken`,
 whose dependencies break on Node 26). jose is an ES module and Lambda's runtime can't `require()`
-one, so the Lambdas load it with `const jose = import("jose")`. Each folder is named after its
+one, so the Lambdas load it with `const jose = import("jose")`. Each Lambda keeps one database connection per warm container and reuses it across calls
+(`newClient()` at the top of each `index.js`): `connect()` reuses or reopens it (with a quick
+`SELECT 1` if it has been idle over a minute), `end()` leaves it open, and a connection-level error
+makes the next call reconnect; queries are never retried. This took `getBikes` from ~260 ms to
+~90 ms (2026-11-21). Each folder is named after its
 Lambda function and deploys on its own. These aren't part of the CodePipeline frontend build.
 
 | Folder | API route | What it does |

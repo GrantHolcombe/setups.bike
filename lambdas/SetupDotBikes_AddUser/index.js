@@ -18,6 +18,64 @@ const TOKEN_LIFETIME = "7d";
 
 const reply = (statusCode, body) => ({ statusCode, body: JSON.stringify(body), headers });
 
+// One database connection per warm Lambda container, reused across calls instead of opening a
+// new one every time (saves ~100-200 ms per request). Handlers still call connect()/end() as
+// before: connect() reuses the open connection (checking it with a quick SELECT 1 if it has been
+// idle for a minute, e.g. Neon paused or the container was frozen), and end() keeps it open.
+// A connection-level error marks it broken so the next call reconnects; a query is never retried.
+let shared = null;
+let lastUsed = 0;
+const IDLE_CHECK_MS = 60_000;
+const isConnectionError = (err) => !err || !err.code || /^(08|57P0)/.test(err.code) ||
+  ["ECONNRESET", "EPIPE", "ETIMEDOUT", "ECONNREFUSED"].includes(err.code);
+
+async function openShared() {
+  const c = new Client({
+    host: process.env.NEON_HOSTNAME,
+    user: process.env.NEON_USERNAME,
+    password: process.env.NEON_PASSWORD,
+    database: process.env.NEON_DATABASE,
+    keepAlive: true
+  });
+  c.on("error", () => { c.broken = true; }); // the socket died while idle
+  await c.connect();
+  shared = c;
+}
+
+const newClient = () => ({
+  async connect() {
+    if (shared && !shared.broken && Date.now() - lastUsed > IDLE_CHECK_MS) {
+      try {
+        await Promise.race([
+          shared.query("SELECT 1"),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("idle check timed out")), 2000))
+        ]);
+      } catch {
+        shared.broken = true;
+      }
+    }
+    if (!shared || shared.broken) {
+      if (shared) shared.end().catch(() => {});
+      shared = null;
+      await openShared();
+    }
+    lastUsed = Date.now();
+  },
+  async query(...args) {
+    try {
+      return await shared.query(...args);
+    } catch (err) {
+      if (isConnectionError(err)) shared.broken = true;
+      throw err;
+    } finally {
+      lastUsed = Date.now();
+    }
+  },
+  async end() {
+    // keep the connection for the next call on this container
+  }
+});
+
 // First-touch sign-up source (campaign tags from the link the user arrived through). Saved only
 // when the account is created. Anything that isn't a short plain tag is dropped.
 const TAG = /^[A-Za-z0-9._~-]{1,64}$/;
@@ -51,12 +109,7 @@ exports.handler = async (event) => {
     return reply(500, { error: "addUser failed" });
   }
 
-  const client = new Client({
-    host: process.env.NEON_HOSTNAME,
-    user: process.env.NEON_USERNAME,
-    password: process.env.NEON_PASSWORD,
-    database: process.env.NEON_DATABASE
-  });
+  const client = newClient();
 
   try {
     const query = event.queryStringParameters || {};
