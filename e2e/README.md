@@ -8,7 +8,13 @@ so they can't catch a broken Lambda, a missing database grant or a bad env var. 
 | --- | --- |
 | `api.spec.ts` | Every endpoint rejects a bad token (401); an unknown share link is `NOT_FOUND`. No sign-in needed. |
 | `smoke.spec.ts` | The garage loads and the menu opens, on desktop and a phone-sized screen. |
+| `paths.spec.ts` | Everything else in the UI: the signed-out landing page; every adjuster (None/Single/Dual) and token control saving through a reload, with the page staying put while a menu is open; saved setups (update, rename, delete, the "Save first / Switch anyway" prompt, and switching while an edit is still being typed); ride ratings and conditions; logging out. |
 | `garage.spec.ts` | One throwaway bike through the whole app: add, edit and reload, the adjuster menu, saved setups (save, edit, switch), ride notes (log, edit, reuse settings, delete), sharing (make a link, open it signed out, copy it into the garage, remove it), reorder and retire. It touches every app table, so it also checks the Lambdas' `setupsbike_app` grants. |
+
+**Console guard:** every browser test fails if the page logs a console error or warning or throws
+an uncaught exception (`fixtures.ts`). Known noise from outside the app (Google's sign-in popup,
+Chrome's install-banner note, React's dev-mode hint) is listed there with the reason. Browser
+extensions don't load in these runs, so their errors (e.g. `background.js`) never show up.
 
 ## Running
 

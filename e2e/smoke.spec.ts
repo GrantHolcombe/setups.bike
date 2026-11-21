@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { appMenu, openGarage, sessionToken } from './helpers';
 
 // Loads the garage and opens the menu. Runs on desktop and on a phone-sized screen.
