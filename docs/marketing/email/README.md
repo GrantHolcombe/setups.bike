@@ -37,5 +37,5 @@ re-publish it.
 
 ## Emails
 
-- [pro-launch.md](pro-launch.md): Pro launch announcement (tested 2026-11-22, not yet sent to
-  the list).
+- [pro-launch.md](pro-launch.md): Pro launch announcement, sent 2026-11-22 to 6 subscribed
+  contacts (campaign `pro-launch`).

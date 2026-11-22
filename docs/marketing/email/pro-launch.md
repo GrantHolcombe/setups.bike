@@ -1,7 +1,6 @@
 # Email: Pro launch announcement (draft)
 
-Board card: "Email blasts: provider setup and Pro announcement". **Draft: not sent.** Grant
-reviews and approves before anything goes out through Resend.
+Board card: "Email blasts: provider setup and Pro announcement". **Sent 2026-11-22** to the "News and offers" segment (6 subscribed contacts), at Grant's go-ahead.
 
 - **To:** the Resend segment "News and offers" (`536f03ac-fa68-49d6-90a8-36e6a7fd02fc`, set as
   `RESEND_SEGMENT_ID`). Per the dev session
@@ -20,7 +19,7 @@ template ([template-base.html](template-base.html), Resend template `setups-bike
 sends swap Resend's unsubscribe placeholder for a plain link.
 
 **Resend broadcast:** "Pro launch announcement (2026-11)", a draft created 2026-11-22 for the
-"News and offers" segment. It goes out only on Grant's explicit yes.
+"News and offers" segment, sent 2026-11-22.
 
 ## Subject line
 
@@ -87,4 +86,4 @@ contacts.
 - [ ] Unsubscribe works and turns the database flag off (Dev card).
 - [x] Postal address filled in.
 - [x] Test sends delivered and approved by Grant (2026-11-22; logo added in Test 2).
-- [ ] Grant's clear yes to send.
+- [x] Grant's clear yes to send (2026-11-22).
