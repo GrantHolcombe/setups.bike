@@ -3,8 +3,10 @@
 Board card: "Email blasts: provider setup and Pro announcement". **Draft: not sent.** Grant
 reviews and approves before anything goes out through Resend.
 
-- **To:** existing users (only those allowed by the Dev card "Email list: marketing consent,
-  unsubscribe sync, export"). Test send to Grant's own accounts first.
+- **To:** the Resend segment Grant creates (`RESEND_SEGMENT_ID`). Per the dev session
+  (2026-11-21), all 7 existing users have `marketing_emails` on (Grant's call: he knows them
+  all). The e2e account is never synced. Unsubscribes, hard bounces and spam complaints turn
+  the flag off through `/resendWebhook`. Test send to Grant's own address first.
 - **From:** Grant at Setups.Bike, e.g. `grant@mail.setups.bike` (once the Resend domain is
   verified). A real person's name, and replies go to a real inbox.
 - **Links:** every link is tagged `?utm_source=email&utm_medium=email&utm_campaign=pro-launch`
@@ -54,15 +56,21 @@ I kept wanting myself.*
 
 ## Footer (required)
 
-> You're getting this because you have a Setups.Bike account.
-> [Unsubscribe]({{{RESEND_UNSUBSCRIBE_URL}}}) · Setups.Bike, [postal address]
+> You're getting this because you have a Setups.Bike account. Change it any time in the app
+> (bike menu > Email preferences) or [unsubscribe]({{{RESEND_UNSUBSCRIBE_URL}}}).
+> Setups.Bike, [postal address]
 
-- **Unsubscribe:** Resend's unsubscribe placeholder for broadcasts (check the exact tag in
-  Resend when setting up the broadcast).
+- **Unsubscribe:** `{{{RESEND_UNSUBSCRIBE_URL}}}` is Resend's broadcast placeholder (confirmed
+  by the dev session). Resend's unsubscribe flows back to the database.
 - **Postal address:** required for US commercial email (CAN-SPAM). A PO box or virtual mailbox
   works if Grant would rather not use his home address. **Fill in before sending.**
 
 ## Checks before sending
+
+Blocked until (from the dev session): Grant approves the app deploy with the email backend and
+the Privacy Policy update; Grant creates the Resend account and domain and sets the three
+Lambda environment variables in the console; the dev session runs `syncAll` to load the 7
+contacts.
 
 - [ ] Prices and plan details match the live app ($2.99/month, $24/year, Free = 3 bikes).
 - [ ] "Go Pro" is the button's real name in the app, and the link lands somewhere sensible
