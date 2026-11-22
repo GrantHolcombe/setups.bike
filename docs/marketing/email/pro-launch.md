@@ -50,7 +50,7 @@ I kept wanting myself.*
 > I build this on my own, so if something's missing or broken, just hit reply. It comes
 > straight to me.
 >
-> All trail's end,
+> Thanks for your continued support,
 > Grant
 > Setups.Bike
 
