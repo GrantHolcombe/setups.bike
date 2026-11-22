@@ -15,9 +15,12 @@ reviews and approves before anything goes out through Resend.
 - **Links:** every link is tagged `?utm_source=email&utm_medium=email&utm_campaign=pro-launch`
   so sign-ups show in the weekly numbers.
 
-**HTML version:** [pro-launch.html](pro-launch.html) is the exact email body: a gold header with the
-app logo (`https://setups.bike/logo192.png`), the red button, and the footer with Resend's
-unsubscribe placeholder. Test sends swap that placeholder for a plain link.
+**HTML version:** [pro-launch.html](pro-launch.html) is the exact email body, built from the base
+template ([template-base.html](template-base.html), Resend template `setups-bike-base`). Test
+sends swap Resend's unsubscribe placeholder for a plain link.
+
+**Resend broadcast:** "Pro launch announcement (2026-11)", a draft created 2026-11-22 for the
+"News and offers" segment. It goes out only on Grant's explicit yes.
 
 ## Subject line
 
@@ -83,5 +86,5 @@ contacts.
 - [ ] No user counts or claims we can't back up.
 - [ ] Unsubscribe works and turns the database flag off (Dev card).
 - [x] Postal address filled in.
-- [ ] Test send looks right on a phone, in light and dark mode.
+- [x] Test sends delivered and approved by Grant (2026-11-22; logo added in Test 2).
 - [ ] Grant's clear yes to send.
