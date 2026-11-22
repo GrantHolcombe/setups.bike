@@ -264,9 +264,11 @@ iOS app will need Sign in with Apple (App Store rule 4.8) and in-app account del
 
 **Decision:** Add our own email sign-up next to Google, Sign in with Apple, and in-app account
 deletion now, as four cards (an identity groundwork card first), ahead of the legal review.
+Email sign-in uses a one-time 6-digit code sent through Resend, not a password.
 
 **Why:** Changing how accounts work is cheaper with a handful of users I know than with many, and
 the Terms and Privacy Policy reviewed by a lawyer should describe the sign-in that will ship.
+Codes mean no passwords to store, leak or reset, and the Resend setup already existed.
 
 ---
 
