@@ -3,12 +3,13 @@
 Board card: "Email blasts: provider setup and Pro announcement". **Draft: not sent.** Grant
 reviews and approves before anything goes out through Resend.
 
-- **To:** the Resend segment Grant creates (`RESEND_SEGMENT_ID`). Per the dev session
+- **To:** the Resend segment "News and offers" (`536f03ac-fa68-49d6-90a8-36e6a7fd02fc`, set as
+  `RESEND_SEGMENT_ID`). Per the dev session
   (2026-11-21), all 7 existing users have `marketing_emails` on (Grant's call: he knows them
   all). The e2e account is never synced. Unsubscribes, hard bounces and spam complaints turn
   the flag off through `/resendWebhook`. Test send to Grant's own address first.
-- **From:** Grant at Setups.Bike, e.g. `grant@mail.setups.bike` (once the Resend domain is
-  verified). A real person's name, and replies go to a real inbox.
+- **From:** Grant at Setups.Bike, e.g. `grant@mail.setups.bike` (Resend domain `mail.setups.bike` added 2026-11-21, with its four DNS records in Cloudflare,
+  DNS only). A real person's name, and replies go to a real inbox.
 - **Links:** every link is tagged `?utm_source=email&utm_medium=email&utm_campaign=pro-launch`
   so sign-ups show in the weekly numbers.
 
@@ -56,12 +57,11 @@ I kept wanting myself.*
 
 > You're getting this because you have a Setups.Bike account. Change it any time in the app
 > (bike menu > Email preferences) or [unsubscribe]({{{RESEND_UNSUBSCRIBE_URL}}}).
-> Setups.Bike, [postal address]
+> Setups.Bike, 8030 La Mesa Blvd, Unit #3002, La Mesa, CA 91942
 
 - **Unsubscribe:** `{{{RESEND_UNSUBSCRIBE_URL}}}` is Resend's broadcast placeholder (confirmed
   by the dev session). Resend's unsubscribe flows back to the database.
-- **Postal address:** required for US commercial email (CAN-SPAM). A PO box or virtual mailbox
-  works if Grant would rather not use his home address. **Fill in before sending.**
+- **Postal address:** Grant's PO box (filled in 2026-11-21), required for US commercial email (CAN-SPAM).
 
 ## Checks before sending
 
@@ -76,6 +76,6 @@ contacts.
 - [ ] Nothing implies the app recommends settings (it doesn't).
 - [ ] No user counts or claims we can't back up.
 - [ ] Unsubscribe works and turns the database flag off (Dev card).
-- [ ] Postal address filled in.
+- [x] Postal address filled in.
 - [ ] Test send looks right on a phone, in light and dark mode.
 - [ ] Grant's clear yes to send.
