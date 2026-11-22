@@ -12,6 +12,10 @@
 // codes go to the home page, never a 404. If a KV namespace is bound as QR_SCANS, each scan adds
 // one to "scan:<code>:<YYYY-MM-DD>" (read them in the dashboard: Workers KV > QR_SCANS).
 //
+// It also limits the website to North America (US, Canada, Mexico) until the legal review covers
+// GDPR: visitors from anywhere else get a short branded page instead of the app (see geoBlock).
+// The API, Stripe and Resend webhooks don't go through Cloudflare, so they're unaffected.
+//
 // Deploy: paste this file into the Worker in the Cloudflare dashboard (Workers & Pages) and
 // click Deploy. It doesn't go through CodePipeline.
 
@@ -24,9 +28,84 @@ const QR_CODES = {
   trailhead: "/?utm_source=sticker&utm_medium=qr&utm_campaign=trailhead",
 };
 
+// --- North America only (card: "Limit setups.bike to North America") ---------------------------
+// To lift it once GDPR is covered: set GEO_LIMIT to false and deploy.
+const GEO_LIMIT = true;
+const ALLOWED_COUNTRIES = new Set(["US", "CA", "MX"]);
+// Still served to blocked visitors: the legal pages, robots.txt and what the blocked page shows.
+const OPEN_PATHS = /^\/(privacy\.html|terms\.html|refunds\.html|robots\.txt|favicon\.ico|img\/logos\/)/;
+// Search and link-preview crawlers, let through from any country so search listings and share
+// previews keep working. The user agent can be faked, but that only gets someone what a VPN
+// would; the point is to show we don't offer the service outside North America.
+const CRAWLERS = /googlebot|google-inspectiontool|bingbot|duckduckbot|applebot|facebookexternalhit|facebot|twitterbot|slackbot|discordbot|linkedinbot|whatsapp|telegrambot|pinterest|redditbot|embedly/i;
+
+// The blocked page, or null to carry on. request.cf.country is Cloudflare's guess from the IP;
+// when it's missing (local tests) or unknown ("XX"), the visitor is let through rather than
+// shown a wrong refusal. Tor ("T1") is treated like any other country outside the list.
+export function geoBlock(request, url) {
+  if (!GEO_LIMIT) return null;
+  // Testing aid, only on the Worker's own workers.dev address: ?geo=DE pretends to be Germany.
+  const testCountry = url.hostname.endsWith(".workers.dev") ? url.searchParams.get("geo") : null;
+  const country = (testCountry || (request.cf && request.cf.country) || "").toUpperCase();
+  if (!country || country === "XX" || ALLOWED_COUNTRIES.has(country)) return null;
+  if (OPEN_PATHS.test(url.pathname)) return null;
+  if (CRAWLERS.test(request.headers.get("user-agent") || "")) return null;
+  console.log("geo blocked", country);
+  return new Response(BLOCKED_PAGE, {
+    status: 403,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex",
+    },
+  });
+}
+
+// Self-contained (no app JS); colors follow docs/STYLE_GUIDE.md in light and dark.
+const BLOCKED_PAGE = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#daa520">
+<title>Setups.Bike: not available in your country yet</title>
+<style>
+  :root { --bg: #ffffff; --text: #1c1c1c; --muted: #5f5f5f; --link: #8a6514; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121212; --text: #ececec; --muted: #b0b0b0; --link: #daa530; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; }
+  header { background: goldenrod; height: 150px; }
+  header img { display: block; width: 120px; height: 120px; margin: 15px; border-radius: 8px; background: #ff0000; }
+  main { max-width: 480px; margin: 0 auto; padding: 32px 16px; line-height: 1.5; }
+  h1 { font-size: 1.5rem; margin: 0 0 12px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); font-size: 0.9rem; }
+  a { color: var(--link); }
+  @media (max-width: 600px) { header img { margin: 15px auto; } }
+</style>
+</head>
+<body>
+<header><img src="/img/logos/Setups-350.png" alt="Setups.Bike" width="120" height="120"></header>
+<main>
+  <h1>Setups.Bike isn't available in your country yet</h1>
+  <p>For now Setups.Bike is only open to riders in the United States, Canada and Mexico. We'd love
+  to bring it to more places, and we're working on it.</p>
+  <p class="muted">If you're in one of those countries and seeing this (on a VPN, for example),
+  turn the VPN off and reload. <a href="/privacy.html">Privacy Policy</a> &middot;
+  <a href="/terms.html">Terms</a></p>
+</main>
+</body>
+</html>`;
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const blocked = geoBlock(request, url);
+    if (blocked) return blocked;
     if (url.pathname.startsWith("/q/")) return qrRedirect(url, env, ctx);
     const id = url.searchParams.get("s");
     if (request.method !== "GET" || url.pathname !== "/" || !id || !SHARE_ID.test(id)) {
