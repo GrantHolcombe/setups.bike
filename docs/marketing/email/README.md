@@ -11,6 +11,12 @@ announcement".
 - **Reply-to:** `support@setups.bike`, which Cloudflare Email Routing forwards to Grant's inbox.
 - **List:** the Resend segment "News and offers". The app's `marketing_emails` flag syncs to it,
   and unsubscribes, bounces and complaints flow back through the `resendWebhook` Lambda.
+- **Tracking (on since 2026-11-22):** open tracking (a pixel) and click tracking (links go through
+  `links.mail.setups.bike`, a CNAME to Resend in Cloudflare, DNS only). Per-recipient opens and
+  clicks show on each broadcast in Resend. Opens are approximate: Apple Mail preloads images, and
+  clients that block images hide real opens. The Privacy Policy update describing this was asked
+  of the dev session on 2026-11-22. It should ship before the next broadcast. The Pro launch
+  email was sent before tracking was on.
 - **Every send:** links tagged `?utm_source=email&utm_medium=email&utm_campaign=<name>`. Grant
   reviews a test send and gives a clear yes before anything goes to the list.
 - **Voice:** plain and factual by default. A pun only when it really fits, and never the same
