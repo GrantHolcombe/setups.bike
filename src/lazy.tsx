@@ -10,6 +10,8 @@ const parts = {
   InstallHelpDialog: () => import('./components/Header/AppMenu/InstallHelpDialog'),
   EmailPrefsDialog: () => import('./components/Header/AppMenu/EmailPrefsDialog'),
   EmailPrompt: () => import('./components/EmailPrompt'),
+  SignInDialog: () => import('./components/SignIn/SignInDialog'),
+  NameDialog: () => import('./components/SignIn/NameDialog'),
   UpgradeDialog: () => import('./components/Billing/UpgradeDialog'),
   RideNotes: () => import('./components/BikeCard/RideNotes'),
   ShareDialog: () => import('./components/BikeCard/ShareDialog'),
@@ -22,6 +24,8 @@ export const ReorderGarageModal = React.lazy(parts.ReorderGarageModal);
 export const InstallHelpDialog = React.lazy(parts.InstallHelpDialog);
 export const EmailPrefsDialog = React.lazy(parts.EmailPrefsDialog);
 export const EmailPrompt = React.lazy(parts.EmailPrompt);
+export const SignInDialog = React.lazy(parts.SignInDialog);
+export const NameDialog = React.lazy(parts.NameDialog);
 export const UpgradeDialog = React.lazy(parts.UpgradeDialog);
 export const RideLogDialog = React.lazy(() => parts.RideNotes().then((m) => ({ default: m.RideLogDialog })));
 export const RideHistoryDialog = React.lazy(() => parts.RideNotes().then((m) => ({ default: m.RideHistoryDialog })));

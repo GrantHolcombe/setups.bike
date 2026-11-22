@@ -28,11 +28,24 @@ test.describe('API without a valid token', () => {
   });
 
   test('sign-in refuses a method that does not exist yet', async ({ request }) => {
-    // apple and email are planned (cards "Sign-in 2" and "Sign-in 3"); until then they're unknown
+    // apple is planned (card "Sign-in 3"); until then it's unknown
     for (const provider of ['apple', 'nope']) {
       const res = await request.post(`${API}/addUser`, { data: { provider, token: bad } });
       expect(res.status(), provider).toBe(400);
     }
+  });
+
+  // No real code is ever sent by these: a bad address is refused before anything is emailed.
+  test('email sign-in: a bad address is 400, a code that was never sent is 401', async ({ request }) => {
+    const ask = await request.post(`${API}/addUser`, { data: { provider: 'email', action: 'requestCode', email: 'not-an-email' } });
+    expect(ask.status()).toBe(400);
+    const verify = await request.post(`${API}/addUser`, { data: { provider: 'email', email: 'nobody@example.com', code: '123456' } });
+    expect(verify.status()).toBe(401);
+  });
+
+  test('setting a name needs a valid sign-in', async ({ request }) => {
+    const res = await request.post(`${API}/addUser`, { data: { action: 'setName', token: bad, firstName: 'Eve' } });
+    expect(res.status()).toBe(401);
   });
 
   test('the Resend webhook refuses unsigned requests', async ({ request }) => {

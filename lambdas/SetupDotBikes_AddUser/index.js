@@ -99,6 +99,7 @@ async function accountFor(client, provider, person, query) {
       [provider, person.subject]
     );
     let userId = res.rows[0] && res.rows[0].app_user_id;
+    let isNew = false;
 
     if (!userId) {
       // Look the account up first. INSERT ... ON CONFLICT draws a new id from the sequence
@@ -117,6 +118,7 @@ async function accountFor(client, provider, person, query) {
         );
         if (res.rows.length) {
           userId = res.rows[0].app_user_id;
+          isNew = true;
           console.log("new user", userId, "via", provider, "source", res.rows[0].signup_source || "-");
         } else {
           // Two first sign-ins at the same moment: the other one inserted the row.
@@ -137,12 +139,51 @@ async function accountFor(client, provider, person, query) {
 
     const user = (await client.query("SELECT * FROM app_user WHERE app_user_id = $1", [userId])).rows[0];
     await client.query("COMMIT");
-    return user;
+    return { user, isNew };
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     throw err;
   }
 }
+
+const appToken = async (u, secret) =>
+  new (await jose).SignJWT({
+    app_user_id: u.app_user_id,
+    first_name: u.first_name,
+    last_name: u.last_name,
+    email_address: u.email_address
+  })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuedAt()
+    .setExpirationTime(TOKEN_LIFETIME)
+    .sign(new TextEncoder().encode(secret));
+
+// action "setName": a signed-in person sets their name (new email sign-ups have none). Returns a
+// fresh app token, since the token carries the name.
+const NAME = (v) => (typeof v === "string" ? v.trim().replace(/\s+/g, " ").slice(0, 100) : "");
+async function setName(client, query, secret) {
+  let claims;
+  try {
+    claims = (await (await jose).jwtVerify(String(query.token || ""), new TextEncoder().encode(secret))).payload;
+  } catch {
+    return reply(401, { error: "Sign in again" });
+  }
+  const first = NAME(query.firstName);
+  if (!first) return reply(400, { error: "Enter your first name" });
+  await client.connect();
+  const res = await client.query(
+    "UPDATE app_user SET first_name = $2, last_name = $3 WHERE app_user_id = $1 RETURNING *",
+    [claims.app_user_id, first, NAME(query.lastName)]
+  );
+  if (!res.rows.length) return reply(401, { error: "Sign in again" });
+  console.log("name set for user", claims.app_user_id);
+  return reply(200, { token: await appToken(res.rows[0], secret) });
+}
+
+const clientIp = (event) => {
+  const ctx = event.requestContext || {};
+  return (ctx.identity && ctx.identity.sourceIp) || (ctx.http && ctx.http.sourceIp) || null;
+};
 
 exports.handler = async (event) => {
   const secret = process.env.JWT;
@@ -154,31 +195,33 @@ exports.handler = async (event) => {
   const client = newClient();
 
   try {
-    // GET ?accessToken=... is how the app signs in with Google today. Other methods send
-    // provider + token (as query parameters or a JSON body).
+    // ?accessToken=... is how the app signs in with Google. Other methods send provider and their
+    // fields (as query parameters or a JSON body): email sends { provider: "email", email } with
+    // action "requestCode", then { provider: "email", email, code }.
     let body = {};
     try { body = event.body ? JSON.parse(event.body) : {}; } catch { body = {}; }
     const query = { ...(event.queryStringParameters || {}), ...(body && typeof body === "object" ? body : {}) };
-    const providerName = query.provider || "google";
-    const provider = getProvider(providerName);
+    if (query.action === "setName") return await setName(client, query, secret);
+
+    const provider = getProvider(query.provider || "google");
     if (!provider) return reply(400, { error: "Unknown sign-in method" });
-    const person = await provider.verify(query.token ?? query.accessToken);
-    if (!person) return reply(401, { error: "Sign-in could not be verified" });
+    const ctx = { db: client, ip: clientIp(event) };
+
+    if (query.action === "requestCode") {
+      if (!provider.requestCode) return reply(400, { error: "Unknown sign-in method" });
+      await client.connect();
+      const out = await provider.requestCode(query, ctx);
+      return reply(out.status, out.body);
+    }
 
     await client.connect();
-    const u = await accountFor(client, provider.name, person, query);
-    const token = await new (await jose).SignJWT({
-      app_user_id: u.app_user_id,
-      first_name: u.first_name,
-      last_name: u.last_name,
-      email_address: u.email_address
-    })
-      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setIssuedAt()
-      .setExpirationTime(TOKEN_LIFETIME)
-      .sign(new TextEncoder().encode(secret));
-    console.log("signed in user", u.app_user_id);
-    return reply(200, { token });
+    const person = await provider.verify(query, ctx);
+    if (!person) return reply(401, { error: "Sign-in could not be verified" });
+
+    const { user: u, isNew } = await accountFor(client, provider.name, person, query);
+    const token = await appToken(u, secret);
+    console.log("signed in user", u.app_user_id, "via", provider.name);
+    return reply(200, { token, isNew });
   } catch (err) {
     console.error(err);
     return reply(500, { error: "addUser failed" });

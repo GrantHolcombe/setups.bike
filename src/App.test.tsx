@@ -13,7 +13,7 @@ test('signed out, the app shows the landing page, sign-in and the legal links', 
   expect(screen.getByRole('heading', { name: 'What it remembers' })).toBeTruthy();
   expect(screen.getByRole('heading', { name: 'Free and Pro' })).toBeTruthy();
   expect(screen.getAllByRole('button', { name: /clip in/i })).toHaveLength(2);
-  expect(screen.getAllByText(/google account required/i)).toHaveLength(2);
+  expect(screen.getAllByText(/sign in with google or your email/i)).toHaveLength(2);
   for (const name of ['Terms', 'Privacy', 'Refunds']) {
     expect(screen.getByRole('link', { name })).toBeTruthy();
   }

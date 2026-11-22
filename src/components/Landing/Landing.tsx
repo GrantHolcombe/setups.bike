@@ -2,7 +2,7 @@ import { Button } from '@mui/material';
 import './Landing.css';
 
 interface ILandingProps {
-  // starts Google sign-in
+  // opens the sign-in dialog (Google or an emailed code)
   onSignIn: () => void;
 }
 
@@ -14,7 +14,7 @@ const REMEMBERS = [
   ['Every bike in your garage', 'in the order you want them'],
 ];
 
-// What a signed-out visitor sees: what the app does, Free vs Pro, and the Google sign-in.
+// What a signed-out visitor sees: what the app does, Free vs Pro, and the sign-in button.
 // It records the rider's own settings and never suggests any (see docs/ROADMAP.md, 2.4).
 export default function Landing({ onSignIn }: ILandingProps) {
   const clipIn = (
@@ -32,7 +32,7 @@ export default function Landing({ onSignIn }: ILandingProps) {
           </p>
           <div className='landingCta'>
             {clipIn}
-            <span className='landingNote'>Free. Google account required.</span>
+            <span className='landingNote'>Free. Sign in with Google or your email.</span>
           </div>
         </div>
         <picture className='landingShot'>
@@ -78,7 +78,7 @@ export default function Landing({ onSignIn }: ILandingProps) {
 
       <section className='landingSection landingEnd'>
         {clipIn}
-        <span className='landingNote'>Google account required.</span>
+        <span className='landingNote'>Sign in with Google or your email.</span>
         <p className='landingNote'>Your numbers, your bike. Setups.Bike keeps the settings you choose.</p>
       </section>
     </main>

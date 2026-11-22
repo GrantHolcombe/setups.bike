@@ -12,7 +12,7 @@ Lambda function and deploys on its own. These aren't part of the CodePipeline fr
 
 | Folder | API route | What it does |
 |---|---|---|
-| `SetupDotBikes_AddUser` | `addUser` | Sign-in for every method: a provider module in `providers/` (Google today) verifies the credential, then it finds, links or creates the account (`auth_identity`) and returns a JWT. Takes `?accessToken=` (Google, what the app sends) or `{provider, token}`. Unknown method 400, unverifiable token 401 |
+| `SetupDotBikes_AddUser` | `addUser` | Sign-in for every method: a provider module in `providers/` (Google, email) verifies the credential, then it finds, links or creates the account (`auth_identity`) and returns `{token, isNew}`. Google: `?accessToken=` (what the app sends). Email: `{provider:"email", action:"requestCode", email}` sends a plain-text 6-digit code through Resend (400 bad address, 429 rate limited, 502 Resend failed), then `{provider:"email", email, code}` signs in. `{action:"setName", token, firstName, lastName}` saves a name and returns a fresh token. Unknown method 400, unverifiable sign-in 401. Env: `JWT`, Neon vars, `RESEND_API_KEY` (email codes), optional `SIGNIN_EMAIL_FROM` |
 | `SetupsDotBike_GetBikes` | `getBikes` | Lists a user's bikes in garage order |
 | `SetupsDotBike_addBike` | `AddBike` | Adds a bike for the signed-in user |
 | `SetupsDotBike_updateBike` | `updateBike` | Saves a bike's tire and suspension settings |

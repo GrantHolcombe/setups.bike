@@ -13,6 +13,12 @@ isn't available from other countries.</p>
   <li><strong>From Google sign-in:</strong> your name, email address and profile picture link.
     We store your name and email in our database. Your profile picture is shown from Google's
     servers and is only kept in your own browser.</li>
+  <li><strong>From email sign-in:</strong> your email address and the name you give us. To sign
+    you in we email a one-time 6-digit code. We store only a scrambled (hashed) form of the code,
+    with the time and the IP address that asked for it, to stop abuse; these records are deleted
+    after a day. Sign-in emails are plain text and don't record opens or clicks.</li>
+  <li><strong>How you sign in:</strong> which sign-in methods your account uses (Google, email),
+    the ID each one gives us, and when you last used it.</li>
   <li><strong>What you enter:</strong> your bikes (brand and model), their tire and suspension
     settings, their order in your garage, and, if you use Pro features, saved setups, ride notes,
     optional rider details such as weight, and setups you choose to share.</li>
@@ -66,15 +72,15 @@ working.</p>
 <h2>Who helps us run the app</h2>
 <p>These services process data for us, only as needed to provide the app:</p>
 <ul>
-  <li><strong>Google:</strong> sign-in.</li>
+  <li><strong>Google:</strong> sign-in, if you choose Continue with Google.</li>
   <li><strong>Amazon Web Services:</strong> hosting the app and its servers, and storing logs
     (United States).</li>
   <li><strong>Neon:</strong> our database (United States).</li>
   <li><strong>Cloudflare:</strong> delivering the website securely, and counting visits (Web
     Analytics).</li>
-  <li><strong>Resend:</strong> sending news and offer emails to people signed up for them (your
-    email address, first name and subscription status), and recording opens and clicks on those
-    emails (stored by Resend).</li>
+  <li><strong>Resend:</strong> sending sign-in codes (your email address), and sending news and
+    offer emails to people signed up for them (your email address, first name and subscription
+    status), recording opens and clicks on those news emails (stored by Resend).</li>
   <li><strong>Stripe:</strong> payments for Pro. Stripe handles your card details under its own
     privacy policy.</li>
 </ul>

@@ -10,7 +10,8 @@ import { IAccount, getAccount, openBillingPortal } from './billing';
 import { IBikeSetup, listSetups } from './setups';
 import { IShare, SHARE_PARAM, copyShare, listShares } from './shares';
 import { LoadingOverlay } from './components/Spinner';
-import { EmailPrompt, SharedSetupView, UpgradeDialog, WhenOpened, preloadParts } from './lazy';
+import { EmailPrompt, NameDialog, SharedSetupView, SignInDialog, UpgradeDialog, WhenOpened, preloadParts } from './lazy';
+import { profileFromToken } from './signin';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { readSignupSource } from './signupSource';
 import Landing from './components/Landing/Landing';
@@ -223,6 +224,10 @@ function App() {
   const [account, setAccount] = useState<IAccount>();
   //the one-time "news by email?" prompt was answered this visit (hides it right away)
   const [emailPromptDone, setEmailPromptDone] = useState(false);
+  //"Clip In": Google or an emailed code
+  const [signInOpen, setSignInOpen] = useState(false);
+  //new email sign-ups have no name; asked once per visit until they give one
+  const [nameSkipped, setNameSkipped] = useState(false);
   const [upgrade, setUpgrade] = useState<{ open: boolean, reason: UpgradeReason }>({ open: false, reason: 'menu' });
   const updateReady = useUpdateAvailable();
   const [offline, setOffline] = useState<boolean>(!navigator.onLine);
@@ -265,7 +270,7 @@ function App() {
     if (!jwt) {
       //sign in first; the copy runs once the app token arrives
       setPendingCopy(true);
-      login();
+      setSignInOpen(true);
       return;
     }
     setPendingCopy(false);
@@ -473,6 +478,25 @@ function App() {
     onError: (error?: any) => console.log('Login Failed:', error)
   });
 
+  //email sign-in finished (SignInDialog); Google sign-in goes through login() above
+  const emailSignedIn = (token: string) => {
+    setSignInOpen(false);
+    setProfile(profileFromToken(token));
+    setIsAuthenticated(true);
+    setJwt(token);
+  };
+
+  //the name was saved (NameDialog): the new token carries it
+  const nameSaved = (token: string) => {
+    setProfile(profileFromToken(token));
+    setJwt(token);
+  };
+
+  const needsName = (() => {
+    if (!isAauthenticated || !jwt) return false;
+    try { return !jwtDecode<IJWT>(jwt).first_name; } catch { return false; }
+  })();
+
   //logout button
   const logout = () => {
     googleLogout();
@@ -522,12 +546,19 @@ function App() {
         </div>
         :
         <div style={{display: isLoading ? 'none' : 'block'}}>
-          <Landing onSignIn={() => { setIsLoading(true); login(); }} />
+          <Landing onSignIn={() => setSignInOpen(true)} />
         </div>
 
       }
-      {/* asked once of anyone who has never chosen (new sign-ups) */}
-      {isAauthenticated && !sharedId && account?.marketingEmails === null && !emailPromptDone && (
+      <WhenOpened open={signInOpen}>
+        <SignInDialog open={signInOpen} onClose={() => { setSignInOpen(false); setPendingCopy(false); }}
+          onGoogle={() => { setIsLoading(true); login(); }} onSignedIn={emailSignedIn} signupSource={signupSource} />
+      </WhenOpened>
+      <WhenOpened open={needsName && !nameSkipped}>
+        <NameDialog open={needsName && !nameSkipped} token={jwt} onSaved={nameSaved} onSkip={() => setNameSkipped(true)} />
+      </WhenOpened>
+      {/* asked once of anyone who has never chosen (new sign-ups), after the name question */}
+      {isAauthenticated && !sharedId && account?.marketingEmails === null && !emailPromptDone && (!needsName || nameSkipped) && (
         <React.Suspense fallback={null}><EmailPrompt onDone={() => setEmailPromptDone(true)} /></React.Suspense>
       )}
       <WhenOpened open={upgrade.open}>

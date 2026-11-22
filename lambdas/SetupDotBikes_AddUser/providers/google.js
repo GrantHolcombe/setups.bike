@@ -5,9 +5,10 @@
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ||
   "347941074448-vqvn1gsthtvt4jj8u7ojnoqme16jh0h5.apps.googleusercontent.com";
 
-// The person behind the access token, or null if it isn't a valid token issued to this app for a
-// verified email address.
-async function verify(accessToken) {
+// The person behind the access token (input.token, or input.accessToken as the app sends it), or
+// null if it isn't a valid token issued to this app for a verified email address.
+async function verify(input) {
+  const accessToken = input.token ?? input.accessToken;
   if (!accessToken || typeof accessToken !== "string") return null;
   const info = await fetch(
     "https://oauth2.googleapis.com/tokeninfo?access_token=" + encodeURIComponent(accessToken)

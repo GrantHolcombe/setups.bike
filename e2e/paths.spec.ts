@@ -46,11 +46,48 @@ test.describe('signed out', () => {
     await expect(page.getByRole('heading', { name: 'What it remembers' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Free and Pro' })).toBeVisible();
     await expect(page.getByRole('button', { name: /clip in/i })).toHaveCount(2);
-    await expect(page.getByText('Google account required.').first()).toBeVisible();
+    await expect(page.getByText('Sign in with Google or your email.').first()).toBeVisible();
     await expect(page.getByRole('img', { name: /bike card in Setups\.Bike/ })).toBeVisible();
     for (const name of ['Terms', 'Privacy', 'Refunds']) await expect(page.getByRole('link', { name })).toBeVisible();
     // the campaign tags stay in the address (sign-up source tracking reads them from there)
     expect(page.url()).toContain('utm_source=sticker');
+  });
+
+  // The whole email sign-in screen, with the two addUser answers faked so no real email is sent:
+  // the "verified" answer hands back the test account's real token, so the garage really loads.
+  test('email sign-in: code screen, wrong code, then signed in to the garage', async ({ page, consoleProblems }) => {
+    const sent: any[] = [];
+    await page.route('**/test/addUser', async (route) => {
+      const body = JSON.parse(route.request().postData() || '{}');
+      sent.push(body);
+      if (body.action === 'requestCode') return route.fulfill({ status: 200, body: JSON.stringify({ sent: true }) });
+      if (body.code === '111111') return route.fulfill({ status: 401, body: JSON.stringify({ error: 'Sign-in could not be verified' }) });
+      return route.fulfill({ status: 200, body: JSON.stringify({ token: sessionToken(), isNew: false }) });
+    });
+    await page.goto('/?utm_source=sticker');
+    await page.getByRole('button', { name: /clip in/i }).first().click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+    await dialog.getByLabel('Email').fill('rider@example.com');
+    await dialog.getByRole('button', { name: 'Email me a code' }).click();
+    await expect(dialog.getByRole('heading', { name: 'Check your email' })).toBeVisible();
+    await expect(dialog.getByText('rider@example.com')).toBeVisible();
+
+    await dialog.getByLabel('Code').fill('111111');
+    await dialog.getByRole('button', { name: 'Sign in' }).click();
+    await expect(dialog.getByText(/That code didn't work/)).toBeVisible();
+    // the browser logs the (deliberate) 401 itself; take exactly that one off the console guard's list
+    const expected401 = consoleProblems.findIndex((p) => /status of 401/.test(p));
+    expect(expected401).toBeGreaterThanOrEqual(0);
+    consoleProblems.splice(expected401, 1);
+
+    await dialog.getByLabel('Code').fill('222 222');
+    await dialog.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('heading', { name: /^Welcome/ })).toBeVisible();
+    await expect(dialog).toHaveCount(0);
+    expect(sent[0]).toEqual({ provider: 'email', action: 'requestCode', email: 'rider@example.com' });
+    expect(sent.at(-1)).toEqual({ provider: 'email', email: 'rider@example.com', code: '222222', utm_source: 'sticker' });
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
   });
 });
 

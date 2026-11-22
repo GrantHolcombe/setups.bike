@@ -22,7 +22,7 @@ const WelcomeMsg = ({welcomeProfile, hasBikes}: IWelcome) => {
     return (
         <div className='welcomeHeading'>
             <Avatar alt={welcomeProfile?.name} src={welcomeProfile?.picture} />
-            <h2>Welcome back, {welcomeProfile?.given_name}!</h2>
+            <h2>{welcomeProfile?.given_name ? `Welcome back, ${welcomeProfile.given_name}!` : 'Welcome!'}</h2>
             <p>{hasBikes ? "Here's your garage." : "There's nothing here yet!"}</p>
         </div>
     )
