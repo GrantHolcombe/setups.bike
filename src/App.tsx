@@ -10,7 +10,7 @@ import { IAccount, getAccount, openBillingPortal } from './billing';
 import { IBikeSetup, listSetups } from './setups';
 import { IShare, SHARE_PARAM, copyShare, listShares } from './shares';
 import { LoadingOverlay } from './components/Spinner';
-import { SharedSetupView, UpgradeDialog, WhenOpened, preloadParts } from './lazy';
+import { EmailPrompt, SharedSetupView, UpgradeDialog, WhenOpened, preloadParts } from './lazy';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { readSignupSource } from './signupSource';
 import Landing from './components/Landing/Landing';
@@ -221,6 +221,8 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [addBikeOpen, setAddBikeOpen] = useState<boolean>(false);
   const [account, setAccount] = useState<IAccount>();
+  //the one-time "news by email?" prompt was answered this visit (hides it right away)
+  const [emailPromptDone, setEmailPromptDone] = useState(false);
   const [upgrade, setUpgrade] = useState<{ open: boolean, reason: UpgradeReason }>({ open: false, reason: 'menu' });
   const updateReady = useUpdateAvailable();
   const [offline, setOffline] = useState<boolean>(!navigator.onLine);
@@ -524,6 +526,10 @@ function App() {
         </div>
 
       }
+      {/* asked once of anyone who has never chosen (new sign-ups) */}
+      {isAauthenticated && !sharedId && account?.marketingEmails === null && !emailPromptDone && (
+        <React.Suspense fallback={null}><EmailPrompt onDone={() => setEmailPromptDone(true)} /></React.Suspense>
+      )}
       <WhenOpened open={upgrade.open}>
         <UpgradeDialog open={upgrade.open} reason={upgrade.reason} onClose={() => setUpgrade({ ...upgrade, open: false })} />
       </WhenOpened>

@@ -220,6 +220,51 @@ test('ride notes: rating and conditions are saved with the ride', async ({ page,
   await history.getByRole('button', { name: 'Close' }).click();
 });
 
+test('email preferences: the menu switch saves, and the one-time prompt saves an answer', async ({ page }) => {
+  sessionToken();
+  await openGarage(page);
+  const openPrefs = async () => {
+    await appMenu(page, 'Email preferences');
+    return page.getByRole('dialog', { name: 'Email preferences' });
+  };
+  // the test account starts off (and is never sent to Resend)
+  let dialog = await openPrefs();
+  const toggle = dialog.getByRole('switch', { name: 'News and offers by email' });
+  await expect(toggle).not.toBeChecked();
+  await toggle.click();
+  await expect(toggle).toBeChecked();
+  await expect(toggle).toBeEnabled(); // saved
+  await dialog.getByRole('button', { name: 'Done' }).click();
+  await openGarage(page);
+  dialog = await openPrefs();
+  await expect(dialog.getByRole('switch', { name: 'News and offers by email' })).toBeChecked();
+  await dialog.getByRole('switch', { name: 'News and offers by email' }).click(); // back off
+  await expect(dialog.getByRole('switch', { name: 'News and offers by email' })).not.toBeChecked();
+  await expect(dialog.getByRole('switch', { name: 'News and offers by email' })).toBeEnabled();
+  await dialog.getByRole('button', { name: 'Done' }).click();
+
+  // a never-asked account (faked in the account response) sees the prompt; "No thanks" saves off
+  await page.route('**/test/account?**', async (route) => {
+    try {
+      const res = await route.fetch();
+      const json = { ...(await res.json()), marketingEmails: null };
+      await route.fulfill({ status: res.status(), headers: res.headers(), json });
+    } catch {
+      // the page moved on before the real response arrived; nothing to fake
+    }
+  });
+  await openGarage(page);
+  const prompt = page.getByText('Want news from Setups.Bike?');
+  await expect(prompt).toBeVisible();
+  const saved = page.waitForResponse((r) => r.url().endsWith('/emailPrefs') && r.request().method() === 'POST');
+  await page.getByRole('button', { name: 'No thanks' }).click();
+  const res = await saved;
+  expect(res.status()).toBe(200);
+  expect(JSON.parse(res.request().postData() || '{}')).toMatchObject({ action: 'set', on: false, via: 'prompt' });
+  await expect(prompt).toHaveCount(0);
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+});
+
 test('logging out returns to the landing page and stays signed out', async ({ page }) => {
   sessionToken();
   await openGarage(page);

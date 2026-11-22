@@ -17,6 +17,8 @@ export interface IAccount {
   billingEnabled: boolean;
   bikeLimit: number | null;
   canAddBike: boolean;
+  //news and offers by email; null = never asked (the app shows a one-time prompt)
+  marketingEmails?: boolean | null;
 }
 
 export class ApiError extends Error {

@@ -15,12 +15,17 @@ test.describe('API without a valid token', () => {
     });
   }
 
-  for (const path of ['DeleteBike', 'reorderGarage', 'updateBike', 'bikeSetups', 'rideNotes', 'checkout', 'portal']) {
+  for (const path of ['DeleteBike', 'reorderGarage', 'updateBike', 'bikeSetups', 'rideNotes', 'checkout', 'portal', 'emailPrefs']) {
     test(`POST /${path} is 401`, async ({ request }) => {
       const res = await request.post(`${API}/${path}`, { data: { token: bad, action: 'list' } });
       expect(res.status()).toBe(401);
     });
   }
+
+  test('the Resend webhook refuses unsigned requests', async ({ request }) => {
+    const res = await request.post(`${API}/resendWebhook`, { data: { type: 'contact.updated', data: { email: 'x@example.com', unsubscribed: false } } });
+    expect(res.status()).toBe(401);
+  });
 
   test('an unknown share link is NOT_FOUND', async ({ request }) => {
     const res = await request.post(`${API}/sharedSetups`, { data: { action: 'view', shareId: 'zzzzzzzzzzzzzzzz' } });

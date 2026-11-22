@@ -4,7 +4,7 @@ import MenuItem from '@mui/material/MenuItem';
 import PedalBikeIcon from '@mui/icons-material/PedalBike';
 import { IAppMenuProps } from '../Header';
 import { useAppContext } from '../../../App';
-import { AddBikeModal, DeleteBikeModal, InstallHelpDialog, ReorderGarageModal, WhenOpened } from '../../../lazy';
+import { AddBikeModal, DeleteBikeModal, EmailPrefsDialog, InstallHelpDialog, ReorderGarageModal, WhenOpened } from '../../../lazy';
 import { promptInstall, useInstallOption } from '../../../pwa';
 
 export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}: IAppMenuProps) {
@@ -23,6 +23,7 @@ export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}:
     const [ deleteBikeOpen, setDeleteBikeOpen ] = React.useState<boolean>(false);
     const [ reorderGarageOpen, setReorderGarageOpen ] = React.useState<boolean>(false);
     const [ installHelpOpen, setInstallHelpOpen ] = React.useState<boolean>(false);
+    const [ emailPrefsOpen, setEmailPrefsOpen ] = React.useState<boolean>(false);
     //'prompt' = the browser can install it, 'ios' = show Add to Home Screen steps, null = installed or not possible
     const installOption = useInstallOption();
     const open = Boolean(anchorEl);
@@ -89,10 +90,12 @@ export default function AppMenu({logout, bikeList, addBikeOpen, setAddBikeOpen}:
                   else setInstallHelpOpen(true);
                 }}>{installOption === 'prompt' ? 'Install App' : 'Add to Home Screen'}</MenuItem>
             )}
-            <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)'}} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
+            <MenuItem sx={{...menuItemStyle, borderTop: '1px solid var(--border)'}} onClick={() => { setAnchorEl(null); setEmailPrefsOpen(true);}}>Email preferences</MenuItem>
+            <MenuItem sx={menuItemStyle} onClick={() => { setAnchorEl(null); logout();}}>Logout</MenuItem>
         </Menu>
         <WhenOpened open={addBikeOpen}><AddBikeModal open={addBikeOpen} closeModal={handleModalClose} /></WhenOpened>
         <WhenOpened open={deleteBikeOpen}><DeleteBikeModal open={deleteBikeOpen} closeModal={() => setDeleteBikeOpen(false)} bikeList={bikeList} /></WhenOpened>
+        <WhenOpened open={emailPrefsOpen}><EmailPrefsDialog open={emailPrefsOpen} onClose={() => setEmailPrefsOpen(false)} /></WhenOpened>
         <WhenOpened open={installHelpOpen}><InstallHelpDialog open={installHelpOpen} onClose={() => setInstallHelpOpen(false)} /></WhenOpened>
         <WhenOpened open={reorderGarageOpen}><ReorderGarageModal open={reorderGarageOpen} closeModal={() => setReorderGarageOpen(false)} bikeList={bikeList} /></WhenOpened>
     </div>
