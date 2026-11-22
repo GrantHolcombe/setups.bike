@@ -8,8 +8,10 @@ reviews and approves before anything goes out through Resend.
   (2026-11-21), all 7 existing users have `marketing_emails` on (Grant's call: he knows them
   all). The e2e account is never synced. Unsubscribes, hard bounces and spam complaints turn
   the flag off through `/resendWebhook`. Test send to Grant's own address first.
-- **From:** Grant at Setups.Bike, e.g. `grant@mail.setups.bike` (Resend domain `mail.setups.bike` added 2026-11-21, with its four DNS records in Cloudflare,
-  DNS only). A real person's name, and replies go to a real inbox.
+- **From:** `Grant at Setups.Bike <grant@mail.setups.bike>`. The Resend domain
+  `mail.setups.bike` was verified 2026-11-22. It can only send.
+- **Reply-to:** `support@setups.bike`, which Cloudflare Email Routing forwards to Grant's inbox
+  (set up 2026-11-22). That's why "just hit reply" in the body works.
 - **Links:** every link is tagged `?utm_source=email&utm_medium=email&utm_campaign=pro-launch`
   so sign-ups show in the weekly numbers.
 
