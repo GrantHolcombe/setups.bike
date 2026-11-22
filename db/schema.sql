@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aaLJtdKqXWEAimUXf3Us8Szh9txmOTtxCILaIjoprPmF9NSPnLehJz4UOT69oRD
+\restrict 7PhWBYO9xeqgAkGHrpA2rOGrtZuUU0eMss8PezFYjVm6kZ0bFUun6jilGx0OOrV
 
 -- Dumped from database version 18.7 (84da7d8)
 -- Dumped by pg_dump version 18.6
@@ -149,6 +149,43 @@ ALTER TABLE ONLY public.app_user ALTER COLUMN marketing_emails_source SET (pg_at
 
 ALTER TABLE public.app_user ALTER COLUMN app_user_id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.app_user_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: auth_identity; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.auth_identity (
+    auth_identity_id bigint NOT NULL,
+    app_user_id bigint NOT NULL,
+    provider text NOT NULL,
+    provider_subject text,
+    email text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_used_at timestamp with time zone,
+    CONSTRAINT auth_identity_provider_check CHECK ((provider = ANY (ARRAY['google'::text, 'email'::text, 'apple'::text])))
+);
+ALTER TABLE ONLY public.auth_identity ALTER COLUMN auth_identity_id SET (pg_attver=44900432);
+ALTER TABLE ONLY public.auth_identity ALTER COLUMN app_user_id SET (pg_attver=44900432);
+ALTER TABLE ONLY public.auth_identity ALTER COLUMN provider SET (pg_attver=44900432);
+ALTER TABLE ONLY public.auth_identity ALTER COLUMN provider_subject SET (pg_attver=44900432);
+ALTER TABLE ONLY public.auth_identity ALTER COLUMN email SET (pg_attver=44900432);
+ALTER TABLE ONLY public.auth_identity ALTER COLUMN created_at SET (pg_attver=44900432);
+ALTER TABLE ONLY public.auth_identity ALTER COLUMN last_used_at SET (pg_attver=44900432);
+
+
+--
+-- Name: auth_identity_auth_identity_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.auth_identity ALTER COLUMN auth_identity_id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.auth_identity_auth_identity_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -382,6 +419,14 @@ ALTER TABLE ONLY public.app_user
 
 
 --
+-- Name: auth_identity auth_identity_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.auth_identity
+    ADD CONSTRAINT auth_identity_pkey PRIMARY KEY (auth_identity_id);
+
+
+--
 -- Name: bike bike_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -438,6 +483,20 @@ ALTER TABLE ONLY public.stripe_event
 
 
 --
+-- Name: auth_identity_provider_subject_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX auth_identity_provider_subject_key ON public.auth_identity USING btree (provider, provider_subject) WHERE (provider_subject IS NOT NULL);
+
+
+--
+-- Name: auth_identity_user_provider_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX auth_identity_user_provider_key ON public.auth_identity USING btree (app_user_id, provider);
+
+
+--
 -- Name: bike_setup_name_per_bike; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -463,6 +522,14 @@ CREATE INDEX shared_setup_by_owner ON public.shared_setup USING btree (app_user_
 --
 
 CREATE TRIGGER insert_garage_order_after_add_bike AFTER INSERT ON public.bike FOR EACH ROW EXECUTE FUNCTION public.insert_garage_order();
+
+
+--
+-- Name: auth_identity auth_identity_app_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.auth_identity
+    ADD CONSTRAINT auth_identity_app_user_id_fkey FOREIGN KEY (app_user_id) REFERENCES public.app_user(app_user_id) ON DELETE CASCADE;
 
 
 --
@@ -533,5 +600,5 @@ ALTER TABLE ONLY public.shared_setup
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aaLJtdKqXWEAimUXf3Us8Szh9txmOTtxCILaIjoprPmF9NSPnLehJz4UOT69oRD
+\unrestrict 7PhWBYO9xeqgAkGHrpA2rOGrtZuUU0eMss8PezFYjVm6kZ0bFUun6jilGx0OOrV
 

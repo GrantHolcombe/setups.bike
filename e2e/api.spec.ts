@@ -22,6 +22,19 @@ test.describe('API without a valid token', () => {
     });
   }
 
+  test('sign-in refuses a Google token it cannot verify', async ({ request }) => {
+    const res = await request.post(`${API}/addUser`, { params: { accessToken: bad }, data: {} });
+    expect(res.status()).toBe(401);
+  });
+
+  test('sign-in refuses a method that does not exist yet', async ({ request }) => {
+    // apple and email are planned (cards "Sign-in 2" and "Sign-in 3"); until then they're unknown
+    for (const provider of ['apple', 'nope']) {
+      const res = await request.post(`${API}/addUser`, { data: { provider, token: bad } });
+      expect(res.status(), provider).toBe(400);
+    }
+  });
+
   test('the Resend webhook refuses unsigned requests', async ({ request }) => {
     const res = await request.post(`${API}/resendWebhook`, { data: { type: 'contact.updated', data: { email: 'x@example.com', unsubscribed: false } } });
     expect(res.status()).toBe(401);

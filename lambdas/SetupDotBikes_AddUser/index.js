@@ -11,9 +11,9 @@ const headers = {
   "X-Requested-With": "*"
 };
 
-// The app's Google OAuth client id (public, also in src/index.tsx).
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ||
-  "347941074448-vqvn1gsthtvt4jj8u7ojnoqme16jh0h5.apps.googleusercontent.com";
+// Sign-in for every method: the provider modules in ./providers check the credential, and this
+// file finds or creates the account and issues the app token. See providers/index.js.
+const getProvider = require("./providers");
 const TOKEN_LIFETIME = "7d";
 
 const reply = (statusCode, body) => ({ statusCode, body: JSON.stringify(body), headers });
@@ -82,24 +82,66 @@ const TAG = /^[A-Za-z0-9._~-]{1,64}$/;
 const tag = (v) => (typeof v === "string" && TAG.test(v) ? v : null);
 const signupSource = (q) => [tag(q.utm_source), tag(q.utm_medium), tag(q.utm_campaign), tag(q.ref)];
 
-// Ask Google who the access token belongs to. Returns null if it isn't a valid token
-// issued to this app for a verified email address.
-async function googleUser(accessToken) {
-  if (!accessToken) return null;
-  const info = await fetch(
-    "https://oauth2.googleapis.com/tokeninfo?access_token=" + encodeURIComponent(accessToken)
-  );
-  if (!info.ok) return null;
-  const tokenInfo = await info.json();
-  if (tokenInfo.aud !== GOOGLE_CLIENT_ID && tokenInfo.azp !== GOOGLE_CLIENT_ID) return null;
+// The account for a verified person from a provider, creating or linking it as needed, in one
+// transaction:
+//   1. This provider id is already known: that account.
+//   2. Otherwise an account with the same (provider-verified) email exists: link this method to it.
+//      This also fills in Google's id on the rows migration 011 backfilled without one, and
+//      replaces a provider id that changed for the same verified address.
+//   3. Otherwise: a new account with this method.
+async function accountFor(client, provider, person, query) {
+  await client.query("BEGIN");
+  try {
+    let res = await client.query(
+      `UPDATE auth_identity SET last_used_at = now()
+        WHERE provider = $1 AND provider_subject = $2
+        RETURNING app_user_id`,
+      [provider, person.subject]
+    );
+    let userId = res.rows[0] && res.rows[0].app_user_id;
 
-  const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-    headers: { Authorization: "Bearer " + accessToken }
-  });
-  if (!res.ok) return null;
-  const profile = await res.json();
-  if (!profile.email || profile.email_verified === false) return null;
-  return profile;
+    if (!userId) {
+      // Look the account up first. INSERT ... ON CONFLICT draws a new id from the sequence
+      // on every call, even when the row already exists, so it is only run for new accounts.
+      const byEmail = "SELECT app_user_id FROM app_user WHERE lower(email_address) = lower($1) ORDER BY app_user_id LIMIT 1";
+      res = await client.query(byEmail, [person.email]);
+      userId = res.rows[0] && res.rows[0].app_user_id;
+      if (!userId) {
+        res = await client.query(
+          `INSERT INTO app_user (first_name, last_name, email_address,
+                                 signup_source, signup_medium, signup_campaign, signup_ref)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (email_address) DO NOTHING
+           RETURNING app_user_id, signup_source`,
+          [person.firstName, person.lastName, person.email, ...signupSource(query)]
+        );
+        if (res.rows.length) {
+          userId = res.rows[0].app_user_id;
+          console.log("new user", userId, "via", provider, "source", res.rows[0].signup_source || "-");
+        } else {
+          // Two first sign-ins at the same moment: the other one inserted the row.
+          userId = (await client.query(byEmail, [person.email])).rows[0].app_user_id;
+        }
+      }
+      res = await client.query(
+        `INSERT INTO auth_identity (app_user_id, provider, provider_subject, email, last_used_at)
+         VALUES ($1, $2, $3, $4, now())
+         ON CONFLICT (app_user_id, provider)
+         DO UPDATE SET provider_subject = EXCLUDED.provider_subject, email = EXCLUDED.email,
+                       last_used_at = now()
+         RETURNING (xmax = 0) AS added`,
+        [userId, provider, person.subject, person.email]
+      );
+      console.log(res.rows[0].added ? "linked" : "updated", provider, "identity for user", userId);
+    }
+
+    const user = (await client.query("SELECT * FROM app_user WHERE app_user_id = $1", [userId])).rows[0];
+    await client.query("COMMIT");
+    return user;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  }
 }
 
 exports.handler = async (event) => {
@@ -112,30 +154,19 @@ exports.handler = async (event) => {
   const client = newClient();
 
   try {
-    const query = event.queryStringParameters || {};
-    const profile = await googleUser(query.accessToken);
-    if (!profile) return reply(401, { error: "Google sign-in could not be verified" });
+    // GET ?accessToken=... is how the app signs in with Google today. Other methods send
+    // provider + token (as query parameters or a JSON body).
+    let body = {};
+    try { body = event.body ? JSON.parse(event.body) : {}; } catch { body = {}; }
+    const query = { ...(event.queryStringParameters || {}), ...(body && typeof body === "object" ? body : {}) };
+    const providerName = query.provider || "google";
+    const provider = getProvider(providerName);
+    if (!provider) return reply(400, { error: "Unknown sign-in method" });
+    const person = await provider.verify(query.token ?? query.accessToken);
+    if (!person) return reply(401, { error: "Sign-in could not be verified" });
 
     await client.connect();
-    // Look the user up first. INSERT ... ON CONFLICT draws a new id from the sequence
-    // on every call, even when the row already exists, so it is only run for new users.
-    const select = "SELECT * FROM app_user WHERE email_address = $1";
-    let res = await client.query(select, [profile.email]);
-    if (res.rows.length === 0) {
-      res = await client.query(
-        `INSERT INTO app_user (first_name, last_name, email_address,
-                               signup_source, signup_medium, signup_campaign, signup_ref)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         ON CONFLICT (email_address) DO NOTHING
-         RETURNING *`,
-        [profile.given_name || "", profile.family_name || "", profile.email, ...signupSource(query)]
-      );
-      if (res.rows.length) console.log("new user", res.rows[0].app_user_id, "source", res.rows[0].signup_source || "-");
-      // Two first logins at the same moment: the other one inserted the row.
-      if (res.rows.length === 0) res = await client.query(select, [profile.email]);
-    }
-
-    const u = res.rows[0];
+    const u = await accountFor(client, provider.name, person, query);
     const token = await new (await jose).SignJWT({
       app_user_id: u.app_user_id,
       first_name: u.first_name,

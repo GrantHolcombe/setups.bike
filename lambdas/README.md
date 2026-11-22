@@ -12,7 +12,7 @@ Lambda function and deploys on its own. These aren't part of the CodePipeline fr
 
 | Folder | API route | What it does |
 |---|---|---|
-| `SetupDotBikes_AddUser` | `addUser` | Sign-in: finds or creates the user, returns a JWT |
+| `SetupDotBikes_AddUser` | `addUser` | Sign-in for every method: a provider module in `providers/` (Google today) verifies the credential, then it finds, links or creates the account (`auth_identity`) and returns a JWT. Takes `?accessToken=` (Google, what the app sends) or `{provider, token}`. Unknown method 400, unverifiable token 401 |
 | `SetupsDotBike_GetBikes` | `getBikes` | Lists a user's bikes in garage order |
 | `SetupsDotBike_addBike` | `AddBike` | Adds a bike for the signed-in user |
 | `SetupsDotBike_updateBike` | `updateBike` | Saves a bike's tire and suspension settings |

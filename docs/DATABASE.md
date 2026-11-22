@@ -30,10 +30,11 @@ Then update the table notes below if the meaning of anything changed.
 ## Diagram
 
 <!-- GENERATED:START (npm run db:diagram) -->
-_Generated from `db/schema.sql`. 7 tables, 8 foreign keys._
+_Generated from `db/schema.sql`. 8 tables, 9 foreign keys._
 
 ```mermaid
 erDiagram
+  app_user ||--o{ auth_identity : "app_user_id (on delete cascade)"
   bike_setup |o--o{ bike : "active_setup_id (on delete set null)"
   bike ||--o{ bike_setup : "bike_id (on delete cascade)"
   app_user |o--o{ bike : "app_user_id"
@@ -91,6 +92,15 @@ erDiagram
     boolean marketing_emails "nullable"
     timestamptz marketing_emails_changed_at "nullable"
     text marketing_emails_source "nullable"
+  }
+  auth_identity {
+    bigint auth_identity_id PK
+    bigint app_user_id FK
+    text provider
+    text provider_subject "nullable"
+    text email
+    timestamptz created_at
+    timestamptz last_used_at "nullable"
   }
   bike_setup {
     bigint bike_setup_id PK
@@ -160,6 +170,8 @@ erDiagram
 - `insert_garage_order_after_add_bike`: after insert on `bike`, runs `insert_garage_order()`
 
 **Extra indexes** (besides primary keys and unique constraints)
+- `auth_identity_provider_subject_key` on `auth_identity` (provider, provider_subject) WHERE (provider_subject IS NOT NULL), unique
+- `auth_identity_user_provider_key` on `auth_identity` (app_user_id, provider), unique
 - `bike_setup_name_per_bike` on `bike_setup` (bike_id, lower(btrim((name)::text))), unique
 - `ride_note_by_bike` on `ride_note` (bike_id, ride_date DESC, ride_note_id DESC)
 - `shared_setup_by_owner` on `shared_setup` (app_user_id, created_at DESC)
@@ -169,7 +181,8 @@ erDiagram
 
 | Table | What it holds | Written by |
 |---|---|---|
-| `app_user` | One row per Google account: name, email, and the plan (`free`/`pro`), its source (`stripe`, `comp`, later `apple`/`google`), status, renewal date and Stripe ids. `created_at` (sign-up) and `last_active_at` (garage last opened, stamped by getBikes at most hourly) feed the weekly numbers; accounts from before 2026-11-20 have no `created_at`. `marketing_emails` (true/false, NULL = never asked) with `_changed_at` and `_source` (existing_user, prompt, settings, resend, bounce, complaint) is the news-and-offers email list; existing accounts started on (migration 009), the e2e account off. | AddUser (sign-in), getBikes (`last_active_at`), stripeWebhook (plan), emailPrefs and resendWebhook (`marketing_emails`), `db/maintenance/comp_user.sql` |
+| `app_user` | One row per account (one person, however they sign in): name, email, and the plan (`free`/`pro`), its source (`stripe`, `comp`, later `apple`/`google`), status, renewal date and Stripe ids. `created_at` (sign-up) and `last_active_at` (garage last opened, stamped by getBikes at most hourly) feed the weekly numbers; accounts from before 2026-11-20 have no `created_at`. `marketing_emails` (true/false, NULL = never asked) with `_changed_at` and `_source` (existing_user, prompt, settings, resend, bounce, complaint) is the news-and-offers email list; existing accounts started on (migration 009), the e2e account off. | AddUser (sign-in), getBikes (`last_active_at`), stripeWebhook (plan), emailPrefs and resendWebhook (`marketing_emails`), `db/maintenance/comp_user.sql` |
+| `auth_identity` | The ways an account can sign in, one row per method: `provider` (`google` now; `email` and `apple` planned and already allowed), `provider_subject` (the provider's stable id: Google's `sub`, the lowercased address for email, Apple's `sub`), the verified `email` it came with, `created_at`, `last_used_at`. A provider id belongs to one account, and an account has at most one identity per provider. Rows backfilled by migration 011 have no `provider_subject` until that person's next Google sign-in fills it in. A new method links to an existing account only through an address the provider verified. Deleted with the account. | AddUser (sign-in, see `lambdas/SetupDotBikes_AddUser/providers/`) |
 | `bike` | A bike in a garage and its **current** settings: tire pressures, fork/shock pressure, compression and rebound (count = how many adjusters: 0 none, 1 single, 2 dual), volume tokens. `active_setup_id` is the saved setup last applied or saved. `created_at` is when it was added (none for bikes from before 2026-11-20). | addBike, updateBike, DeleteBike, bikeSetups (apply), rideNotes (reuse), sharedSetups (copy) |
 | `garage_order` | The bike's position in its owner's garage. A trigger adds a row for every new bike; deleting a bike removes it. | trigger, reorderGarage, DeleteBike |
 | `bike_setup` | Pro: named saved setups ("Bike park", "Wet") with a full copy of the 18 settings. Names are unique per bike, ignoring case. Max 20 per bike. | bikeSetups |
