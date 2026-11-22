@@ -15,6 +15,10 @@ reviews and approves before anything goes out through Resend.
 - **Links:** every link is tagged `?utm_source=email&utm_medium=email&utm_campaign=pro-launch`
   so sign-ups show in the weekly numbers.
 
+**HTML version:** [pro-launch.html](pro-launch.html) is the exact email body: a gold header with the
+app logo (`https://setups.bike/logo192.png`), the red button, and the footer with Resend's
+unsubscribe placeholder. Test sends swap that placeholder for a plain link.
+
 ## Subject line
 
 **New in Setups.Bike: saved setups, ride notes and share links** (chosen 2026-11-21)
