@@ -12,11 +12,9 @@ reviews and approves before anything goes out through Resend.
 - **Links:** every link is tagged `?utm_source=email&utm_medium=email&utm_campaign=pro-launch`
   so sign-ups show in the weekly numbers.
 
-## Subject line (pick one)
+## Subject line
 
-1. **New in Setups.Bike: saved setups, ride notes and share links**: plain, says what's new.
-2. **Your bikes just got a quiver of setups**: on-brand pun, a little vaguer.
-3. **Dry, wet, bike park: save a setup for each**: leads with the most useful feature.
+**New in Setups.Bike: saved setups, ride notes and share links** (chosen 2026-11-21)
 
 **Preview text** (the grey line after the subject): *Free stays free. Pro adds a few things
 I kept wanting myself.*
