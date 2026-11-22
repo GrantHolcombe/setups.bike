@@ -21,7 +21,7 @@ Lambda function and deploys on its own. These aren't part of the CodePipeline fr
 | `SetupsDotBike_bikeSetups` | `POST bikeSetups` | Pro: named setups per bike |
 | `SetupsDotBike_rideNotes` | `POST rideNotes` | Pro: ride notes with a settings snapshot |
 | `SetupsDotBike_sharedSetups` | `POST sharedSetups` | Pro: share links (viewing needs no sign-in) |
-| `SetupsDotBike_emailPrefs` | `POST emailPrefs` | Marketing email preference: get/set for the signed-in user, keeps the Resend contact in step. A direct invoke with `{"action": "syncAll"}` copies everyone to Resend. Env: `RESEND_API_KEY`, `RESEND_SEGMENT_ID` (Grant sets these in the console), `EXCLUDED_USER_IDS=6` |
+| `SetupsDotBike_emailPrefs` | `POST emailPrefs` | Marketing email preference: get/set for the signed-in user, keeps the Resend contact in step. A direct invoke with `{"action": "syncAll"}` copies everyone to Resend. Env: `RESEND_API_KEY`, `RESEND_SEGMENT_ID` (Grant sets these in the console); optional `EXCLUDED_USER_IDS` (comma-separated user ids never sent to Resend; empty since 2026-11-22, so the e2e account syncs too and can be a test inbox) |
 | `SetupsDotBike_resendWebhook` | `POST resendWebhook` | Called by Resend: unsubscribe, permanent bounce or spam complaint turns `marketing_emails` off (Svix signature checked with `RESEND_WEBHOOK_SECRET`) |
 
 All DB access uses parameterized queries (`$1`, `$2`, ...). Keep it that way: never build SQL

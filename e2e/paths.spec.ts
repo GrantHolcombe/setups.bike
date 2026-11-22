@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import {
   API, TEST_BRAND, appMenu, bikeCard, openGarage, removeTestBikes, sessionToken, setSetting, waitIdle,
 } from './helpers';
@@ -227,20 +227,22 @@ test('email preferences: the menu switch saves, and the one-time prompt saves an
     await appMenu(page, 'Email preferences');
     return page.getByRole('dialog', { name: 'Email preferences' });
   };
-  // the test account starts off (and is never sent to Resend)
+  // flip the switch, check it saved through a reload, then put it back how it was. The test
+  // account is synced to Resend like any user (Grant may keep it ON as a test inbox), so the
+  // test must leave it in the state it found it.
+  const sw = (d: Locator) => d.getByRole('switch', { name: 'News and offers by email' });
   let dialog = await openPrefs();
-  const toggle = dialog.getByRole('switch', { name: 'News and offers by email' });
-  await expect(toggle).not.toBeChecked();
-  await toggle.click();
-  await expect(toggle).toBeChecked();
-  await expect(toggle).toBeEnabled(); // saved
+  const startedOn = await sw(dialog).isChecked();
+  await sw(dialog).click();
+  await expect(sw(dialog)).toBeChecked({ checked: !startedOn });
+  await expect(sw(dialog)).toBeEnabled(); // saved
   await dialog.getByRole('button', { name: 'Done' }).click();
   await openGarage(page);
   dialog = await openPrefs();
-  await expect(dialog.getByRole('switch', { name: 'News and offers by email' })).toBeChecked();
-  await dialog.getByRole('switch', { name: 'News and offers by email' }).click(); // back off
-  await expect(dialog.getByRole('switch', { name: 'News and offers by email' })).not.toBeChecked();
-  await expect(dialog.getByRole('switch', { name: 'News and offers by email' })).toBeEnabled();
+  await expect(sw(dialog)).toBeChecked({ checked: !startedOn });
+  await sw(dialog).click(); // back to how it started
+  await expect(sw(dialog)).toBeChecked({ checked: startedOn });
+  await expect(sw(dialog)).toBeEnabled();
   await dialog.getByRole('button', { name: 'Done' }).click();
 
   // a never-asked account (faked in the account response) sees the prompt; "No thanks" saves off
@@ -257,10 +259,11 @@ test('email preferences: the menu switch saves, and the one-time prompt saves an
   const prompt = page.getByText('Want news from Setups.Bike?');
   await expect(prompt).toBeVisible();
   const saved = page.waitForResponse((r) => r.url().endsWith('/emailPrefs') && r.request().method() === 'POST');
-  await page.getByRole('button', { name: 'No thanks' }).click();
+  // answer the way the account already is, so the run leaves it unchanged
+  await page.getByRole('button', { name: startedOn ? 'Yes please' : 'No thanks' }).click();
   const res = await saved;
   expect(res.status()).toBe(200);
-  expect(JSON.parse(res.request().postData() || '{}')).toMatchObject({ action: 'set', on: false, via: 'prompt' });
+  expect(JSON.parse(res.request().postData() || '{}')).toMatchObject({ action: 'set', on: startedOn, via: 'prompt' });
   await expect(prompt).toHaveCount(0);
   await page.unrouteAll({ behavior: 'ignoreErrors' });
 });
