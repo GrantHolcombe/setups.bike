@@ -104,7 +104,7 @@ exports.handler = async (event) => {
     await client.connect();
     const { rows } = await client.query(
       `SELECT u.plan, u.plan_source, u.plan_status, u.plan_interval, u.plan_renews_at,
-              u.plan_cancel_at_period_end, u.stripe_customer_id IS NOT NULL AS has_billing,
+              u.plan_cancel_at_period_end, u.stripe_customer_id IS NOT NULL AS has_billing, u.marketing_emails,
               (SELECT count(*) FROM bike b WHERE b.app_user_id = u.app_user_id)::int AS bikes
          FROM app_user u WHERE u.app_user_id = $1`,
       [userId]
@@ -125,7 +125,9 @@ exports.handler = async (event) => {
       bikes: a.bikes,
       billingEnabled,
       bikeLimit: limited ? FREE_BIKE_LIMIT : null,
-      canAddBike: !limited || a.bikes < FREE_BIKE_LIMIT
+      canAddBike: !limited || a.bikes < FREE_BIKE_LIMIT,
+      // news and offers by email: true / false, or null if never asked (the app asks once)
+      marketingEmails: a.marketing_emails
     });
   } catch (err) {
     console.error(err);
