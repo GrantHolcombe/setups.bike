@@ -115,8 +115,9 @@ Every modal is an MUI `Dialog`. Don't use `Modal` with a hand-positioned `Box`.
 | Loading inside a dialog | `<Spinner />` centered in the content |
 | Background saves on a card | Small "Saving… / Saved / Couldn't save · Retry" note by the bike name; "Saved" clears after 2 s |
 | A field that failed to save | Red outline (`.saveFailed`) until a save succeeds |
-| App-level news (checkout done, copied a setup) | `Snackbar` with a filled `Alert` at the bottom center |
-| New version deployed | Snackbar "A new version of Setups.Bike is ready" with a Reload button |
+| App-level news (checkout done, copied a setup, account deleted) | `Snackbar` with a filled `Alert` at the bottom center, always brand green (`color='success'`, even for `severity='info'`); only errors are red. Never blue. |
+| New version deployed | Green snackbar "A new version of Setups.Bike is ready" with a Reload button |
+| One-time questions (news by email?) | Green snackbar with the answers as its action buttons |
 | Offline | Info `Alert` banner under the header |
 
 ## Cards

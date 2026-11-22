@@ -25,7 +25,7 @@ export default function EmailPrompt({ onDone }: { onDone: () => void }) {
 
   return (
     <Snackbar open anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-      <Alert severity='info' variant='filled' icon={false} sx={{ maxWidth: 520, alignItems: 'center' }}
+      <Alert severity='info' color='success' variant='filled' icon={false} sx={{ maxWidth: 520, alignItems: 'center' }}
         action={
           <>
             <Button color='inherit' size='small' disabled={busy} onClick={() => answer(false)}>No thanks</Button>

@@ -566,14 +566,16 @@ function App() {
         <UpgradeDialog open={upgrade.open} reason={upgrade.reason} onClose={() => setUpgrade({ ...upgrade, open: false })} />
       </WhenOpened>
       <Snackbar open={updateReady} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert severity='info' variant='filled'
+        <Alert severity='info' color='success' variant='filled'
           action={<Button color='inherit' size='small' onClick={applyUpdate}>Reload</Button>}>
           A new version of Setups.Bike is ready.
         </Alert>
       </Snackbar>
       <Snackbar open={!!notice} autoHideDuration={notice?.severity === 'success' ? 6000 : null} onClose={() => setNotice(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        {notice ? <Alert severity={notice.severity} onClose={() => setNotice(null)} variant='filled'>{notice.text}</Alert> : <span />}
+        {/* bottom notifications are always the brand green; only errors are red (docs/STYLE_GUIDE.md) */}
+        {notice ? <Alert severity={notice.severity} color={notice.severity === 'error' ? 'error' : 'success'}
+          onClose={() => setNotice(null)} variant='filled'>{notice.text}</Alert> : <span />}
       </Snackbar>
       <footer className='legalFooter'>
         <a href='terms.html'>Terms</a> · <a href='privacy.html'>Privacy</a> · <a href='refunds.html'>Refunds</a>
