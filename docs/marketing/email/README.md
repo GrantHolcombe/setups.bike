@@ -14,11 +14,13 @@ announcement".
 - **Tracking (on since 2026-11-22):** open tracking (a pixel) and click tracking (links go through
   `links.mail.setups.bike`, a CNAME to Resend in Cloudflare, DNS only). Per-recipient opens and
   clicks show on each broadcast in Resend. Opens are approximate: Apple Mail preloads images, and
-  clients that block images hide real opens. The Privacy Policy describes it (committed by the dev
-  session 2026-11-22, `caa6383`). **Hold the next broadcast until that deploy is live.** The
-  Pro launch email was sent before tracking was on.
+  clients that block images hide real opens. The Privacy Policy describes it (live since 2026-11-22,
+  https://setups.bike/privacy.html). The Pro launch email was sent before tracking was on.
 - **Every send:** links tagged `?utm_source=email&utm_medium=email&utm_campaign=<name>`. Grant
   reviews a test send and gives a clear yes before anything goes to the list.
+- **Sign-in in copy:** people can sign up with Google **or** their email (a 6-digit code), so
+  never write "Google account required". The landing page says "Free. Sign in with Google or
+  your email." Sign-in codes come from `signin@mail.setups.bike`, plain text, untracked.
 - **Voice:** plain and factual by default. A pun only when it really fits, and never the same
   one twice.
 
