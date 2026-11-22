@@ -257,6 +257,17 @@ competing app.
 **Why:** Less attack surface and a bill of about $0.05 a month. Each step was verified, and a
 local backup of the old database was kept before the server was terminated.
 
+## 2026-11-22: More ways to sign in, before more users and before legal review
+
+**Situation:** Google was the only way to sign in, and accounts were found by email address. The
+iOS app will need Sign in with Apple (App Store rule 4.8) and in-app account deletion (5.1.1(v)).
+
+**Decision:** Add our own email sign-up next to Google, Sign in with Apple, and in-app account
+deletion now, as four cards (an identity groundwork card first), ahead of the legal review.
+
+**Why:** Changing how accounts work is cheaper with a handful of users I know than with many, and
+the Terms and Privacy Policy reviewed by a lawyer should describe the sign-in that will ship.
+
 ---
 
 *Adding a line:* add an entry whenever I choose between approaches, overrule or redirect the
