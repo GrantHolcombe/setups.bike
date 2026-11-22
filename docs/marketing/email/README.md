@@ -14,13 +14,26 @@ announcement".
 - **Tracking (on since 2026-11-22):** open tracking (a pixel) and click tracking (links go through
   `links.mail.setups.bike`, a CNAME to Resend in Cloudflare, DNS only). Per-recipient opens and
   clicks show on each broadcast in Resend. Opens are approximate: Apple Mail preloads images, and
-  clients that block images hide real opens. The Privacy Policy update describing this was asked
-  of the dev session on 2026-11-22. It should ship before the next broadcast. The Pro launch
-  email was sent before tracking was on.
+  clients that block images hide real opens. The Privacy Policy describes it (committed by the dev
+  session 2026-11-22, `caa6383`). **Hold the next broadcast until that deploy is live.** The
+  Pro launch email was sent before tracking was on.
 - **Every send:** links tagged `?utm_source=email&utm_medium=email&utm_campaign=<name>`. Grant
   reviews a test send and gives a clear yes before anything goes to the list.
 - **Voice:** plain and factual by default. A pun only when it really fits, and never the same
   one twice.
+
+## Before every broadcast
+
+1. Send a test copy to Grant and check the message source (Gmail: Show original) for
+   `dkim=pass`, `spf=pass` and `dmarc=pass`.
+2. Grant reviews the test and gives a clear yes.
+3. Any new service that sends as setups.bike (another email tool, a form provider) has to be
+   added to SPF/DKIM first, or DMARC fails it. Tell the dev session before using it.
+4. Report tracking as totals. Per-person opens and clicks stay in Resend.
+
+DMARC: `_dmarc.setups.bike` is `p=none`, with reports in Cloudflare (setups.bike > Email > DMARC
+Management). It covers `mail.setups.bike`. Board card "DMARC review: consider p=quarantine
+(around 2026-12-06)".
 
 ## Base template: `setups-bike-base`
 
