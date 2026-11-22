@@ -30,15 +30,15 @@ const layout = (title, body) => `<!doctype html>
 <title>${escape(title)} | ${escape(config.appName)}</title>
 <link rel="icon" href="favicon.ico">
 <style>
-  :root { --accent: #daa530; --text: #1f1f1f; --muted: #666; --bg: #fff; --line: #e6e6e6; }
-  @media (prefers-color-scheme: dark) { :root { --text: #eaeaea; --muted: #a0a0a0; --bg: #161616; --line: #2c2c2c; } }
+  :root { --accent: #daa530; --link: #8a6514; --text: #1f1f1f; --muted: #666; --bg: #fff; --line: #e6e6e6; }
+  @media (prefers-color-scheme: dark) { :root { --link: #daa530; --text: #eaeaea; --muted: #a0a0a0; --bg: #161616; --line: #2c2c2c; } }
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
   header { border-bottom: 3px solid var(--accent); padding: 14px 16px; }
   header a { color: var(--text); font-weight: 700; text-decoration: none; }
   h1 { margin: 8px 0 4px; } h2 { margin-top: 28px; font-size: 1.2rem; }
   .meta { color: var(--muted); margin-top: 0; }
-  a { color: var(--accent); } li { margin: 6px 0; }
+  a { color: var(--link); } li { margin: 6px 0; }
   footer { border-top: 1px solid var(--line); margin-top: 40px; padding-top: 16px; color: var(--muted); font-size: 14px; }
 </style>
 </head>

@@ -46,6 +46,11 @@ html {
   background: var(--bg);
 }
 
+/* links are brand gold text, never the browser's default blue (docs/STYLE_GUIDE.md) */
+a {
+  color: var(--gold-text);
+}
+
 /* Mobile: no pinch or double-tap zoom, and the page never slides sideways. touch-action allows
    only vertical scrolling (iPhone Safari ignores user-scalable=no in the viewport tag, but honors
    this). Inputs stay at 16px so iOS doesn't auto-zoom when one is focused. */

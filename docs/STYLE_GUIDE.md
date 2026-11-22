@@ -38,6 +38,7 @@ Rules:
 - Gold **text** always uses `--gold-text`, which the theme applies to text/outlined `primary`
   buttons, outlined chips and focused inputs automatically.
 - Don't use MUI `secondary` (pure red) for actions; use `error` for destructive ones.
+- Links (`<a>`) are `--gold-text` everywhere, set globally in `index.css` (the legal pages use the same light/dark pair). Never the browser's default blue.
 
 ## Type
 
@@ -118,7 +119,8 @@ Every modal is an MUI `Dialog`. Don't use `Modal` with a hand-positioned `Box`.
 | App-level news (checkout done, copied a setup, account deleted) | `Snackbar` with a filled `Alert` at the bottom center, always brand green (`color='success'`, even for `severity='info'`); only errors are red. Never blue. |
 | New version deployed | Green snackbar "A new version of Setups.Bike is ready" with a Reload button |
 | One-time questions (news by email?) | Green snackbar with the answers as its action buttons |
-| Offline | Info `Alert` banner under the header |
+| Offline | Green `Alert` banner under the header (`severity='info'` with `color='success'`) |
+| Notes inside a dialog or page | Green `Alert` (`color='success'`); `warning` for caution, `error` for failures. No blue (`info` colour) anywhere. |
 
 ## Cards
 

@@ -521,7 +521,7 @@ function App() {
       <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}
         onAccountDeleted={() => { logout(); setNotice({ severity: 'success', text: 'Your account has been deleted.' }); }}/>
       {offline && (
-        <Alert severity='info' sx={{ maxWidth: 600, mx: 'auto', mb: 2, position: 'relative', zIndex: 1 }}>
+        <Alert severity='info' color='success' sx={{ maxWidth: 600, mx: 'auto', mb: 2, position: 'relative', zIndex: 1 }}>
           You're offline. Changes can't be saved until you're back online.
         </Alert>
       )}

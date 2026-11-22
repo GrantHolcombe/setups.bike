@@ -48,7 +48,7 @@ export default function UpgradeDialog({ open, reason, onClose }: IUpgradeDialogP
       <DialogTitle>Go Pro</DialogTitle>
       <DialogContent>
         {reason === 'limit' && (
-          <Alert severity='info' sx={{ mb: 2 }}>
+          <Alert severity='info' color='success' sx={{ mb: 2 }}>
             The free plan holds {account?.bikeLimit ?? 3} bikes. Go Pro to add more.
           </Alert>
         )}

@@ -34,7 +34,7 @@ export default function SharedSetupView({ shareId, signedIn, belowWelcome, copyi
       {!share && !error && <div className='sharedSetupLoading'><Spinner size={80} /></div>}
       {error && (
         <>
-          <Alert severity='info' sx={{ mb: 2 }}>{error}</Alert>
+          <Alert severity='info' color='success' sx={{ mb: 2 }}>{error}</Alert>
           <Button variant='contained' onClick={onClose}>{signedIn ? 'Go to my garage' : 'Go to Setups.Bike'}</Button>
         </>
       )}
