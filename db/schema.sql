@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict HkDZme9p53Rm9qGfeVkcnzWgJHkm4rQKeOqidFUQMnn3XEx2o8xOxeZSB5GCig4
+\restrict aaLJtdKqXWEAimUXf3Us8Szh9txmOTtxCILaIjoprPmF9NSPnLehJz4UOT69oRD
 
 -- Dumped from database version 18.7 (84da7d8)
 -- Dumped by pg_dump version 18.6
@@ -110,9 +110,18 @@ CREATE TABLE public.app_user (
     stripe_subscription_id text,
     created_at timestamp with time zone DEFAULT now(),
     last_active_at timestamp with time zone,
+    signup_source text,
+    signup_medium text,
+    signup_campaign text,
+    signup_ref text,
+    marketing_emails boolean,
+    marketing_emails_changed_at timestamp with time zone,
+    marketing_emails_source text,
+    CONSTRAINT app_user_marketing_emails_source_check CHECK (((marketing_emails_source IS NULL) OR (marketing_emails_source = ANY (ARRAY['existing_user'::text, 'prompt'::text, 'settings'::text, 'resend'::text, 'bounce'::text, 'complaint'::text])))),
     CONSTRAINT app_user_plan_check CHECK ((plan = ANY (ARRAY['free'::text, 'pro'::text]))),
     CONSTRAINT app_user_plan_interval_check CHECK (((plan_interval IS NULL) OR (plan_interval = ANY (ARRAY['month'::text, 'year'::text])))),
-    CONSTRAINT app_user_plan_source_check CHECK (((plan_source IS NULL) OR (plan_source = ANY (ARRAY['stripe'::text, 'apple'::text, 'google'::text, 'comp'::text]))))
+    CONSTRAINT app_user_plan_source_check CHECK (((plan_source IS NULL) OR (plan_source = ANY (ARRAY['stripe'::text, 'apple'::text, 'google'::text, 'comp'::text])))),
+    CONSTRAINT app_user_signup_source_len CHECK (((char_length(signup_source) <= 64) AND (char_length(signup_medium) <= 64) AND (char_length(signup_campaign) <= 64) AND (char_length(signup_ref) <= 64)))
 );
 ALTER TABLE ONLY public.app_user ALTER COLUMN plan SET (pg_attver=31955024);
 ALTER TABLE ONLY public.app_user ALTER COLUMN plan_source SET (pg_attver=31956416);
@@ -125,6 +134,13 @@ ALTER TABLE ONLY public.app_user ALTER COLUMN stripe_customer_id SET (pg_attver=
 ALTER TABLE ONLY public.app_user ALTER COLUMN stripe_subscription_id SET (pg_attver=31960616);
 ALTER TABLE ONLY public.app_user ALTER COLUMN created_at SET (pg_attver=40121696);
 ALTER TABLE ONLY public.app_user ALTER COLUMN last_active_at SET (pg_attver=40123000);
+ALTER TABLE ONLY public.app_user ALTER COLUMN signup_source SET (pg_attver=40293608);
+ALTER TABLE ONLY public.app_user ALTER COLUMN signup_medium SET (pg_attver=40294064);
+ALTER TABLE ONLY public.app_user ALTER COLUMN signup_campaign SET (pg_attver=40294520);
+ALTER TABLE ONLY public.app_user ALTER COLUMN signup_ref SET (pg_attver=40294976);
+ALTER TABLE ONLY public.app_user ALTER COLUMN marketing_emails SET (pg_attver=43688696);
+ALTER TABLE ONLY public.app_user ALTER COLUMN marketing_emails_changed_at SET (pg_attver=43689152);
+ALTER TABLE ONLY public.app_user ALTER COLUMN marketing_emails_source SET (pg_attver=43689616);
 
 
 --
@@ -470,7 +486,7 @@ ALTER TABLE ONLY public.bike_setup
 --
 
 ALTER TABLE ONLY public.bike
-    ADD CONSTRAINT fk_bike_app_user_id FOREIGN KEY (app_user_id) REFERENCES public.app_user(app_user_id) NOT VALID;
+    ADD CONSTRAINT fk_bike_app_user_id FOREIGN KEY (app_user_id) REFERENCES public.app_user(app_user_id);
 
 
 --
@@ -517,5 +533,5 @@ ALTER TABLE ONLY public.shared_setup
 -- PostgreSQL database dump complete
 --
 
-\unrestrict HkDZme9p53Rm9qGfeVkcnzWgJHkm4rQKeOqidFUQMnn3XEx2o8xOxeZSB5GCig4
+\unrestrict aaLJtdKqXWEAimUXf3Us8Szh9txmOTtxCILaIjoprPmF9NSPnLehJz4UOT69oRD
 

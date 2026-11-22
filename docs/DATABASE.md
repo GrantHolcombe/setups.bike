@@ -84,6 +84,13 @@ erDiagram
     text stripe_subscription_id UK "nullable"
     timestamptz created_at "nullable"
     timestamptz last_active_at "nullable"
+    text signup_source "nullable"
+    text signup_medium "nullable"
+    text signup_campaign "nullable"
+    text signup_ref "nullable"
+    boolean marketing_emails "nullable"
+    timestamptz marketing_emails_changed_at "nullable"
+    text marketing_emails_source "nullable"
   }
   bike_setup {
     bigint bike_setup_id PK
