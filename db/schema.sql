@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7PhWBYO9xeqgAkGHrpA2rOGrtZuUU0eMss8PezFYjVm6kZ0bFUun6jilGx0OOrV
+\restrict E01vWfjF8Qj1MCKz63KCv7Wj60nfcjrbv2u7pBdfodgffLm4kbllJBlifY0kuro
 
 -- Dumped from database version 18.7 (84da7d8)
 -- Dumped by pg_dump version 18.6
@@ -264,6 +264,44 @@ ALTER TABLE public.bike_setup ALTER COLUMN bike_setup_id ADD GENERATED ALWAYS AS
 
 
 --
+-- Name: email_login_code; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_login_code (
+    email_login_code_id bigint NOT NULL,
+    email text NOT NULL,
+    code_hash text NOT NULL,
+    request_ip text,
+    attempts integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    consumed_at timestamp with time zone
+);
+ALTER TABLE ONLY public.email_login_code ALTER COLUMN email_login_code_id SET (pg_attver=45300024);
+ALTER TABLE ONLY public.email_login_code ALTER COLUMN email SET (pg_attver=45300024);
+ALTER TABLE ONLY public.email_login_code ALTER COLUMN code_hash SET (pg_attver=45300024);
+ALTER TABLE ONLY public.email_login_code ALTER COLUMN request_ip SET (pg_attver=45300024);
+ALTER TABLE ONLY public.email_login_code ALTER COLUMN attempts SET (pg_attver=45300024);
+ALTER TABLE ONLY public.email_login_code ALTER COLUMN created_at SET (pg_attver=45300024);
+ALTER TABLE ONLY public.email_login_code ALTER COLUMN expires_at SET (pg_attver=45300024);
+ALTER TABLE ONLY public.email_login_code ALTER COLUMN consumed_at SET (pg_attver=45300024);
+
+
+--
+-- Name: email_login_code_email_login_code_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.email_login_code ALTER COLUMN email_login_code_id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.email_login_code_email_login_code_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: garage_order; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -443,6 +481,14 @@ ALTER TABLE ONLY public.bike_setup
 
 
 --
+-- Name: email_login_code email_login_code_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_login_code
+    ADD CONSTRAINT email_login_code_pkey PRIMARY KEY (email_login_code_id);
+
+
+--
 -- Name: app_user email_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -501,6 +547,20 @@ CREATE UNIQUE INDEX auth_identity_user_provider_key ON public.auth_identity USIN
 --
 
 CREATE UNIQUE INDEX bike_setup_name_per_bike ON public.bike_setup USING btree (bike_id, lower(btrim((name)::text)));
+
+
+--
+-- Name: email_login_code_email_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_login_code_email_idx ON public.email_login_code USING btree (email, created_at DESC);
+
+
+--
+-- Name: email_login_code_ip_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_login_code_ip_idx ON public.email_login_code USING btree (request_ip, created_at);
 
 
 --
@@ -600,5 +660,5 @@ ALTER TABLE ONLY public.shared_setup
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7PhWBYO9xeqgAkGHrpA2rOGrtZuUU0eMss8PezFYjVm6kZ0bFUun6jilGx0OOrV
+\unrestrict E01vWfjF8Qj1MCKz63KCv7Wj60nfcjrbv2u7pBdfodgffLm4kbllJBlifY0kuro
 

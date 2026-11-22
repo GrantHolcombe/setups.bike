@@ -30,7 +30,7 @@ Then update the table notes below if the meaning of anything changed.
 ## Diagram
 
 <!-- GENERATED:START (npm run db:diagram) -->
-_Generated from `db/schema.sql`. 8 tables, 9 foreign keys._
+_Generated from `db/schema.sql`. 9 tables, 9 foreign keys._
 
 ```mermaid
 erDiagram
@@ -127,6 +127,16 @@ erDiagram
     timestamptz created_at
     timestamptz updated_at
   }
+  email_login_code {
+    bigint email_login_code_id PK
+    text email
+    text code_hash
+    text request_ip "nullable"
+    integer attempts
+    timestamptz created_at
+    timestamptz expires_at
+    timestamptz consumed_at "nullable"
+  }
   garage_order {
     bigint garage_order_id PK
     bigint app_user_id FK
@@ -173,6 +183,8 @@ erDiagram
 - `auth_identity_provider_subject_key` on `auth_identity` (provider, provider_subject) WHERE (provider_subject IS NOT NULL), unique
 - `auth_identity_user_provider_key` on `auth_identity` (app_user_id, provider), unique
 - `bike_setup_name_per_bike` on `bike_setup` (bike_id, lower(btrim((name)::text))), unique
+- `email_login_code_email_idx` on `email_login_code` (email, created_at DESC)
+- `email_login_code_ip_idx` on `email_login_code` (request_ip, created_at)
 - `ride_note_by_bike` on `ride_note` (bike_id, ride_date DESC, ride_note_id DESC)
 - `shared_setup_by_owner` on `shared_setup` (app_user_id, created_at DESC)
 <!-- GENERATED:END -->

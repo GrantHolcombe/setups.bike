@@ -73,16 +73,16 @@ test.describe('signed out', () => {
     await expect(dialog.getByRole('heading', { name: 'Check your email' })).toBeVisible();
     await expect(dialog.getByText('rider@example.com')).toBeVisible();
 
-    await dialog.getByLabel('Code').fill('111111');
-    await dialog.getByRole('button', { name: 'Sign in' }).click();
+    // six boxes; a whole code in the first box (paste or a phone's autofill) fills them and signs in
+    await expect(dialog.getByRole('group', { name: 'Code' }).getByRole('textbox')).toHaveCount(6);
+    await dialog.getByLabel('Digit 1 of 6').fill('111111');
     await expect(dialog.getByText(/That code didn't work/)).toBeVisible();
     // the browser logs the (deliberate) 401 itself; take exactly that one off the console guard's list
     const expected401 = consoleProblems.findIndex((p) => /status of 401/.test(p));
     expect(expected401).toBeGreaterThanOrEqual(0);
     consoleProblems.splice(expected401, 1);
 
-    await dialog.getByLabel('Code').fill('222 222');
-    await dialog.getByRole('button', { name: 'Sign in' }).click();
+    await dialog.getByLabel('Digit 1 of 6').fill('222 222');
     await expect(page.getByRole('heading', { name: /^Welcome/ })).toBeVisible();
     await expect(dialog).toHaveCount(0);
     expect(sent[0]).toEqual({ provider: 'email', action: 'requestCode', email: 'rider@example.com' });

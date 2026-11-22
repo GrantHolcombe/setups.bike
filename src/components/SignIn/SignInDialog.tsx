@@ -3,6 +3,7 @@ import {
   Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, TextField, Typography,
 } from '@mui/material';
 import { requestEmailCode, verifyEmailCode } from '../../signin';
+import CodeInput from './CodeInput';
 import type { ISignupSource } from '../../signupSource';
 
 interface ISignInDialogProps {
@@ -33,6 +34,7 @@ export default function SignInDialog({ open, onClose, onGoogle, onSignedIn, sign
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState('');
   const [resent, setResent] = React.useState(false);
+  const [codeKey, setCodeKey] = React.useState(0);
 
   React.useEffect(() => {
     if (open) { setStep('start'); setCode(''); setError(''); setResent(false); }
@@ -48,6 +50,7 @@ export default function SignInDialog({ open, onClose, onGoogle, onSignedIn, sign
       await requestEmailCode(email.trim());
       setStep('code');
       setCode('');
+      setCodeKey((k) => k + 1); // empties the boxes
       setResent(again);
     } catch (err: any) {
       setError(err?.message || 'Could not send the code. Please try again.');
@@ -55,8 +58,9 @@ export default function SignInDialog({ open, onClose, onGoogle, onSignedIn, sign
     setBusy(false);
   };
 
-  const verify = async () => {
-    const digits = code.replace(/\D/g, '');
+  const verify = async (entered = code) => {
+    if (busy) return;
+    const digits = entered.replace(/\D/g, '');
     if (digits.length !== 6) { setError('Enter the 6-digit code from the email.'); return; }
     setBusy(true);
     setError('');
@@ -103,9 +107,8 @@ export default function SignInDialog({ open, onClose, onGoogle, onSignedIn, sign
               {resent ? 'We sent a new code to ' : 'We sent a 6-digit code to '}
               <strong>{email.trim()}</strong>. It works for 10 minutes.
             </Typography>
-            <TextField fullWidth autoFocus label='Code' value={code} disabled={busy}
-              onChange={(e) => setCode(e.target.value.replace(/[^\d\s]/g, '').slice(0, 7))}
-              inputProps={{ inputMode: 'numeric', autoComplete: 'one-time-code', maxLength: 7 }} />
+            {/* signs in as soon as the sixth digit is in (typed or pasted) */}
+            <CodeInput key={codeKey} disabled={busy} onChange={setCode} onComplete={(c) => verify(c)} />
             <Button fullWidth type='submit' variant='contained' sx={{ mt: 2 }} disabled={busy}>
               Sign in
             </Button>
