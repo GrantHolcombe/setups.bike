@@ -38,20 +38,21 @@ SELECT
   (SELECT count(*) FROM shared_setup WHERE app_user_id = :user) AS share_links,
   (SELECT count(*) FROM garage_order WHERE app_user_id = :user) AS garage_rows;
 
-SELECT (stripe_customer_id IS NOT NULL) AS has_stripe FROM app_user WHERE app_user_id = :user \gset
-\if :{?has_stripe}
-  \if :has_stripe
-    \if :{?force_stripe}
-    \else
-      \echo 'STOPPED: this account has a Stripe customer. Check Stripe first, then re-run with -v force_stripe=1.'
-      ROLLBACK;
-      \quit
-    \endif
-  \endif
+SELECT EXISTS (SELECT 1 FROM app_user WHERE app_user_id = :user) AS user_exists,
+       COALESCE((SELECT stripe_customer_id IS NOT NULL FROM app_user WHERE app_user_id = :user), false) AS has_stripe \gset
+\if :user_exists
 \else
-  \echo 'No such user.'
+  \echo 'No such user: nothing to delete.'
   ROLLBACK;
   \quit
+\endif
+\if :has_stripe
+  \if :{?force_stripe}
+  \else
+    \echo 'STOPPED: this account has a Stripe customer. Check Stripe first, then re-run with -v force_stripe=1.'
+    ROLLBACK;
+    \quit
+  \endif
 \endif
 
 DELETE FROM bike WHERE app_user_id = :user;
