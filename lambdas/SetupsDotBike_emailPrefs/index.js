@@ -110,17 +110,45 @@ async function resendCall(method, path, body) {
 }
 
 // Creates or updates the contact: subscribed when the user is on the list, unsubscribed if not.
+// Resend accepts an email in place of the contact id, but some addresses (e.g. with a "+") come
+// back as "id must be a valid UUID"; then we create the contact, or find its id and update by id.
+async function findContactId(email) {
+  let after;
+  for (let page = 0; page < 50; page++) {
+    const res = await resendCall("GET", `/contacts?limit=100${after ? `&after=${after}` : ""}`);
+    if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const body = await res.json();
+    const hit = (body.data || []).find((c) => (c.email || "").toLowerCase() === email.toLowerCase());
+    if (hit) return hit.id;
+    if (!body.has_more || !(body.data || []).length) return null;
+    after = body.data[body.data.length - 1].id;
+  }
+  return null;
+}
+
 async function syncContact(user) {
   if (!process.env.RESEND_API_KEY) return "skipped (no RESEND_API_KEY)";
   if (excluded().includes(String(user.app_user_id))) return "skipped (excluded account)";
   const unsubscribed = user.marketing_emails !== true;
-  let res = await resendCall("PATCH", `/contacts/${encodeURIComponent(user.email_address)}`,
-    { unsubscribed, first_name: user.first_name || undefined });
-  if (res.status === 404) {
-    if (unsubscribed) return "not on Resend; nothing to do";
-    const body = { email: user.email_address, first_name: user.first_name || undefined, unsubscribed: false };
+  const update = { unsubscribed, first_name: user.first_name || undefined };
+  const create = async () => {
+    const body = { email: user.email_address, first_name: user.first_name || undefined, unsubscribed };
     if (process.env.RESEND_SEGMENT_ID) body.segments = [{ id: process.env.RESEND_SEGMENT_ID }];
-    res = await resendCall("POST", "/contacts", body);
+    return resendCall("POST", "/contacts", body);
+  };
+
+  let res = await resendCall("PATCH", `/contacts/${encodeURIComponent(user.email_address)}`, update);
+  if (res.status === 422) {
+    // the address wasn't recognised as an email in the URL: create it, or update it by id
+    res = await create();
+    if (!res.ok) {
+      const id = await findContactId(user.email_address);
+      if (!id) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      res = await resendCall("PATCH", `/contacts/${id}`, update);
+    }
+  } else if (res.status === 404) {
+    if (unsubscribed) return "not on Resend; nothing to do";
+    res = await create();
   }
   if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 200)}`);
   return unsubscribed ? "unsubscribed on Resend" : "subscribed on Resend";
