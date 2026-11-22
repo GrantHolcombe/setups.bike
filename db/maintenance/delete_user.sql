@@ -1,4 +1,6 @@
 -- delete_user.sql: permanently delete one account and everything it owns.
+-- People can do this themselves in the app (bike menu > Delete account, the deleteAccount Lambda,
+-- which also cancels Stripe and removes the Resend contact). This script is for doing it by hand.
 -- Used for account deletion requests and for broken rows (e.g. user 4, created by the
 -- pre-2026 AddUser with "undefined" name and email). This can't be undone.
 --
@@ -58,7 +60,8 @@ SELECT EXISTS (SELECT 1 FROM app_user WHERE app_user_id = :user) AS user_exists,
 DELETE FROM bike WHERE app_user_id = :user;
 DELETE FROM garage_order WHERE app_user_id = :user;
 DELETE FROM shared_setup WHERE app_user_id = :user;
-DELETE FROM app_user WHERE app_user_id = :user;
+DELETE FROM email_login_code WHERE email = (SELECT lower(email_address) FROM app_user WHERE app_user_id = :user);
+DELETE FROM app_user WHERE app_user_id = :user;  -- auth_identity rows go with it (ON DELETE CASCADE)
 
 SELECT count(*) AS remaining_rows_for_user FROM app_user WHERE app_user_id = :user;
 

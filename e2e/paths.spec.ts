@@ -305,6 +305,35 @@ test('email preferences: the menu switch saves, and the one-time prompt saves an
   await page.unrouteAll({ behavior: 'ignoreErrors' });
 });
 
+// The real deletion is never sent here (it would delete the test account): the API answer is faked.
+test('delete account: the menu item, the type-"delete" guard, then signed out with a notice', async ({ page }) => {
+  let sent: any = null;
+  await page.route('**/test/deleteAccount', async (route) => {
+    sent = JSON.parse(route.request().postData() || '{}');
+    await route.fulfill({ status: 200, body: JSON.stringify({ deleted: true }) });
+  });
+  await openGarage(page);
+  await page.getByTestId('PedalBikeIcon').click();
+  const items = page.getByRole('menuitem');
+  await expect(page.getByRole('menuitem', { name: 'Delete account' })).toBeVisible();
+  const names = await items.allInnerTexts();
+  // account settings sit together, after the app actions and before Logout
+  expect(names.slice(-3).map((n) => n.trim())).toEqual(['Email preferences', 'Delete account', 'Logout']);
+  await page.getByRole('menuitem', { name: 'Delete account' }).click();
+  const dialog = page.getByRole('dialog');
+  const del = dialog.getByRole('button', { name: 'Delete my account' });
+  await expect(del).toBeDisabled();
+  await dialog.getByLabel('Type "delete" to confirm').fill('delet');
+  await expect(del).toBeDisabled();
+  await dialog.getByLabel('Type "delete" to confirm').fill('Delete');
+  await expect(del).toBeEnabled();
+  await del.click();
+  await expect(page.getByText('Your account has been deleted.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /clip in/i }).first()).toBeVisible();
+  expect(sent).toEqual({ token, confirm: 'delete' });
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+});
+
 test('logging out returns to the landing page and stays signed out', async ({ page }) => {
   sessionToken();
   await openGarage(page);

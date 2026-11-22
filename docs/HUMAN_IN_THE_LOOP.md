@@ -270,6 +270,20 @@ Email sign-in uses a one-time 6-digit code sent through Resend, not a password.
 the Terms and Privacy Policy reviewed by a lawyer should describe the sign-in that will ship.
 Codes mean no passwords to store, leak or reset, and the Resend setup already existed.
 
+## 2026-11-22: Delete account lives in the menu, behind typing "delete"
+
+**Situation:** Apple's rule 5.1.1(v) (and privacy laws) expect people to be able to delete their
+account from inside the app; until now it was a hand-run SQL script.
+
+**Decision:** A red "Delete account" item right after Email preferences, with the account items
+set apart from the bike actions by a line above and below. The confirm dialog only enables its
+button once the person types "delete". Deleting cancels a paid Pro subscription right away
+without a refund (the dialog says so and links the Refund Policy), and if Stripe can't be reached
+nothing is deleted.
+
+**Why:** Typing a word can't happen by accident, unlike a second tap. Refusing to delete while a
+subscription might keep charging protects riders from paying for an account that's gone.
+
 ---
 
 *Adding a line:* add an entry whenever I choose between approaches, overrule or redirect the

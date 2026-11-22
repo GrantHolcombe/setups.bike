@@ -6,6 +6,8 @@ import { IProfile, IBike } from '../../App';
 
 export interface IAppMenuProps {
     logout: Function;
+    // the account was deleted from the menu: sign out and say so
+    onAccountDeleted: () => void;
     isAuth?: boolean;
     profile?: IProfile;
     bikeList?: IBike[];
@@ -27,7 +29,7 @@ const WelcomeMsg = ({welcomeProfile, hasBikes}: IWelcome) => {
         </div>
     )
 }
-export default function Header({logout, isAuth, profile, bikeList, addBikeOpen, setAddBikeOpen}: IAppMenuProps) {
+export default function Header({logout, onAccountDeleted, isAuth, profile, bikeList, addBikeOpen, setAddBikeOpen}: IAppMenuProps) {
     const headerBarStyle = {
         background: "goldenrod",
         position: 'absolute' as 'absolute',
@@ -46,7 +48,7 @@ export default function Header({logout, isAuth, profile, bikeList, addBikeOpen, 
                     <img src='img/logos/Setups-350.png' className='logo' alt='Setups.Bike' width={175} height={175}
                         {...{ fetchpriority: 'high' }} />
                 </picture>
-                {isAuth && <AppMenu bikeList={bikeList} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout} />}
+                {isAuth && <AppMenu bikeList={bikeList} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout} onAccountDeleted={onAccountDeleted} />}
             </div>
             {isAuth && <WelcomeMsg welcomeProfile={profile} hasBikes={bikeList ? bikeList.length > 0 : false} />}
         </div>

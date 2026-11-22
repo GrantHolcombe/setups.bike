@@ -21,6 +21,7 @@ Lambda function and deploys on its own. These aren't part of the CodePipeline fr
 | `SetupsDotBike_bikeSetups` | `POST bikeSetups` | Pro: named setups per bike |
 | `SetupsDotBike_rideNotes` | `POST rideNotes` | Pro: ride notes with a settings snapshot |
 | `SetupsDotBike_sharedSetups` | `POST sharedSetups` | Pro: share links (viewing needs no sign-in) |
+| `SetupsDotBike_deleteAccount` | `POST deleteAccount` | Deletes the signed-in account from the app (bike menu > Delete account): body `{token, confirm: "delete"}`. Cancels an active Stripe subscription first (if Stripe fails, nothing is deleted: 502), runs each sign-in method's cleanup (Apple revoke is a stub until Sign-in 3), deletes the same rows as `db/maintenance/delete_user.sql` in one transaction, then removes the Resend contact. Already gone 200, bad confirm 400, bad token 401. Env: `JWT`, Neon vars, `STRIPE_SECRET_KEY`, `RESEND_API_KEY` |
 | `SetupsDotBike_emailPrefs` | `POST emailPrefs` | Marketing email preference: get/set for the signed-in user, keeps the Resend contact in step. A direct invoke with `{"action": "syncAll"}` copies everyone to Resend. Env: `RESEND_API_KEY`, `RESEND_SEGMENT_ID` (Grant sets these in the console); optional `EXCLUDED_USER_IDS` (comma-separated user ids never sent to Resend; empty since 2026-11-22, so the e2e account syncs too and can be a test inbox) |
 | `SetupsDotBike_resendWebhook` | `POST resendWebhook` | Called by Resend: unsubscribe, permanent bounce or spam complaint turns `marketing_emails` off (Svix signature checked with `RESEND_WEBHOOK_SECRET`) |
 

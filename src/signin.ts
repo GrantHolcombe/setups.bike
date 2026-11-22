@@ -31,6 +31,16 @@ export async function saveName(token: string, firstName: string, lastName = ''):
   return (await post({ action: 'setName', token, firstName, lastName }, 'Could not save your name')).token;
 }
 
+// Deletes the signed-in account and everything it owns (card "Sign-in 4"; deleteAccount Lambda).
+export async function deleteAccount(token: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/deleteAccount`, {
+    method: 'POST',
+    body: JSON.stringify({ token, confirm: 'delete' }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(res.status, data.code, data.error || "Your account wasn't deleted. Please try again.");
+}
+
 // The header's profile for someone who didn't sign in with Google: built from the app token.
 export function profileFromToken(token: string): IProfile {
   const t = jwtDecode<IJWT>(token);

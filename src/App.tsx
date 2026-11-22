@@ -518,7 +518,8 @@ function App() {
     <ThemeProvider theme={theme}>
     <AppContext.Provider value={{ loading: isLoading, setLoading: setIsLoading, token: jwt, refreshBikes: getBikes, account, refreshAccount, openUpgrade, manageBilling, setups, refreshSetups, shares, refreshShares }}>
       <LoadingOverlay visible={isLoading} />
-      <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}/>
+      <Header isAuth={isAauthenticated} profile={profile} bikeList={bikes} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout}
+        onAccountDeleted={() => { logout(); setNotice({ severity: 'success', text: 'Your account has been deleted.' }); }}/>
       {offline && (
         <Alert severity='info' sx={{ maxWidth: 600, mx: 'auto', mb: 2, position: 'relative', zIndex: 1 }}>
           You're offline. Changes can't be saved until you're back online.

@@ -15,7 +15,7 @@ test.describe('API without a valid token', () => {
     });
   }
 
-  for (const path of ['DeleteBike', 'reorderGarage', 'updateBike', 'bikeSetups', 'rideNotes', 'checkout', 'portal', 'emailPrefs']) {
+  for (const path of ['DeleteBike', 'reorderGarage', 'updateBike', 'bikeSetups', 'rideNotes', 'checkout', 'portal', 'emailPrefs', 'deleteAccount']) {
     test(`POST /${path} is 401`, async ({ request }) => {
       const res = await request.post(`${API}/${path}`, { data: { token: bad, action: 'list' } });
       expect(res.status()).toBe(401);
