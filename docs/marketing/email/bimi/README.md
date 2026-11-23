@@ -16,6 +16,14 @@ which traces `public/logo512.png` (Grant's original design):
   run it through the BIMI group's checker (https://bimigroup.org/bimi-generator/).
 - If an original vector file of the logo turns up, use it instead of the trace.
 
+## App mark (for the dev session)
+
+[setups-bike-mark.svg](setups-bike-mark.svg): the same trace as a plain SVG, the white mark only,
+transparent background, cropped to the mark (377 x 294), 6.0 KB (2.3 KB gzipped). It's meant to
+replace the header's `Setups-350.webp` (13.6 KB, the page's preloaded main image), with
+"Setups.Bike" and the tagline as real HTML text. Dev card: "Header logo: SVG mark plus HTML text
+instead of Setups-350". The PWA, manifest and Apple touch icons stay PNG.
+
 ## Steps
 
 1. **Host the SVG over HTTPS**, e.g. `https://setups.bike/bimi/logo.svg`. That's a file in

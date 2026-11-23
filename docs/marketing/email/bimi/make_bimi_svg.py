@@ -3,7 +3,7 @@
 Usage (from the setups.bike folder):
     python docs/marketing/email/bimi/make_bimi_svg.py
 
-Writes docs/marketing/email/bimi/setups-bike-bimi.svg: square viewBox, solid red background,
+Writes docs/marketing/email/bimi/setups-bike-bimi.svg (BIMI): square viewBox, solid red background,
 the white mark as one even-odd path, scaled to 90% so it stays inside a circular crop.
 If an original vector file of the logo turns up, prefer it over this trace.
 Needs: pillow (pip install --user pillow).
@@ -103,6 +103,21 @@ def main():
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         f.write(svg)
     print(f"{len(rings)} outlines, {sum(len(r) for r in rings)} points, {len(svg.encode())} bytes -> {OUT}")
+
+    # App variant: the white mark alone, transparent background, viewBox cropped to the mark
+    # (with a small margin), at full source scale. For the app header and anywhere else the mark
+    # sits on the red tile; the name and tagline belong in HTML text, not in the image.
+    xs = [x for r in rings for x, _ in r]
+    ys = [y for r in rings for _, y in r]
+    m = 4
+    x0, y0, x1, y1 = min(xs) - m, min(ys) - m, max(xs) + m, max(ys) + m
+    d_full = "".join("M" + "L".join(f"{fmt(x - x0)} {fmt(y - y0)}" for x, y in r) + "Z" for r in rings)
+    app = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {fmt(x1 - x0)} {fmt(y1 - y0)}" role="img" '
+           f'aria-label="Setups.Bike"><path fill="{WHITE}" fill-rule="evenodd" d="{d_full}"/></svg>\n')
+    app_out = os.path.join(HERE, "setups-bike-mark.svg")
+    with open(app_out, "w", encoding="utf-8", newline="\n") as f:
+        f.write(app)
+    print(f"app mark: {len(app.encode())} bytes, viewBox {fmt(x1 - x0)} x {fmt(y1 - y0)} -> {app_out}")
 
 
 if __name__ == "__main__":
