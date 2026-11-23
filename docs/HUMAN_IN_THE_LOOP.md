@@ -281,8 +281,20 @@ button once the person types "delete". Deleting cancels a paid Pro subscription 
 without a refund (the dialog says so and links the Refund Policy), and if Stripe can't be reached
 nothing is deleted.
 
-**Why:** Typing a word can't happen by accident, unlike a second tap. Refusing to delete while a
+**Why (delete account):** Typing a word can't happen by accident, unlike a second tap. Refusing to delete while a
 subscription might keep charging protects riders from paying for an account that's gone.
+
+## 2026-11-23: Our own volume token, not a photo of Fox's
+
+**Situation:** The token counter on every bike card showed a photo of a real Fox token, with the
+FOX logo and Fox part numbers moulded on it. Fine for a free hobby app; less so once Pro is paid.
+
+**Decision:** Replace it with our own SVG, traced from the photo so it keeps the real shape and
+green, with the logo and every marking removed. Retake the landing page screenshots that showed
+the old token, and delete the photo.
+
+**Why:** Showing another company's logo in a paid product invites trademark and copyright
+questions for no benefit; riders recognise a token by its shape and colour, not the logo.
 
 ---
 

@@ -20,7 +20,8 @@ export default function TokenInput({ count, onChange, invalid = false }: ITokenI
     <div className='tokenRelContainer'>
         <div className='tokenContainer'>
         {Array(coins).fill(0).map((e,i) => {
-            return <img src="/img/fox_token.png" key={i} width={55} height={55} className='coinShadow' style={{left: (i * 10) +"px", top: (i + 1) +"px", height: "55px", width: "55px",transform: "rotate(-3deg)"}} alt="logo" />
+            // our own drawing of a volume token (no brand marks); decorative, the count is in the label
+            return <img src="/img/volume_token.svg" key={i} width={55} height={55} className='coinShadow' style={{left: (i * 10) +"px", top: (i + 1) +"px", height: "55px", width: "55px",transform: "rotate(-3deg)"}} alt="" aria-hidden="true" />
         })}
         </div>
     </div>

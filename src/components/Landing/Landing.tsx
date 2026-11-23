@@ -37,7 +37,7 @@ export default function Landing({ onSignIn }: ILandingProps) {
         </div>
         <picture className='landingShot'>
           <source srcSet='img/landing/card-dark.webp' media='(prefers-color-scheme: dark)' />
-          <img src='img/landing/card-light.webp' width={362} height={532} loading='eager'
+          <img src='img/landing/card-light.webp' width={362} height={538} loading='eager'
             alt="A bike card in Setups.Bike: a Specialized Stumpjumper Evo with tire pressures, fork and shock pressure, compression and rebound clicks, and volume tokens, on a saved setup called Dry" />
         </picture>
       </section>
