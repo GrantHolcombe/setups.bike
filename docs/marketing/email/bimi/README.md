@@ -27,13 +27,12 @@ devices. So the mark-only file is for email and other marketing use.
 
 ## Steps
 
-1. **Host the SVG over HTTPS** at `https://setups.bike/bimi/logo.svg`. The dev session committed
-   `public/bimi/logo.svg` (an exact copy, `d25e3f6`), and it's exempt from the North America geo
-   limit so checkers abroad can fetch it. **Not live until Grant's next deploy.** The dev session
-   will say when it returns 200 as `image/svg+xml`. Only then add the record below.
-2. **BIMI record (DNS, Cloudflare):** TXT `default._bimi.mail.setups.bike` =
-   `v=BIMI1; l=https://setups.bike/bimi/logo.svg;` (add `a=<certificate .pem URL>` once there
-   is a certificate). Harmless before DMARC is tightened.
+1. ✅ **Hosted** at `https://setups.bike/bimi/logo.svg` (live 2026-11-23: 200, `image/svg+xml`,
+   identical bytes; exempt from the North America geo limit).
+2. ✅ **BIMI record** added in Cloudflare 2026-11-23 and resolving: TXT
+   `default._bimi.mail.setups.bike` = `v=BIMI1; l=https://setups.bike/bimi/logo.svg;` (add
+   `a=<certificate .pem URL>` once there is a certificate). It has no effect until DMARC is
+   tightened.
 3. **DMARC `p=quarantine; pct=100`** on both `setups.bike` and `mail.setups.bike`, after the
    DMARC review (card, around 2026-12-06). Yahoo can then show the logo.
 4. **Later, when revenue covers it:** a CMC certificate (DigiCert, GlobalSign or SSL.com) for
