@@ -20,14 +20,17 @@ which traces `public/logo512.png` (Grant's original design):
 
 [setups-bike-mark.svg](setups-bike-mark.svg): the same trace as a plain SVG, the white mark only,
 transparent background, cropped to the mark (377 x 294), 6.0 KB (2.3 KB gzipped). It's meant to
-replace the header's `Setups-350.webp` (13.6 KB, the page's preloaded main image), with
-"Setups.Bike" and the tagline as real HTML text. Dev card: "Header logo: SVG mark plus HTML text
-instead of Setups-350". The PWA, manifest and Apple touch icons stay PNG.
+replace the header's `Setups-350.webp`. **The dev session went another way (2026-11-23):** it
+traced the whole header artwork, lettering included, into `public/img/logos/setups-logo.svg`
+(25.9 KB raw, about 9 KB gzipped), because the Fira Sans-like lettering isn't installed on most
+devices. So the mark-only file is for email and other marketing use.
 
 ## Steps
 
-1. **Host the SVG over HTTPS**, e.g. `https://setups.bike/bimi/logo.svg`. That's a file in
-   `public/`, so it's dev session work and ships with a deploy.
+1. **Host the SVG over HTTPS** at `https://setups.bike/bimi/logo.svg`. The dev session committed
+   `public/bimi/logo.svg` (an exact copy, `d25e3f6`), and it's exempt from the North America geo
+   limit so checkers abroad can fetch it. **Not live until Grant's next deploy.** The dev session
+   will say when it returns 200 as `image/svg+xml`. Only then add the record below.
 2. **BIMI record (DNS, Cloudflare):** TXT `default._bimi.mail.setups.bike` =
    `v=BIMI1; l=https://setups.bike/bimi/logo.svg;` (add `a=<certificate .pem URL>` once there
    is a certificate). Harmless before DMARC is tightened.
