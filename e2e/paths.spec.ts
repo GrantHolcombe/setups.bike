@@ -87,6 +87,16 @@ test.describe('signed out', () => {
     await expect(dialog).toHaveCount(0);
     expect(sent[0]).toEqual({ provider: 'email', action: 'requestCode', email: 'rider@example.com' });
     expect(sent.at(-1)).toEqual({ provider: 'email', email: 'rider@example.com', code: '222222', utm_source: 'sticker' });
+
+    // log out, then Clip In again: everything is usable and the address isn't left behind
+    // (bug: the dialog stayed "busy" after an email sign-in until the page was reloaded)
+    await page.getByTestId('PedalBikeIcon').click();
+    await page.getByRole('menuitem', { name: 'Logout' }).click();
+    await page.getByRole('button', { name: /clip in/i }).first().click();
+    await expect(dialog.getByLabel('Email')).toBeEnabled();
+    await expect(dialog.getByLabel('Email')).toHaveValue('');
+    await expect(dialog.getByRole('button', { name: 'Continue with Google' })).toBeEnabled();
+    await expect(dialog.getByRole('button', { name: 'Email me a code' })).toBeEnabled();
     await page.unrouteAll({ behavior: 'ignoreErrors' });
   });
 });

@@ -36,8 +36,10 @@ export default function SignInDialog({ open, onClose, onGoogle, onSignedIn, sign
   const [resent, setResent] = React.useState(false);
   const [codeKey, setCodeKey] = React.useState(0);
 
+  // The dialog stays mounted between openings (WhenOpened), so every opening starts clean,
+  // including busy: a successful sign-in left it true, which disabled everything after a logout.
   React.useEffect(() => {
-    if (open) { setStep('start'); setCode(''); setError(''); setResent(false); }
+    if (open) { setStep('start'); setCode(''); setError(''); setResent(false); setBusy(false); }
   }, [open]);
 
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -66,6 +68,9 @@ export default function SignInDialog({ open, onClose, onGoogle, onSignedIn, sign
     setError('');
     try {
       const { token, isNew } = await verifyEmailCode(email.trim(), digits, signupSource);
+      // signed in: forget the address (a shared device shouldn't show it to the next person)
+      setBusy(false);
+      setEmail('');
       onSignedIn(token, isNew);
     } catch (err: any) {
       setError(err?.status === 401

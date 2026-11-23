@@ -46,6 +46,25 @@ test('Sign in: email, code, signed in (with the signup source)', async () => {
   expect(calls[1].body).toEqual({ provider: 'email', email: 'r@x.co', code: '123456', utm_source: 'sticker' });
 });
 
+test('Sign in: after an email sign-in, reopening the dialog (after logout) works again', async () => {
+  const p = props();
+  mockFetch([200, { sent: true }], [200, { token: TOKEN, isNew: false }]);
+  const { rerender } = render(<SignInDialog {...p} />);
+  fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'r@x.co' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Email me a code' }));
+  await screen.findByLabelText('Digit 1 of 6');
+  paste(box(1), '123456');
+  await waitFor(() => expect(p.onSignedIn).toHaveBeenCalled());
+  // the app closes it on sign-in, and opens it again after a logout (it stays mounted in between)
+  rerender(<SignInDialog {...p} open={false} />);
+  rerender(<SignInDialog {...p} open />);
+  const email = screen.getByLabelText('Email') as HTMLInputElement;
+  expect(email.disabled).toBe(false);
+  expect(email.value).toBe('');
+  expect((screen.getByRole('button', { name: 'Continue with Google' }) as HTMLButtonElement).disabled).toBe(false);
+  expect((screen.getByRole('button', { name: 'Email me a code' }) as HTMLButtonElement).disabled).toBe(false);
+});
+
 test('Sign in: a bad address is caught before sending; a wrong code says so', async () => {
   const p = props();
   mockFetch([200, { sent: true }], [401, { error: 'Sign-in could not be verified' }]);
