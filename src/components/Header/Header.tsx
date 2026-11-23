@@ -42,12 +42,10 @@ export default function Header({logout, onAccountDeleted, isAuth, profile, bikeL
     return (
         <div>
             <div style={headerBarStyle}>
-                {/* 350px logo (2x its display size), WebP with a PNG fallback; preloaded in index.html */}
-                <picture>
-                    <source srcSet='img/logos/Setups-350.webp' type='image/webp' />
-                    <img src='img/logos/Setups-350.png' className='logo' alt='Setups.Bike' width={175} height={175}
-                        {...{ fetchpriority: 'high' }} />
-                </picture>
+                {/* the white logo artwork as one SVG (traced from Setups.png, so the lettering looks the
+                    same on every device) on the red tile from Header.css; preloaded in index.html */}
+                <img src='img/logos/setups-logo.svg' className='logo' alt='Setups.Bike' width={175} height={175}
+                    {...{ fetchpriority: 'high' }} />
                 {isAuth && <AppMenu bikeList={bikeList} addBikeOpen={addBikeOpen} setAddBikeOpen={setAddBikeOpen} logout={logout} onAccountDeleted={onAccountDeleted} />}
             </div>
             {isAuth && <WelcomeMsg welcomeProfile={profile} hasBikes={bikeList ? bikeList.length > 0 : false} />}

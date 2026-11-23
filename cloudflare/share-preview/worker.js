@@ -32,8 +32,9 @@ const QR_CODES = {
 // To lift it once GDPR is covered: set GEO_LIMIT to false and deploy.
 const GEO_LIMIT = true;
 const ALLOWED_COUNTRIES = new Set(["US", "CA", "MX"]);
-// Still served to blocked visitors: the legal pages, robots.txt and what the blocked page shows.
-const OPEN_PATHS = /^\/(privacy\.html|terms\.html|refunds\.html|robots\.txt|favicon\.ico|img\/logos\/)/;
+// Still served to blocked visitors: the legal pages, robots.txt, what the blocked page shows, and
+// the BIMI logo (mail providers anywhere fetch it to show our logo next to emails).
+const OPEN_PATHS = /^\/(privacy\.html|terms\.html|refunds\.html|robots\.txt|favicon\.ico|img\/logos\/|bimi\/)/;
 // Search and link-preview crawlers, let through from any country so search listings and share
 // previews keep working. The user agent can be faked, but that only gets someone what a VPN
 // would; the point is to show we don't offer the service outside North America.
@@ -89,7 +90,7 @@ const BLOCKED_PAGE = `<!doctype html>
 </style>
 </head>
 <body>
-<header><img src="/img/logos/Setups-350.png" alt="Setups.Bike" width="120" height="120"></header>
+<header><img src="/img/logos/setups-logo.svg" alt="Setups.Bike" width="120" height="120"></header>
 <main>
   <h1>Setups.Bike isn't available in your country yet</h1>
   <p>For now Setups.Bike is only open to riders in the United States, Canada and Mexico. We'd love
