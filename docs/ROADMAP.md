@@ -415,7 +415,8 @@ subscriber gets a discount, and the partner gets a finder's fee on what that sub
    For now production runs on `test`; a `prod` stage would mean updating the app's API URL
    and the Stripe webhook URL together.
 3. ~~A support email address and who writes the legal pages~~ Decided 2026-11-17:
-   `grant@hiregrant.today` (set in `legal/site.config.json`); pages drafted, still worth a
+   `support@setups.bike` since 2026-11-23 (Cloudflare Email Routing forwards it to Grant; set in
+   `legal/site.config.json`, was Grant's personal address); pages drafted, still worth a
    professional review (board card "Waiting on Grant").
 4. Partner referrals (Phase 3.5): discount size and length, finder's fee % and how long it lasts, and manual payouts versus Stripe Connect.
 
