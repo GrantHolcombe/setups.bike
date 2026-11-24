@@ -29,7 +29,8 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 LOGO_PNG = os.path.join(REPO, "public", "logo512.png")      # white mark on red
-FONT_BOLD = r"C:\Windows\Fonts\segoeuib.ttf"                  # matches the app's system font on Windows
+LOGO_SVG = os.path.join(REPO, "public", "img", "logos", "setups-logo.svg")  # app logo: mark + lettering
+FONT_BOLD = r"C:\Windows\Fonts\segoeuib.ttf"                  # headline only; the name uses the logo's lettering
 BASE_URL = "https://setups.bike/q/"
 BRAND, HEADLINE = "Setups.Bike", "Dialed it in? Save it."
 WHITE, BLACK, GOLD, RED = 1, 2, 3, 4
@@ -290,6 +291,50 @@ def logo_polygons(x0, y0, size, res=200, crop=0.09):
     return _group_rings(rings)
 
 
+# ---------- brand name: the app logo's own lettering ----------
+
+def logo_name_groups(x, y_bottom, width, steps=6):
+    """'Setups.Bike' as polygons (mm), traced lettering from the app logo SVG, scaled to `width`,
+    sitting on y_bottom (y up). Returns (groups for extrude, height in mm)."""
+    s = open(LOGO_SVG, encoding="utf-8").read()
+    d = re.findall(r'<path[^>]*\sd="([^"]+)"', s)[0]
+    subs = re.findall(r"M[^M]*", d)
+    def nums(sp):
+        return [float(v) for v in re.findall(r"-?\d+\.?\d*", sp)]
+    name = [sp for sp in subs if max(nums(sp)[1::2]) >= 220]        # lettering sits below the mark
+    rings_raw = []
+    for sp in name:
+        toks = re.findall(r"[MQLZ]|-?\d+\.?\d*", sp)
+        pts, i, cmd = [], 0, None
+        while i < len(toks):
+            t = toks[i]
+            if t in "MQLZ":
+                cmd = t; i += 1
+                if t == "Z":
+                    break
+                continue
+            if cmd in ("M", "L"):
+                pts.append((float(toks[i]), float(toks[i + 1]))); i += 2
+            elif cmd == "Q":
+                cx, cy, ex, ey = map(float, toks[i:i + 4]); i += 4
+                (sx, sy) = pts[-1]
+                for k in range(1, steps + 1):
+                    u = k / steps
+                    pts.append(((1-u)**2*sx + 2*(1-u)*u*cx + u*u*ex, (1-u)**2*sy + 2*(1-u)*u*cy + u*u*ey))
+            else:
+                i += 1
+        if len(pts) > 2 and pts[0] == pts[-1]:
+            pts.pop()
+        dedup = [p for j, p in enumerate(pts) if p != pts[j - 1]]
+        if len(dedup) >= 3:
+            rings_raw.append(dedup)
+    xs = [p[0] for r in rings_raw for p in r]; ys = [p[1] for r in rings_raw for p in r]
+    x0, x1, y1 = min(xs), max(xs), max(ys)
+    k = width / (x1 - x0)
+    rings = [[(x + (px - x0) * k, y_bottom + (y1 - py) * k) for px, py in r] for r in rings_raw]
+    return _group_rings(rings), (y1 - min(ys)) * k
+
+
 # ---------- the display ----------
 
 def build(code, module, error, thickness=4.0, color_layer=0.6, text_height=0.6, border=6.0,
@@ -313,14 +358,15 @@ def build(code, module, error, thickness=4.0, color_layer=0.6, text_height=0.6, 
     H = tile_y1 + border
     brand_x = border + tile + 4.0
     room = W - border - brand_x
-    brand_size = min(14.0, room / font.width(BRAND, 1.0))
     head_size = min(9.0, room / font.width(HEADLINE, 1.0))
-    brand_cap = font.cap * brand_size / font.upm
     head_cap = font.cap * head_size / font.upm
-    line_gap = 0.22 * brand_size + 3.0                 # clears the descender of the "p"
-    block = brand_cap + line_gap + head_cap
+    _, name_h = logo_name_groups(0, 0, room)              # height of the logo lettering at full width
+    line_gap = 3.0
+    block = name_h + line_gap + head_cap
     head_base = (tile_y0 + tile_y1) / 2 - block / 2
-    brand_base = head_base + head_cap + line_gap
+    name_bottom = head_base + head_cap + line_gap
+    name_groups, _ = logo_name_groups(brand_x, name_bottom, room)
+    brand_size = name_h
 
     white = box(0, 0, 0, W, H, zc)                       # body under the color layer
     black, gold, red = [], [], []
@@ -364,7 +410,7 @@ def build(code, module, error, thickness=4.0, color_layer=0.6, text_height=0.6, 
     white += extrude(logo_polygons(tx0, tile_y0, tile), ztop, ztop + text_height)
 
     # Raised text in black on the band.
-    text = extrude(font.polygons(BRAND, brand_size, brand_x, brand_base), ztop, ztop + text_height)
+    text = extrude(name_groups, ztop, ztop + text_height)    # the logo's own lettering
     text += extrude(font.polygons(HEADLINE, head_size, brand_x, head_base), ztop, ztop + text_height)
     black += text
 
@@ -608,7 +654,7 @@ def main():
     print(f"QR version {info['version']}-{info['error']} ({info['modules']}x{info['modules']} modules, "
           f"{a.module} mm each). Plaque {info['width']:.0f} x {info['height']:.0f} mm, "
           f"stand {info['width']:.0f} x {info['stand_depth']:.0f} mm. "
-          f"Text {info['brand_size']:.1f} / {info['head_size']:.1f} mm.")
+          f"Name {info['brand_size']:.1f} mm tall (logo lettering), headline {info['head_size']:.1f} mm.")
     print(f"Files in {out}")
 
 
