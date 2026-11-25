@@ -13,7 +13,8 @@ the Bambu with an AMS, QR code included.
   - A gold band with a 32 mm red logo tile on the left (inlaid). The white mark is traced from
     `public/logo512.png` and raised 0.6 mm, with strokes about 1.4 mm wide. To its right,
     raised black text, left-aligned: "Setups.Bike" in the logo's own traced lettering (from
-    `public/img/logos/setups-logo.svg`, 15 mm tall, the same as the app), with "Dialed it in? Save it."
+    `public/img/logos/setups-logo.svg`, about 15.5 mm tall, the same as the app; re-run after
+    any logo change, last 2026-11-25 for the sharper, bolder lettering), with "Dialed it in? Save it."
     (8.1 mm, Segoe UI Bold) under it.
 - **Stand**, 123 × 55 mm, in gold: a base slab, a front lip, and two posts plus a brace leaning
   back 15°. The plaque slides in behind the lip and rests on the posts with about 0.8 mm
