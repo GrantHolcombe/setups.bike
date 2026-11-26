@@ -35,4 +35,8 @@ GitHub connection.
 Left:
 - Artifact bucket `codepipeline-us-west-1-708924771225`: **keep**. It only holds the Lambda
   deploy zips in `lambda-deploys/` now (`lambdas/README.md`).
-- `www.setups.bike`: an empty bucket that does the www to setups.bike redirect. **Keep.**
+
+`www.setups.bike` redirects with a Cloudflare Redirect Rule ("www to setups.bike": 301 to
+`https://setups.bike/${1}`, query string kept), not an S3 bucket. Its DNS record is a proxied
+`AAAA 100::` placeholder, so nothing points at S3. The old `www.setups.bike` redirect bucket was
+deleted 2026-11-26 (hiregrant.today got the same change).
