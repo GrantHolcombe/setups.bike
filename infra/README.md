@@ -26,14 +26,13 @@ If GitHub Actions ever has to be dropped:
 
 Deleted: both Setups.Bike pipelines (`setups.bike_bucket` and the old `https.setups.bike`), the
 `https.setups.bike` and `hiregrant-serverless` buckets (old copies of repos uploaded by S3 deploy
-actions), `recipe-app-imgs`, the old pipeline folders in the artifact bucket, and the
-`Setups.Bike_GitHub` CodeConnections connection.
+actions), `recipe-app-imgs`, the old pipeline folders in the artifact bucket, the
+`Setups.Bike_GitHub` CodeConnections connection, the CodeBuild project `SetupsDotBike_builder`,
+its role `SetupsDotBikeCodeBuildSR`, the pipeline role `Setups.Bike_CD_Role`, and both roles'
+policies. Going back to CodePipeline means recreating those from the backups above, plus a new
+GitHub connection.
 
 Left:
 - Artifact bucket `codepipeline-us-west-1-708924771225`: **keep**. It only holds the Lambda
   deploy zips in `lambda-deploys/` now (`lambdas/README.md`).
-- CodeBuild project `SetupsDotBike_builder`, its role `SetupsDotBikeCodeBuildSR` and the pipeline
-  role `Setups.Bike_CD_Role` (plus their policies `CodeBuildBasePolicy-SetupsDotBikeCodeBuildSR-us-west-1`
-  and `AWSCodePipelineServiceRole-us-west-1-setups.bike_bucket`): unused, free while idle, and can
-  be deleted (backups above). Going back to CodePipeline would also need a new GitHub connection.
 - `www.setups.bike`: an empty bucket that does the www to setups.bike redirect. **Keep.**
