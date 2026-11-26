@@ -51,6 +51,6 @@ This keeps sign-in honest: no test-only login path in the Lambdas and no secrets
 
 ## Not in CI (yet)
 
-The suite isn't part of CodePipeline: the saved session expires weekly and the run writes to
+The suite isn't part of the GitHub Actions deploy or PR checks: the saved session expires weekly and the run writes to
 the production database. Moving it to CI would need a test-only way to get a token (or a Neon
 branch plus its own API stage).

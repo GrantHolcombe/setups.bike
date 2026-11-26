@@ -334,7 +334,7 @@ after a logo or tagline change. There's no service worker yet.
       kept on. Measure on an idle machine: a busy CPU skewed one run to a 7 s blocking time.
 - Service worker notes: `src/service-worker.ts` precaches the app shell and same-origin images,
   never the API; updates wait for "A new version is ready · Reload"; `service-worker.js` and
-  `manifest.json` are uploaded with no-cache (buildspec).
+  `manifest.json` are uploaded with no-cache (`.github/workflows/deploy.yml`).
 
 ## Phase 3.5: Partner referrals and promo codes (after the Pro launch, web first)
 

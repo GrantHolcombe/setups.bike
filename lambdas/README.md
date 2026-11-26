@@ -8,7 +8,7 @@ one, so the Lambdas load it with `const jose = import("jose")`. Each Lambda keep
 `SELECT 1` if it has been idle over a minute), `end()` leaves it open, and a connection-level error
 makes the next call reconnect; queries are never retried. This took `getBikes` from ~260 ms to
 ~90 ms (2026-11-21). Each folder is named after its
-Lambda function and deploys on its own. These aren't part of the CodePipeline frontend build.
+Lambda function and deploys on its own. These aren't part of the frontend deploy (GitHub Actions).
 
 | Folder | API route | What it does |
 |---|---|---|

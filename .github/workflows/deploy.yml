@@ -3,26 +3,26 @@
 #
 # The upload steps below publish ./build only. Never upload the repo itself.
 #
-# CUTOVER: for now this runs only by hand (Actions tab > Deploy > Run workflow, on main). Once one
-# manual run is verified and the old pipeline is deleted, uncomment the push trigger below, so
-# nothing deploys twice.
+# Runs on every push to main, except pushes that only touch the paths below. To deploy anyway,
+# use Actions tab > Deploy > Run workflow (on main). The old pipeline's definition is saved in
+# infra/codepipeline-setups.bike_bucket.json.
 name: Deploy
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [main]
-  #   # Pushes that only touch these don't affect the site, so they don't deploy (same list the
-  #   # old pipeline used, plus infra/, e2e/ and cloudflare/, which aren't part of the build).
-  #   paths-ignore:
-  #     - 'docs/**'
-  #     - 'db/**'
-  #     - 'lambdas/**'
-  #     - 'aws/**'
-  #     - 'infra/**'
-  #     - 'e2e/**'
-  #     - 'cloudflare/**'
-  #     - '**/*.md'
+  push:
+    branches: [main]
+    # Pushes that only touch these don't affect the site, so they don't deploy (same list the
+    # old pipeline used, plus infra/, e2e/ and cloudflare/, which aren't part of the build).
+    paths-ignore:
+      - 'docs/**'
+      - 'db/**'
+      - 'lambdas/**'
+      - 'aws/**'
+      - 'infra/**'
+      - 'e2e/**'
+      - 'cloudflare/**'
+      - '**/*.md'
 
 permissions:
   id-token: write # OIDC token for the AWS role; no AWS keys are stored in GitHub
