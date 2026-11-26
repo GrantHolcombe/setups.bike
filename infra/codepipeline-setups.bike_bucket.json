@@ -1,0 +1,62 @@
+{
+  "_note": "The setups.bike_bucket pipeline as GetPipeline returned it on 2026-11-26 (version 14), saved before the move to GitHub Actions so it can be recreated (CreatePipeline with the 'pipeline' object). It ran buildspec.yaml in the CodeBuild project SetupsDotBike_builder.",
+  "pipeline": {
+    "name": "setups.bike_bucket",
+    "roleArn": "arn:aws:iam::550363918681:role/service-role/Setups.Bike_CD_Role",
+    "artifactStore": { "type": "S3", "location": "codepipeline-us-west-1-708924771225" },
+    "stages": [
+      {
+        "name": "Source",
+        "actions": [
+          {
+            "name": "Source",
+            "actionTypeId": { "category": "Source", "owner": "AWS", "provider": "CodeStarSourceConnection", "version": "1" },
+            "runOrder": 1,
+            "configuration": {
+              "BranchName": "main",
+              "ConnectionArn": "arn:aws:codeconnections:us-west-1:550363918681:connection/9a22d2ec-a0ef-4704-b90c-a2a35783e9f9",
+              "DetectChanges": "false",
+              "FullRepositoryId": "GrantHolcombe/setups.bike",
+              "OutputArtifactFormat": "CODE_ZIP"
+            },
+            "outputArtifacts": [{ "name": "SourceArtifact" }],
+            "inputArtifacts": [],
+            "region": "us-west-1",
+            "namespace": "SourceVariables"
+          }
+        ]
+      },
+      {
+        "name": "build",
+        "actions": [
+          {
+            "name": "build",
+            "actionTypeId": { "category": "Build", "owner": "AWS", "provider": "CodeBuild", "version": "1" },
+            "runOrder": 1,
+            "configuration": { "ProjectName": "SetupsDotBike_builder" },
+            "outputArtifacts": [],
+            "inputArtifacts": [{ "name": "SourceArtifact" }],
+            "region": "us-west-1"
+          }
+        ]
+      }
+    ],
+    "version": 14,
+    "executionMode": "QUEUED",
+    "pipelineType": "V2",
+    "triggers": [
+      {
+        "providerType": "CodeStarSourceConnection",
+        "gitConfiguration": {
+          "sourceActionName": "Source",
+          "push": [
+            {
+              "branches": { "includes": ["main"] },
+              "filePaths": { "excludes": ["docs/**", "db/**", "lambdas/**", "aws/**", "*.md", "**/*.md"] }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

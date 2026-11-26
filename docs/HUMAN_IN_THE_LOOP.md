@@ -296,6 +296,21 @@ the old token, and delete the photo.
 **Why:** Showing another company's logo in a paid product invites trademark and copyright
 questions for no benefit; riders recognise a token by its shape and colour, not the logo.
 
+## 2026-11-26: Site deploys move to GitHub Actions
+
+**Situation:** The CodePipeline/CodeBuild deploy shared AWS's free build minutes with
+hiregrant.today, ran out of them by mid-month, and spent about 47 seconds of each build switching
+Node versions. hiregrant.today had just moved to GitHub Actions.
+
+**Decision:** Move Setups.Bike the same way. A GitHub Actions workflow builds, runs the unit
+tests and uploads to S3 through a role that trusts only this repo's `main` and can only write
+to the site bucket, with no AWS keys stored in GitHub. Pull requests get test and build checks.
+Cutover is one manual run first, then I delete the old pipeline, and only then do pushes deploy.
+
+**Why:** The repo is public, so GitHub's runners are free, and the builds are faster. Running the
+manual deploy first and deleting the pipeline before turning on push deploys means nothing ever
+deploys twice. The approval step for deploys stays as it is.
+
 ---
 
 *Adding a line:* add an entry whenever I choose between approaches, overrule or redirect the

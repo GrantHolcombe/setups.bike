@@ -1,0 +1,78 @@
+# Build and deploy setups.bike to the S3 bucket behind Cloudflare. Replaces the CodePipeline
+# setups.bike_bucket + CodeBuild SetupsDotBike_builder deploy (buildspec.yaml).
+#
+# The upload steps below publish ./build only. Never upload the repo itself.
+#
+# CUTOVER: for now this runs only by hand (Actions tab > Deploy > Run workflow, on main). Once one
+# manual run is verified and the old pipeline is deleted, uncomment the push trigger below, so
+# nothing deploys twice.
+name: Deploy
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   # Pushes that only touch these don't affect the site, so they don't deploy (same list the
+  #   # old pipeline used, plus infra/, e2e/ and cloudflare/, which aren't part of the build).
+  #   paths-ignore:
+  #     - 'docs/**'
+  #     - 'db/**'
+  #     - 'lambdas/**'
+  #     - 'aws/**'
+  #     - 'infra/**'
+  #     - 'e2e/**'
+  #     - 'cloudflare/**'
+  #     - '**/*.md'
+
+permissions:
+  id-token: write # OIDC token for the AWS role; no AWS keys are stored in GitHub
+  contents: read
+
+# Two deploys never upload over each other; a newer one waits for the running one.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  BUCKET: s3://setups.bike
+  AWS_REGION: us-west-1
+  # Not a secret. Trust policy: infra/github-deploy-trust-policy.json (main of this repo only).
+  ROLE_ARN: arn:aws:iam::550363918681:role/setupsbike-github-deploy
+  # Skip source maps: faster builds, and the site doesn't publish a readable copy of the source.
+  GENERATE_SOURCEMAP: 'false'
+
+jobs:
+  deploy:
+    # The role only trusts main, so don't even try from another branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      # Also builds the legal pages (prebuild: npm run legal)
+      - run: npm run build
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Same uploads as buildspec.yaml: everything, then the files that must never be cached
+      # (index.html, and the service worker and manifest, or app updates get stuck).
+      # Files are never deleted from the bucket, as before.
+      - name: Upload site
+        run: aws s3 cp --recursive --acl public-read --only-show-errors ./build "$BUCKET/"
+
+      - name: Upload never-cached files
+        run: |
+          NC="max-age=0, no-cache, no-store, must-revalidate"
+          for f in index.html service-worker.js manifest.json; do
+            aws s3 cp --acl public-read --cache-control "$NC" "./build/$f" "$BUCKET/"
+          done
