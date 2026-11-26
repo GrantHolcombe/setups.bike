@@ -40,3 +40,10 @@ Left:
 `https://setups.bike/${1}`, query string kept), not an S3 bucket. Its DNS record is a proxied
 `AAAA 100::` placeholder, so nothing points at S3. The old `www.setups.bike` redirect bucket was
 deleted 2026-11-26 (hiregrant.today got the same change).
+
+Also deleted 2026-11-26 (a final read-only sweep, done with one CloudShell script): the Secrets
+Manager VPC endpoint `vpce-09d74b5dde5cc9c74`, the EventBridge rule `ec2-restart-watch` (both
+left over from the old EC2 setup), the log group `/aws/codebuild/SetupsDotBike_builder`, and the
+expired us-east-1 `setups.bike` ACM certificate with its Cloudflare validation CNAME
+(`_f25b7f43…`). The `deleteAccount`, `emailPrefs` and `resendWebhook` Lambda log groups now keep
+30 days like the others.
